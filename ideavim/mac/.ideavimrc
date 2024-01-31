@@ -1,0 +1,165 @@
+"""
+" :map, :noremap => normal, visual, select
+" :nmap, :nnoremap => normal
+" :vmap, :vnoremap => visual, select
+" :imap, inoremap => insert
+" :cmap, cnormap => command-line
+" :map! => insert, command-line
+
+let mapleader=" "
+
+set ignorecase
+set smartcase
+set clipboard+=unnamed
+
+nnoremap <C-a> gg<S-v>G
+nmap <C-z> :action ToggleDistractionFreeMode<CR>
+vmap <C-j> :action EditorUnSelectWord<CR>
+vmap <C-k> :action EditorSelectWord<CR>
+
+nmap <Leader>c ciw
+nmap <Leader>x viwx
+nmap <Leader>d viwd
+nnoremap <Leader>p viw"_x"kP
+nnoremap <Leader>P viw"_xP
+nmap <Leader>o o<ESC>
+nmap <Leader>O O<ESC>
+nmap <Leader><CR> i<CR><ESC>
+
+nmap ' ,
+inoremap jj <ESC>
+inoremap jk <ESC>
+map <S-h> h
+map <S-l> l
+vmap <S-k> k
+vmap <S-j> j
+map ( 10k
+map ) 10j
+
+""" not use register
+noremap x "_x
+noremap y "ky
+noremap Y y
+nnoremap yy "kyy
+noremap p "kp
+noremap P p
+
+""" virtual mode
+vnoremap < <gv
+vnoremap > >gv
+xmap K :action MoveLineUp<CR>
+xmap J :action MoveLineDown<CR>
+
+""" Navigation
+map <Leader>\ :action SplitVertically<CR>
+map <Leader>- :action SplitHorizontally<CR>
+map <Leader>= :action Unsplit<CR>
+map <Leader>m :action MoveEditorToOppositeTabGroup<CR>
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+map <S-TAB> :action PreviousTab<CR>
+map <TAB> :action NextTab<CR>
+nnoremap <Leader>qa :action CloseAllEditors<CR>
+nnoremap <Leader>w :wq<CR>
+
+""" Window
+map <Leader>nw :action EditSourceInNewWindow<CR>
+map <Leader>nq :action PreviousWindow<CR>
+map <Leader>ne :action NextWindow<CR>
+
+""" Editing source code
+set ideajoin
+set idearefactormode=keep
+map [[ :action MethodUp<CR>
+map ]] :action MethodDown<CR>
+map zc :action CollapseRegion<CR>
+map zo :action ExpandRegion<CR>
+map <Leader>zc :action CollapseAllRegions<CR>
+map <Leader>zo :action ExpandAllRegions<CR>
+map ge :action GotoNextError<CR>
+map gE :action GotoPreviousError<CR>
+map gD :action GotoImplementation<CR>
+
+""" Source Code Navigation
+set incsearch
+map <Leader>ll :action RecentLocations<CR>
+map <Leader>lh :action LocalHistory.ShowHistory<CR>
+map <Leader>lu :action FindUsages<CR>
+map <Leader>lr :action GotoRelated<CR>
+map <Leader>lt :action TypeHierarchy<CR>
+map <Leader>lm :action FileStructurePopup<CR>
+map <Leader>lf :action ReformatCode<CR>
+map <Leader>lo :action OptimizeImports<CR>
+
+""" Searching
+map <C-e> :action RecentFiles<CR>
+map <Leader>fe :action RecentFiles<CR>
+map <Leader>ft :action GotoTest<CR>
+map <Leader>fc :action GotoClass<CR>
+map <Leader>ff :action GotoFile<CR>
+map <Leader>f/ :action FindInPath<CR>
+
+""" Generate / refactorings
+map <Leader>go :action OverrideMethods<CR>
+map <Leader>gi :action ImplementMethods<CR>
+map <Leader>gp :action Generate<CR>
+map <Leader>rp :action Refactorings.QuickListPopupAction<CR>
+map <Leader>rn :action Inline<CR>
+map <Leader>rm :action ExtractMethod<CR>
+map <Leader>rv :action IntroduceVariable<CR>
+map <Leader>ro :action OptimizeImports<CR>
+
+""" Running and Debugging
+nnoremap ,r :action Run<CR>
+nnoremap ,c :action RunClass<CR>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+nnoremap ,p :action ChooseRunConfiguration<CR>
+nnoremap ,s :action Stop<CR>
+"""nnoremap ,t :action ActivateRunToolWindow<CR>
+nnoremap ,u :action Rerun<CR>
+nnoremap ,f :action RerunFailedTests<CR>
+nnoremap ,b :action ToggleLineBreakpoint<CR>
+nnoremap ,d :action ContextDebug<CR>
+nnoremap ,n :action ActivateDebugToolWindow<CR>
+
+""" Tool windows
+nnoremap <C-p> :action JumpToLastWindow<CR>
+nnoremap <C-x> :action HideAllWindows<CR>
+
+""" easy motion
+set easymotion
+nmap <Leader>j <Plug>(easymotion-j)
+nmap <Leader>k <Plug>(easymotion-k)
+nmap <Leader>a <Plug>(easymotion-jumptoanywhere)
+
+""" NERDTree
+set NERDTree
+
+""" Multi Cursor
+Plug 'terryma/vim-multiple-cursors'
+set multicursor
+map m/ <Plug>(multicursor-mc/)
+map mf <Plug>(multicursor-mc^)
+map mb <Plug>(multicursor-mc$)
+map mc <A-n>
+map mx <A-x>
+map mp <A-p>
+
+""" commentary
+set commentary
+
+set quickscope
+
+""" surrround
+set surround
+map <Leader>y ysiw
+
+""" replace with register
+set ReplaceWithRegister
+
+""" which-key
+set which-key
+set notimeout
+"""set timeoutlen=2000
+

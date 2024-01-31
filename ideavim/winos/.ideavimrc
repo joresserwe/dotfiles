@@ -1,0 +1,169 @@
+
+"""
+" :map, :noremap => normal, visual, select
+" :nmap, :nnoremap => normal
+" :vmap, :vnoremap => visual, select
+" :imap, inoremap => insert
+" :cmap, cnormap => command-line
+" :map! => insert, command-line
+
+let mapleader=" "
+
+set ignorecase
+set smartcase
+set clipboard=unnamed
+
+noremap <A-=> j
+nnoremap <A-v> <C-v>
+
+nmap <A-z> :action ToggleDistractionFreeMode<CR>
+vmap <A-j> :action EditorUnSelectWord<CR>
+vmap <A-k> :action EditorSelectWord<CR>
+
+nmap <Leader>c ciw
+nmap <Leader>x viwx
+nmap <Leader>d viwd
+nnoremap <Leader>p viw"_x"kP
+nnoremap <Leader>P viw"_xP
+nmap <Leader>o o<ESC>
+nmap <Leader>O O<ESC>
+nmap <Leader><CR> i<CR><ESC>
+
+map '<CR> <ESC>
+inoremap jj <ESC>
+inoremap jk <ESC>
+inoremap kl <ESC>
+map <S-h> h
+map <S-l> l
+map ( 10k
+map ) 10j
+
+""" not use register
+noremap x "_x
+noremap y "ky
+noremap Y y
+nnoremap yy "kyy
+noremap p "kp
+noremap P p
+
+"" virtual mode
+nmap <Leader>vl ^v$
+vmap <Leader>vl ^vv$
+vmap K :action MoveLineUp<CR>
+vmap J :action MoveLineDown<CR>
+vnoremap <<gv
+vnoremap > >gv
+
+""" Navigation
+map <Leader>\ :action SplitVertically<CR>
+map <Leader>- :action SplitHorizontally<CR>
+map <Leader>= :action Unsplit<CR>
+map <Leader>m :action MoveEditorToOppositeTabGroup<CR>
+map <Leader>qa :action CloseAllEditors<CR>
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
+map <S-TAB> :action PreviousTab<CR>
+map <TAB> :action NextTab<CR>
+nnoremap <Leader>w :wq<CR>
+
+""" Window
+map <Leader>nw :action EditSourceInNewWindow<CR>
+map <Leader>nq :action PreviousWindow<CR>
+map <Leader>ne :action NextWindow<CR>
+
+""" Editing source code
+set ideajoin
+set idearefactormode=keep
+map [[ :action MethodUp<CR>
+map ]] :action MethodDown<CR>
+map zc :action CollapseRegion<CR>
+map zo :action ExpandRegion<CR>
+map <Leader>zc :action CollapseAllRegions<CR>
+map <Leader>zo :action ExpandAllRegions<CR>
+map ge :action GotoNextError<CR>
+map gE :action GotoPreviousError<CR>
+map gD :action GotoImplementation<CR>
+
+""" Searching and Source Code Navigation (lsp)
+set incsearch
+map <Leader>ll :action RecentLocations<CR>
+map <Leader>lh :action LocalHistory.ShowHistory<CR>
+map <Leader>lu :action FindUsages<CR>
+"""map <Leader>lr :action GotoRelated<CR>
+map <Leader>lt :action TypeHierarchy<CR>
+map <Leader>ls :action FileStructurePopup<CR>
+map <Leader>lf :action ReformatCode<CR>
+map <Leader>lo :action OptimizeImports<CR>
+map <Leader>lr :action RenameElement<CR>
+
+"""Searching
+map <Leader>fe :action RecentFiles<CR>
+map <Leader>ft :action GotoTest<CR>
+map <Leader>fc :action GotoClass<CR>
+map <Leader>ff :action GotoFile<CR>
+map <Leader>f/ :action FindInPath<CR>
+
+"" Generate/Refactioring
+map <Leader>go :action OverrideMethods<CR>
+map <Leader>gi :action ImplementMethods<CR>
+map <Leader>gp :action Generate<CR>
+map <Leader>rp :action Refactorings.QuickListPopupAction<CR>
+map <Leader>rn :action Inline<CR>
+map <Leader>rm :action ExtractMethod<CR>
+map <Leader>rv :action IntroduceVariable<CR>
+map <Leader>rr :action RenameElement<CR>
+
+""" Running and Debugging
+nnoremap ,r :action Run<CR>
+nnoremap ,c :action RunClass<CR>
+nnoremap ,p :action ChooseRunConfiguration<CR>
+nnoremap ,t :action ActivateRunToolWindow<CR>
+nnoremap ,u :action Rerun<CR>
+nnoremap ,s :action Stop<CR>
+""" nnoremap rf :action RerunFailedTests<CR>
+"""nnoremap rb :action ToggleLineBreakpoint<CR>
+"""nnoremap rd :action ContextDebug<CR>
+"""nnoremap rn :action ActivateDebugToolWindow<CR>
+
+""" Tool windows
+nnoremap <A-p> :action JumpToLastWindow<CR>
+nnoremap <A-x> :action HideAllWindows<CR>
+
+""" easy motion
+set easymotion
+nmap <Leader>j <Plug>(easymotion-j)
+nmap <Leader>k <Plug>(easymotion-k)
+nmap <Leader>a <Plug>(easymotion-jumptoanywhere)
+
+""" NERDTree
+set NERDTree
+
+""" Multi Cursor
+Plug 'terryma/vim-multiple-cursors'
+set multicursor
+map m/ <Plug>(multicursor-mc/)
+map mf <Plug>(multicursor-mc^)
+map mb <Plug>(multicursor-mc$)
+map mm <A-n>
+map mp <A-p>
+map mx <A-x>
+
+""" commentary
+set commentary
+
+set quickscope
+
+""" surround
+set surround
+nmap <Leader>y ysiw
+
+""" replace with register
+set ReplaceWithRegister
+
+""" which-key
+set which-key
+set notimeout
+"""set timeoutlen=2000
+
