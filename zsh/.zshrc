@@ -5,23 +5,22 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-
-plugins=(
-	git
-  fzf
-  zsh-autosuggestions
-  fasd
-)
-
 source $ZSH/oh-my-zsh.sh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+plugins=(
+	git
+	fzf
+	zsh-autosuggestions
+	tmux
+	fasd
+	fzf-zsh-plugin
+)
+
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
-
-neofetch
 
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
@@ -78,3 +77,24 @@ export GOPATH=$HOME/.go
 export GOMODCACHE=$GOPATH/pkg/mod
 export PATH=$PATH:$GOPATH/bin
 
+# trash-cli
+alias rm="echo Use 'del' or 'trash', or the full path i.e. '/bin/rm'"
+alias del="trash"
+
+# asdf
+. /opt/homebrew/opt/asdf/libexec/asdf.sh
+
+# eza
+eza_params=('--git' '--icons' '--classify' '--group-directories-first' '--time-style="+%y/%m/%d %H:%M"' '--group' '--color-scale')
+alias ls="eza ${eza_params}"
+alias l='ls -la'
+alias la='ls -la'
+alias lam='ls -la --sort=modified'
+alias ll='ls -l'
+alias llm='ls -l --sort=modified'
+alias lt='ls --tree'
+ 
+# htop
+alias top="htop"
+
+neofetch
