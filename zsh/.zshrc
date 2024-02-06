@@ -5,9 +5,6 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-source $ZSH/oh-my-zsh.sh
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 plugins=(
 	git
@@ -17,6 +14,10 @@ plugins=(
 	fasd
 	fzf-zsh-plugin
 )
+
+source $ZSH/oh-my-zsh.sh
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
@@ -65,7 +66,7 @@ export SDKMAN_DIR="$HOME/.sdkman"
 # 함수로 추가할 디렉토리를 auto complete 목록에 포함합니다.
 # autoload에 zfunc이하 모든 항목을 선언합니다.
 fpath=($fpath ~/.zfunc)
-#autoload -Uz ~/.zfunc/**/*
+autoload -Uz ~/.zfunc/**/*
 
 # BindKey
 # zle (Z-shell Line Editor)를 등록한 후, 단축키를 Binding 한다.
@@ -96,5 +97,9 @@ alias lt='ls --tree'
  
 # htop
 alias top="htop"
+
+# tcping
+alias ping="ping_or_tcping"
+ 
 
 neofetch

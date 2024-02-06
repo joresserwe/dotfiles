@@ -1,0 +1,19 @@
+# 함수 정의
+ping_or_tcping() {
+    if [ "$#" -lt 1 ]; then
+        echo "Usage: ping <IP address> [Port]"
+        return 1
+    fi
+
+    local IP=$1
+
+    # 포트 번호가 제공되었는지 확인
+    if [ "$#" -eq 2 ]; then
+        local PORT=$2
+        # tcping을 사용하여 특정 포트에 대해 ping
+        tcping -t 5 $IP $PORT
+    else
+        # 포트 번호 없이 일반 ping 실행
+        ping $IP
+    fi
+}
