@@ -1,9 +1,3 @@
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
@@ -16,16 +10,20 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# p10k
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh"
+fi 
+ [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
-export NVM_DIR="$HOME/.nvm"
+# nvm
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-export FZF_DEFAULT_COMMAND="fd -t f"
+# zsh
+alias ezr="vi $ZDOTDIR/.zshrc" # edit zshrc
+alias eze="vi $HOME/.zshenv"
 
 # find Port Num
 port() {
@@ -36,6 +34,10 @@ alias portall="sudo lsof -nP | grep LISTEN"
 # vim
 export PATH=/opt/nvim/bin:$PATH
 alias vi="nvim"
+
+# fzf
+export FZF_DEFAULT_COMMAND="fd -t f"
+[ -f $XDG_CACHE_HOME/fzf/fzf.zsh ] && source $XDG_CACHE_HOME/fzf/fzf.zsh
 
 # fasd
 alias v="f -e nvim"
@@ -55,9 +57,8 @@ export KUBE_EDITOR="nvim"
 # Bat
 alias cat="bat"
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+# sdkman
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
@@ -65,19 +66,14 @@ export SDKMAN_DIR="$HOME/.sdkman"
 # Auto Function
 # 함수로 추가할 디렉토리를 auto complete 목록에 포함합니다.
 # autoload에 zfunc이하 모든 항목을 선언합니다.
-fpath=($fpath ~/.zfunc)
-autoload -Uz ~/.zfunc/**/*
+fpath=($fpath $ZDOTDIR/.zfunc)
+autoload -Uz $ZDOTDIR/.zfunc/**/*
 
 # BindKey
 # zle (Z-shell Line Editor)를 등록한 후, 단축키를 Binding 한다.
 # zle -N src
 # bindkey '^e' src # ^e를 누르면 src 명령어가 나간다.
  
-# Go Path
-export GOPATH=$HOME/.go
-export GOMODCACHE=$GOPATH/pkg/mod
-export PATH=$PATH:$GOPATH/bin
-
 # trash-cli
 alias rm="echo Use 'del' or 'trash', or the full path i.e. '/bin/rm'"
 alias del="trash"
@@ -101,5 +97,8 @@ alias top="htop"
 # tcping
 alias ping="ping_or_tcping"
  
+# lazygit
+alias lg="lazygit"
 
-neofetch
+#neofetch
+
