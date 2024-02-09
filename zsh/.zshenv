@@ -7,6 +7,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
+export XDG_RUNTIME_DIR="$HOME/Library/Caches/Runtime"
 
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -17,7 +18,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # use vim as the editor
 export EDITOR=nvim
 
-# nvim
+# nvm
 export NVM_DIR="$XDG_DATA_HOME/nvm"
 
 # sdkman
@@ -31,3 +32,15 @@ export PATH="$PATH:$GOPATH/bin"
 # nvm
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/.npmrc"
 
+# remove less history
+export LESSHISTFILE=-
+
+# vscode
+export VSCODE_EXTENSIONS="$XDG_DATA_HOME"/vscode/extensions
+
+# fasd
+export _FASD_DATA="$XDG_CACHE_HOME/fasd/fasd"
+export _FASD_VIMINFO="$XDG_CACHE_HOME/fasd/viminfo"
+
+# fzf-zsh-plugin
+export FZF_PATH="$XDG_DATA_HOME/fzf"

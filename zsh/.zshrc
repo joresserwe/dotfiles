@@ -22,6 +22,7 @@ fi
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # zsh
+alias szr="source $ZDOTDIR/.zshrc"
 alias ezr="vi $ZDOTDIR/.zshrc" # edit zshrc
 alias eze="vi $HOME/.zshenv"
 
@@ -47,12 +48,12 @@ alias o="a -e open"
 eval $(thefuck --alias)
 
 # K8S
-alias k="kubectl"
-alias mk="minikube"
-alias kgp="kubectl get pod -o wide"
-source <(kubectl completion zsh)
-source ~/.minikube/.minikube-completion
-export KUBE_EDITOR="nvim"
+# alias k="kubectl"
+# alias mk="minikube"
+# alias kgp="kubectl get pod -o wide"
+# source <(kubectl completion zsh)
+# source ~/.minikube/.minikube-completion
+# export KUBE_EDITOR="nvim"
 
 # Bat
 alias cat="bat"
@@ -66,8 +67,8 @@ alias cat="bat"
 # Auto Function
 # 함수로 추가할 디렉토리를 auto complete 목록에 포함합니다.
 # autoload에 zfunc이하 모든 항목을 선언합니다.
-fpath=($fpath $ZDOTDIR/.zfunc)
-autoload -Uz $ZDOTDIR/.zfunc/**/*
+fpath=($fpath $ZDOTDIR/zfunc)
+autoload -Uz $ZDOTDIR/zfunc/**/*
 
 # BindKey
 # zle (Z-shell Line Editor)를 등록한 후, 단축키를 Binding 한다.
