@@ -1,4 +1,5 @@
-"""
+" $XDG_CONFIG_HOME/ideavim/ideavimrc
+ 
 " :map, :noremap => normal, visual, select
 " :nmap, :nnoremap => normal
 " :vmap, :vnoremap => visual, select
@@ -8,9 +9,12 @@
 
 let mapleader=" "
 
-set ignorecase
-set smartcase
 set clipboard+=unnamed
+set ideajoin
+set idearefactormode=keep
+set ignorecase
+set incsearch
+set smartcase
 
 nnoremap <C-a> gg<S-v>G
 nmap <C-z> :action ToggleDistractionFreeMode<CR>
@@ -70,8 +74,6 @@ map <Leader>nq :action PreviousWindow<CR>
 map <Leader>ne :action NextWindow<CR>
 
 """ Editing source code
-set ideajoin
-set idearefactormode=keep
 map [[ :action MethodUp<CR>
 map ]] :action MethodDown<CR>
 map zc :action CollapseRegion<CR>
@@ -83,7 +85,6 @@ map gE :action GotoPreviousError<CR>
 map gD :action GotoImplementation<CR>
 
 """ Source Code Navigation
-set incsearch
 map <Leader>ll :action RecentLocations<CR>
 map <Leader>lh :action LocalHistory.ShowHistory<CR>
 map <Leader>lu :action FindUsages<CR>
