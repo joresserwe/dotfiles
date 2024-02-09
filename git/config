@@ -1,0 +1,30 @@
+# ~/.config/git/config
+# 깃의 사용자별 설정 파일입니다.
+[user]
+	name = Cyan
+	email = joresserwe12@gmail.com
+[core]
+	editor = code --wait
+	autocrlf = input
+[diff]
+	tool = vscode
+[difftool "vscode"]
+	cmd = code --wait --diff $LOCAL $REMOTE
+[pager]
+	log = false
+	branch = false
+[merge]
+	tool = vscode
+#	tool = p4merge
+[mergetool]
+	keepBackup = false
+[mergetool "vscode"]
+	cmd = code -- wait $MERGED	
+[mergetool "p4merge"]
+#	path = "C:\\Program Files\\Perforce\\p4merge.exe"
+[alias]
+	hist = log --graph --all --pretty=format:'%C(yellow)[%ad]%C(reset) %C(green)[%h]%C(reset) | %C(white)%s %C(bold red){{%an}}%C(reset) %C(blue)%d%C(reset)' --date=short
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
