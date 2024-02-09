@@ -1,16 +1,13 @@
-# zsh
-export ZDOTDIR="$HOME/.config/zsh"
-export ZSH="$ZDOTDIR/oh-my-zsh"
-
-# set xdg paths
+# XDG(https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 export XDG_RUNTIME_DIR="$HOME/Library/Caches/Runtime"
 
-# PATH
-export PATH="$HOME/.local/bin:$PATH"
+# zsh
+export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+export ZSH="$ZDOTDIR/oh-my-zsh"
 
 # brew
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -36,7 +33,7 @@ export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/.npmrc"
 export LESSHISTFILE=-
 
 # vscode
-export VSCODE_EXTENSIONS="$XDG_DATA_HOME"/vscode/extensions
+# export VSCODE_EXTENSIONS="$XDG_DATA_HOME"/vscode/extensions
 
 # fasd
 export _FASD_DATA="$XDG_CACHE_HOME/fasd/fasd"
