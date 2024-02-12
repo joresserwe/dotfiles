@@ -1,0 +1,5 @@
+# find the process using the specified port
+port() {
+    sudo lsof -nP -i4TCP:$1 | grep LISTEN
+}
+
