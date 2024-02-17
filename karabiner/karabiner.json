@@ -2,7 +2,7 @@
     "global": {
         "ask_for_confirmation_before_quitting": true,
         "check_for_updates_on_startup": true,
-        "show_in_menu_bar": true,
+        "show_in_menu_bar": false,
         "show_profile_name_in_menu_bar": false,
         "unsafe_ui": false
     },
@@ -18,28 +18,7 @@
                 },
                 "rules": [
                     {
-                        "description": "Open iTerm2 with Ctrl+T globally",
-                        "manipulators": [
-                            {
-                                "from": {
-                                    "key_code": "t",
-                                    "modifiers": {
-                                        "mandatory": [
-                                            "control"
-                                        ]
-                                    }
-                                },
-                                "to": [
-                                    {
-                                        "shell_command": "open -a iTerm"
-                                    }
-                                ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
-                        "description": "Disable Command + H except in specified applications",
+                        "description": "In Citrix, change left_option to Windows logo key via \"Send Windows logo key using ⌘ Command (right)\"",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -48,22 +27,20 @@
                                             "^com\\.citrix\\.XenAppViewer$",
                                             "^com\\.citrix\\.receiver\\.icaviewer\\.mac$"
                                         ],
-                                        "type": "frontmost_application_unless"
+                                        "type": "frontmost_application_if"
                                     }
                                 ],
                                 "from": {
-                                    "key_code": "h",
+                                    "key_code": "left_option",
                                     "modifiers": {
-                                        "mandatory": [
-                                            "command"
+                                        "optional": [
+                                            "any"
                                         ]
                                     }
                                 },
-                                "to": [
-                                    {
-                                        "key_code": "vk_none"
-                                    }
-                                ],
+                                "to": {
+                                    "key_code": "right_command"
+                                },
                                 "type": "basic"
                             }
                         ]
@@ -126,6 +103,130 @@
                                         "fn"
                                     ]
                                 },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Change Hide shortcut to Control+Option+H",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.citrix\\.XenAppViewer$",
+                                            "^com\\.citrix\\.receiver\\.icaviewer\\.mac$"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_control",
+                                            "left_option"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "h",
+                                        "modifiers": [
+                                            "left_command"
+                                        ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Disable Command+H",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.citrix\\.XenAppViewer$",
+                                            "^com\\.citrix\\.receiver\\.icaviewer\\.mac$"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_command"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "vk_none"
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Disable Option+Command+H",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.citrix\\.XenAppViewer$",
+                                            "^com\\.citrix\\.receiver\\.icaviewer\\.mac$"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_option",
+                                            "left_command"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "vk_none"
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open iTerm2 with Ctrl+T globally",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.googlecode\\.iterm2$"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "t",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "control"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "shell_command": "open -a iTerm"
+                                    }
+                                ],
                                 "type": "basic"
                             }
                         ]
