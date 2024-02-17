@@ -7,6 +7,8 @@ plugins=(
 	tmux
 	fasd
 	fzf-zsh-plugin
+	sprunge
+	sdk
 )
 
 [ -f "$ZSH/oh-my-zsh.sh" ] && . "$ZSH/oh-my-zsh.sh"
