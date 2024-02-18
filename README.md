@@ -15,4 +15,11 @@ ln -sf ~/.config/.dotfiles/ideavim/mac/.ideavimrc ~/.config/ideavim/ideavimrc
 
 # git
 ln -sf ~/.config/.dotfiles/git/config ~/.config/git/config
+
+# tmux
+ln -sf ~/.config/.dotfiles/tmux/tmux.conf ~/.config/tmux/tmux.conf
+ln -sf ~/.config/.dotfiles/tmux/tmux.mapping.conf ~/.config/tmux/tmux.mapping.conf
+ln -sf ~/.config/.dotfiles/tmux/gitmux.conf ~/.config/tmux/gitmux.conf
+
 ```
+
