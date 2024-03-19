@@ -1,0 +1,34 @@
+{
+    "description": "Change Hide shortcut to Control+Option+H",
+    "manipulators": [
+        {
+            "conditions": [
+                {
+                    "bundle_identifiers": [
+                        "^com\\.citrix\\.XenAppViewer$",
+                        "^com\\.citrix\\.receiver\\.icaviewer\\.mac$"
+                    ],
+                    "type": "frontmost_application_unless"
+                }
+            ],
+            "from": {
+                "key_code": "h",
+                "modifiers": {
+                    "mandatory": [
+                        "left_control",
+                        "left_option"
+                    ]
+                }
+            },
+            "to": [
+                {
+                    "key_code": "h",
+                    "modifiers": [
+                        "left_command"
+                    ]
+                }
+            ],
+            "type": "basic"
+        }
+    ]
+}

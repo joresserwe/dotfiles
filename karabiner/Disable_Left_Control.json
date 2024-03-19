@@ -1,0 +1,17 @@
+{
+    "description": "Disable Left Control",
+    "manipulators": [
+        {
+            "from": {
+                "key_code": "left_control",
+                "modifiers": {
+                    "optional": [
+                        "any"
+                    ]
+                }
+            },
+            "to": [],
+            "type": "basic"
+        }
+    ]
+}
