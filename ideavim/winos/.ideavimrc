@@ -9,9 +9,12 @@
 
 let mapleader=" "
 
-set ignorecase
-set smartcase
 set clipboard=unnamed
+set ideajoin
+set idearefactormode=keep
+set ignorecase
+set incsearch
+set smartcase
 
 noremap <A-=> j
 nnoremap <A-v> <C-v>
@@ -23,8 +26,6 @@ vmap <A-k> :action EditorSelectWord<CR>
 nmap <Leader>c ciw
 nmap <Leader>x viwx
 nmap <Leader>d viwd
-nnoremap <Leader>p viw"_x"kP
-nnoremap <Leader>P viw"_xP
 nmap <Leader>o o<ESC>
 nmap <Leader>O O<ESC>
 nmap <Leader><CR> i<CR><ESC>
@@ -38,27 +39,38 @@ map <S-l> l
 map ( 10k
 map ) 10j
 
-""" not use register
+noremap c "_c
 noremap x "_x
-noremap y "ky
+noremap y "iy
 noremap Y y
-nnoremap yy "kyy
+noremap d "dd
 noremap p "kp
 noremap P p
+
+nnoremap yy "iyy
+nnoremap Yy yy
+nnoremap dd "ddd
+
+noremap ps p
+noremap pi "ip
+noremap pd "dp
+nnoremap <Leader>pi viw"_x"iP
+nnoremap <Leader>pd viw"_x"dP
+nnoremap <Leader>ps viw"_xP
 
 "" virtual mode
 nmap <Leader>vl ^v$
 vmap <Leader>vl ^vv$
 vmap K :action MoveLineUp<CR>
 vmap J :action MoveLineDown<CR>
-vnoremap <<gv
+vnoremap < <gv
 vnoremap > >gv
 
 """ Navigation
 map <Leader>\ :action SplitVertically<CR>
 map <Leader>- :action SplitHorizontally<CR>
-map <Leader>= :action Unsplit<CR>
-map <Leader>m :action MoveEditorToOppositeTabGroup<CR>
+map <Leader>= :action MoveEditorToOppositeTabGroup<CR>
+map <Leader>m :action MaximizeEditorInSplit<CR>
 map <Leader>qa :action CloseAllEditors<CR>
 nnoremap <C-h> <C-w>h
 nnoremap <C-j> <C-w>j
@@ -74,29 +86,32 @@ map <Leader>nq :action PreviousWindow<CR>
 map <Leader>ne :action NextWindow<CR>
 
 """ Editing source code
-set ideajoin
-set idearefactormode=keep
 map [[ :action MethodUp<CR>
 map ]] :action MethodDown<CR>
 map zc :action CollapseRegion<CR>
 map zo :action ExpandRegion<CR>
 map <Leader>zc :action CollapseAllRegions<CR>
 map <Leader>zo :action ExpandAllRegions<CR>
+
 map ge :action GotoNextError<CR>
 map gE :action GotoPreviousError<CR>
 map gD :action GotoImplementation<CR>
+map gu :action GotoSuperMethod<CR>
 
 """ Searching and Source Code Navigation (lsp)
-set incsearch
 map <Leader>ll :action RecentLocations<CR>
 map <Leader>lh :action LocalHistory.ShowHistory<CR>
 map <Leader>lu :action FindUsages<CR>
-"""map <Leader>lr :action GotoRelated<CR>
+map <Leader>lr :action GotoRelated<CR>
 map <Leader>lt :action TypeHierarchy<CR>
 map <Leader>ls :action FileStructurePopup<CR>
-map <Leader>lf :action ReformatCode<CR>
 map <Leader>lo :action OptimizeImports<CR>
-map <Leader>lr :action RenameElement<CR>
+
+""" formatting
+map ;r :action RenameElement<CR>
+map ;f :action ReformatCode<CR>
+map ;a :action ShowIntentionActions<CR>
+map ;o :action OptimizeImports<CR>
 
 """Searching
 map <Leader>fe :action RecentFiles<CR>
@@ -113,6 +128,7 @@ map <Leader>rp :action Refactorings.QuickListPopupAction<CR>
 map <Leader>rn :action Inline<CR>
 map <Leader>rm :action ExtractMethod<CR>
 map <Leader>rv :action IntroduceVariable<CR>
+map <Leader>ro :action OptimizeImports<CR>
 map <Leader>rr :action RenameElement<CR>
 
 """ Running and Debugging
