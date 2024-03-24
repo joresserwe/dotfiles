@@ -21,5 +21,9 @@ ln -sf ~/.config/.dotfiles/tmux/tmux.conf ~/.config/tmux/tmux.conf
 ln -sf ~/.config/.dotfiles/tmux/tmux.mapping.conf ~/.config/tmux/tmux.mapping.conf
 ln -sf ~/.config/.dotfiles/tmux/gitmux.conf ~/.config/tmux/gitmux.conf
 
+# yabai
+ln -sf ~/.config/.dotfiles/yabai/skhdrc ~/.config/skhd/skhdrc
+ln -sf ~/.config/.dotfiles/yabai/yabairc ~/.config/yabai/yabairc
+
 ```
 
