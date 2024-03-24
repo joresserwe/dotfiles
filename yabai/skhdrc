@@ -1,0 +1,113 @@
+# focus window (through display)
+alt - h : yabai -m window --focus west  || yabai -m display --focus west
+alt - j : yabai -m window --focus south || yabai -m display --focus south
+alt - k : yabai -m window --focus north || yabai -m display --focus north
+alt - l : yabai -m window --focus east  || yabai -m display --focus east
+
+# focus recent window
+alt - z : yabai -m space --focus recent
+
+# move managed window
+# ctrl + alt - k : yabai -m window --warp north
+# ctrl + alt - j : yabai -m window --warp south
+# ctrl + alt - h : yabai -m window --warp west
+# ctrl + alt - l : yabai -m window --warp east
+
+# swap managed window (through display)
+shift + alt - h : yabai -m window --warp west || $(yabai -m window --display west && yabai -m display --focus west && yabai -m window --warp last) || yabai -m window --move rel:-20:0
+shift + alt - j : yabai -m window --warp south || $(yabai -m window --display south && yabai -m display --focus south) || yabai -m window --move rel:0:20
+shift + alt - k : yabai -m window --warp north || $(yabai -m window --display north && yabai -m display --focus north) || yabai -m window --move rel:0:-20
+shift + alt - l : yabai -m window --warp east || $(yabai -m window --display east && yabai -m display --focus east && yabai -m window --warp first) || yabai -m window --move rel:20:0
+
+shift + alt - s : yabai -m window --toggle split
+
+# float / unfloat window and center on screen 
+alt - space :  yabai -m window --toggle float --grid 20:20:1:1:18:18
+
+# toggle window zoom
+alt - d : yabai -m window --toggle zoom-parent
+alt - m : yabai -m window --toggle zoom-fullscreen
+
+# flip
+shift + alt - y : yabai -m space --mirror y-axis
+shift + alt - x : yabai -m space --mirror x-axis
+
+# rotate layout clockwise
+shift + alt - r : yabai -m space --rotate 270
+
+# focus display
+alt - 0x21 : yabai -m display --focus west
+alt - 0x1E : yabai -m display --focus east
+
+# resize window
+ctrl + alt - left : yabai -m window --resize right:-100:0 || yabai -m window --resize left:-100:0
+ctrl + alt - down : yabai -m window --resize bottom:0:100 || yabai -m window --resize top:0:100
+ctrl + alt - up : yabai -m window --resize bottom:0:-100 || yabai -m window --resize top:0:-100
+ctrl + alt - right : yabai -m window --resize right:100:0 || yabai -m window --resize left:100:0
+ctrl + alt - h : yabai -m window --resize right:-100:0 || yabai -m window --resize left:-100:0
+ctrl + alt - j : yabai -m window --resize bottom:0:100 || yabai -m window --resize top:0:100
+ctrl + alt - k : yabai -m window --resize bottom:0:-100 || yabai -m window --resize top:0:-100
+ctrl + alt - l : yabai -m window --resize right:100:0 || yabai -m window --resize left:100:0
+
+# balance size of windows
+ctrl + alt - e : yabai -m space --balance
+
+# Warp space
+alt - 1 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] && yabai -m space --focus $SPACES[1]
+alt - 2 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[2] ]] && yabai -m space --focus $SPACES[2]
+alt - 3 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[3] ]] && yabai -m space --focus $SPACES[3]
+alt - 4 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[4] ]] && yabai -m space --focus $SPACES[4]
+
+# Move windows between space
+shift + alt - 1 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] \
+                  && yabai -m window --space $SPACES[1]
+
+shift + alt - 2 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[2] ]] \
+                  && yabai -m window --space $SPACES[2]
+
+shift + alt - 3 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[3] ]] \
+                  && yabai -m window --space $SPACES[3]
+
+shift + alt - 4 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[4] ]] \
+                  && yabai -m window --space $SPACES[4]
+shift + alt - p : yabai -m window --space prev && yabai -m space --focus prev
+shift + alt - n : yabai -m window --space next && yabai -m space --focus next
+
+# New window in hor./ vert. splits for all applications with yabai
+alt - 0x2A : yabai -m window --insert east;  skhd -k "cmd - n"
+alt - 0x1B : yabai -m window --insert south; skhd -k "cmd - n"
+
+# Stack
+shift + ctrl - h : yabai -m window  west --stack $(yabai -m query --windows --window | jq -r '.id')
+shift + ctrl - j : yabai -m window south --stack $(yabai -m query --windows --window | jq -r '.id')
+shift + ctrl - k : yabai -m window north --stack $(yabai -m query --windows --window | jq -r '.id')
+shift + ctrl - l : yabai -m window  east --stack $(yabai -m query --windows --window | jq -r '.id')
+
+shift + ctrl - n : yabai -m window --focus stack.next
+shift + ctrl - p : yabai -m window --focus stack.prev
+
+# Set insertion point for focused container
+shift + ctrl - i : yabai -m window --insert stack 
+
+# unstack
+shift + ctrl - u : window=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window east --stack $window || (yabai -m window $window --toggle float && yabai -m window $window --toggle float)
+
+## DESKTOP
+# ctrl + alt + cmd - n : yabai -m space --create && \
+#                        index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
+#                        yabai -m space --focus "${index}"
+# hyper - n : yabai -m space --create && \
+#             index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
+#             yabai -m window --space "${index}" && \
+#             yabai -m space --focus "${index}"
+             
+# move window to display left and right
+# shift + alt - n : yabai -m window --display east; yabai -m display --focus east;
+# shift + alt - p : yabai -m window --display west; yabai -m display --focus west;
+# ctrl + alt - z  : yabai -m display --focus prev
+# ctrl + alt - 3  : yabai -m display --focus 3
+ 
+# resize floating windows
+# ctrl + alt - 0x24 : yabai -m window --grid 1:1:0:0:1:1
+# ctrl + alt - left : yabai -m --grid 1:2:0:0:1:1
+# ctrl + alt - right : yabai -m --grid 1:2:1:0:1:1
