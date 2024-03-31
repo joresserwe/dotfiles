@@ -4,6 +4,9 @@ alt - j : yabai -m window --focus south || yabai -m display --focus south
 alt - k : yabai -m window --focus north || yabai -m display --focus north
 alt - l : yabai -m window --focus east  || yabai -m display --focus east
 
+# focus first window in this space
+alt - f : yabai -m window --focus first
+
 # focus recent window
 alt - z : yabai -m space --focus recent
 
@@ -83,8 +86,8 @@ shift + ctrl - j : yabai -m window south --stack $(yabai -m query --windows --wi
 shift + ctrl - k : yabai -m window north --stack $(yabai -m query --windows --window | jq -r '.id')
 shift + ctrl - l : yabai -m window  east --stack $(yabai -m query --windows --window | jq -r '.id')
 
-shift + ctrl - n : yabai -m window --focus stack.next
-shift + ctrl - p : yabai -m window --focus stack.prev
+alt - n : yabai -m window --focus stack.next
+alt - p : yabai -m window --focus stack.prev
 
 # Set insertion point for focused container
 shift + ctrl - i : yabai -m window --insert stack 
