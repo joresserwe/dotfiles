@@ -7,21 +7,24 @@
 	editor = nvim
 	autocrlf = input
 [diff]
-	tool = vscode
+# tool = vscode
+	tool = diffview
 [difftool "vscode"]
 	cmd = code --wait --diff $LOCAL $REMOTE
+[difftool "diffview"]
+	cmd = nvim -n -c "DiffviewOpen" "$LOCAL" "$REMOTE"
 [pager]
 	log = false
 	branch = false
 [merge]
-	tool = vscode
-#	tool = p4merge
+#	tool = vscode
+	tool = diffview
 [mergetool]
 	keepBackup = false
 [mergetool "vscode"]
 	cmd = code -- wait $MERGED	
-[mergetool "p4merge"]
-#	path = "C:\\Program Files\\Perforce\\p4merge.exe"
+[mergetool "diffview"]
+	cmd = nvim -n -c "DiffviewOpen" "$MERGE"
 [alias]
 	hist = log --graph --all --pretty=format:'%C(yellow)[%ad]%C(reset) %C(green)[%h]%C(reset) | %C(white)%s %C(bold red){{%an}}%C(reset) %C(blue)%d%C(reset)' --date=short
 	co = checkout
