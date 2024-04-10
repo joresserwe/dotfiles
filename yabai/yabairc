@@ -52,6 +52,7 @@ yabai -m rule --add app="^(System Settings|시스템 설정)$" manage=off
 yabai -m rule --add app="^(Calculator|계산기)$" manage=off
 yabai -m rule --add app="^(App Store)$" manage=off
 yabai -m rule --add app="^(kakaoTalk|카카오톡)$" manage=off
+yabai -m rule --add app="^(스티커)$" manage=off
 yabai -m rule --add app="^CleanMyMac X$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add label="Finder" app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
