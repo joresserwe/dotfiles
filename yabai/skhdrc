@@ -157,35 +157,6 @@ resize, move, pane < escape ; default
 resize, move, pane < space ; default
           
 
-#####################################################################################################################
-#                                                     Not In Use                                                    #
-#####################################################################################################################
-# move window
-# resize < cmd - left : yabai -m window --move rel:-25:0
-# resize < cmd - down : yabai -m window -move rel:0:25
-# resize < cmd - up : yabai -m window --move rel:0:-25
-# resize < cmd - right : yabai -m window --move rel:25:0
-# 
-# ctrl + alt - h : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
-# ctrl + alt - j : yabai -m window north --resize bottom:0:40 2> /dev/null || yabai -m window --resize bottom:0:40
-# ctrl + alt - k : yabai -m window south --resize top:0:-40 2> /dev/null || yabai -m window --resize top:0:-40
-# ctrl + alt - l : yabai -m window east --resize left:40:0 2> /dev/null || yabai -m window --resize left:40:0
-# ctrl + alt - 0x1B : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
-# ctrl + alt - 0x1B : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
-
-## DESKTOP
-# ctrl + alt + cmd - n : yabai -m space --create && \
-#                        index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
-#                        yabai -m space --focus "${index}"
-# hyper - n : yabai -m space --create && \
-#             index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
-#             yabai -m window --space "${index}" && \
-#             yabai -m space --focus "${index}"
-             
-# move above/below
-# shift + alt - u : yabai -m window --layer above
-# shift + alt - d : yabai -m window --layer below
-
 #################
 # ASCII KeyCode #
 # 0x2F : .      #
