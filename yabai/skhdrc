@@ -4,32 +4,31 @@ alt - j : yabai -m window --focus south || yabai -m display --focus south
 alt - k : yabai -m window --focus north || yabai -m display --focus north
 alt - l : yabai -m window --focus east  || yabai -m display --focus east
 
+# swap managed window (through display)
+shift + alt - h : yabai -m window --warp west || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display west && yabai -m window --warp last && yabai -m window --focus $WID)
+shift + alt - j : yabai -m window --warp south || $(yabai -m window --display south && yabai -m display --focus south)
+shift + alt - k : yabai -m window --warp north || $(yabai -m window --display north && yabai -m display --focus north)
+shift + alt - l : yabai -m window --warp east || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display east && yabai -m window --warp first && yabai -m window --focus $WID)
+
 # focus first window in this space
 alt - f : yabai -m window --focus first
 
 # focus recent window
 alt - z : yabai -m space --focus recent
 
-# move managed window
-# ctrl + alt - k : yabai -m window --warp north
-# ctrl + alt - j : yabai -m window --warp south
-# ctrl + alt - h : yabai -m window --warp west
-# ctrl + alt - l : yabai -m window --warp east
-
-# swap managed window (through display)
-shift + alt - h : yabai -m window --warp west || $(yabai -m window --display west && yabai -m display --focus west && yabai -m window --warp last) || yabai -m window --move rel:-20:0
-shift + alt - j : yabai -m window --warp south || $(yabai -m window --display south && yabai -m display --focus south) || yabai -m window --move rel:0:20
-shift + alt - k : yabai -m window --warp north || $(yabai -m window --display north && yabai -m display --focus north) || yabai -m window --move rel:0:-20
-shift + alt - l : yabai -m window --warp east || $(yabai -m window --display east && yabai -m display --focus east && yabai -m window --warp first) || yabai -m window --move rel:20:0
-
-shift + alt - s : yabai -m window --toggle split
+# focus above/below
+alt - u : yabai -m window --focus "$( \
+          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | reverse | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
+alt - d : yabai -m window --focus "$( \
+          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
 
 # float / unfloat window and center on screen 
 alt - space :  yabai -m window --toggle float --grid 20:20:1:1:18:18
 
 # toggle window zoom
-alt - d : yabai -m window --toggle zoom-parent
-alt - m : yabai -m window --toggle zoom-fullscreen
+alt - n : yabai -m window --toggle zoom-parent
+alt - m : yabai -m window --toggle float --grid 1:1:0:0:1:1
+alt - 0x2F : yabai -m window --toggle sticky --toggle pip
 
 # flip
 shift + alt - y : yabai -m space --mirror y-axis
@@ -38,22 +37,12 @@ shift + alt - x : yabai -m space --mirror x-axis
 # rotate layout clockwise
 shift + alt - r : yabai -m space --rotate 270
 
+# change split
+shift + alt - s : yabai -m window --toggle split
+
 # focus display
 alt - 0x21 : yabai -m display --focus west
 alt - 0x1E : yabai -m display --focus east
-
-# resize window
-ctrl + alt - left : yabai -m window --resize right:-100:0 || yabai -m window --resize left:-100:0
-ctrl + alt - down : yabai -m window --resize bottom:0:100 || yabai -m window --resize top:0:100
-ctrl + alt - up : yabai -m window --resize bottom:0:-100 || yabai -m window --resize top:0:-100
-ctrl + alt - right : yabai -m window --resize right:100:0 || yabai -m window --resize left:100:0
-ctrl + alt - h : yabai -m window --resize right:-100:0 || yabai -m window --resize left:-100:0
-ctrl + alt - j : yabai -m window --resize bottom:0:100 || yabai -m window --resize top:0:100
-ctrl + alt - k : yabai -m window --resize bottom:0:-100 || yabai -m window --resize top:0:-100
-ctrl + alt - l : yabai -m window --resize right:100:0 || yabai -m window --resize left:100:0
-
-# balance size of windows
-ctrl + alt - e : yabai -m space --balance
 
 # Warp space
 alt - 1 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] && yabai -m space --focus $SPACES[1]
@@ -62,38 +51,127 @@ alt - 3 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[
 alt - 4 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[4] ]] && yabai -m space --focus $SPACES[4]
 
 # Move windows between space
-shift + alt - 1 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] \
-                  && yabai -m window --space $SPACES[1]
+shift + alt - 1 : WID=($(yabai -m query --windows --window | jq -r '.id')) && SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] \
+                  && yabai -m window --space $SPACES[1] && yabai -m window --focus $WID
 
-shift + alt - 2 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[2] ]] \
-                  && yabai -m window --space $SPACES[2]
+shift + alt - 2 : WID=($(yabai -m query --windows --window | jq -r '.id')) && SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[2] ]] \
+                  && yabai -m window --space $SPACES[2] && yabai -m window --focus $WID
 
-shift + alt - 3 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[3] ]] \
-                  && yabai -m window --space $SPACES[3]
+shift + alt - 3 : WID=($(yabai -m query --windows --window | jq -r '.id')) && SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[3] ]] \
+                  && yabai -m window --space $SPACES[3] && yabai -m window --focus $WID
 
-shift + alt - 4 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[4] ]] \
-                  && yabai -m window --space $SPACES[4]
-shift + alt - p : yabai -m window --space prev && yabai -m space --focus prev
-shift + alt - n : yabai -m window --space next && yabai -m space --focus next
+shift + alt - 4 : WID=($(yabai -m query --windows --window | jq -r '.id')) && SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[4] ]] \
+                  && yabai -m window --space $SPACES[4] && yabai -m window --focus $WID
+
+shift + alt - p : WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --space prev && yabai -m space --focus prev && yabai -m window --focus $WID
+shift + alt - n : WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --space next && yabai -m space --focus next && yabai -m window --focus $WID
 
 # New window in hor./ vert. splits for all applications with yabai
 alt - 0x2A : yabai -m window --insert east;  skhd -k "cmd - n"
 alt - 0x1B : yabai -m window --insert south; skhd -k "cmd - n"
 
-# Stack
-shift + ctrl - h : yabai -m window  west --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl - j : yabai -m window south --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl - k : yabai -m window north --stack $(yabai -m query --windows --window | jq -r '.id')
-shift + ctrl - l : yabai -m window  east --stack $(yabai -m query --windows --window | jq -r '.id')
+# Switch layout
+ctrl + alt + cmd - f : yabai -m space --layout float
+ctrl + alt + cmd - b : yabai -m space --layout bsp
+ctrl + alt + cmd - s : yabai -m space --layout stack
 
-alt - n : yabai -m window --focus stack.next
-alt - p : yabai -m window --focus stack.prev
+# Resize windows (Larger/Smaller/Restore)
+ctrl + alt - 0x18 : yabai -m window --resize top_left:-25:-25; yabai -m window --resize bottom_right:25:25
+ctrl + alt - 0x1B : yabai -m window --resize top_left:25:25; yabai -m window --resize bottom_right:-25:-25
+ctrl + alt - e : yabai -m space --balance
+                                                                                                              
+#####################################################################################################################
+#                                                       Mode                                                        #
+#####################################################################################################################
+## add to default mode
+:: default : borders active_color=0x0xff00ff00
+ 
+## Resize
+:: resize @ : borders active_color=0xffff1493
+ctrl + alt + cmd - r ; resize 
+resize < ctrl + alt + cmd - r ; default
 
-# Set insertion point for focused container
-shift + ctrl - i : yabai -m window --insert stack 
+resize < h : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
+resize < j : yabai -m window north --resize bottom:0:40 2> /dev/null || yabai -m window --resize bottom:0:40
+resize < k : yabai -m window south --resize top:0:-40 2> /dev/null || yabai -m window --resize top:0:-40
+resize < l : yabai -m window east --resize left:40:0 2> /dev/null || yabai -m window --resize left:40:0
 
-# unstack
-shift + ctrl - u : window=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window east --stack $window || (yabai -m window $window --toggle float && yabai -m window $window --toggle float)
+resize < shift - h : yabai -m window west --resize right:40:0 2> /dev/null || yabai -m window --resize right:40:0
+resize < shift - j : yabai -m window north --resize bottom:0:-40 2> /dev/null || yabai -m window --resize bottom:0:-40
+resize < shift - k : yabai -m window south --resize top:0:40 2> /dev/null || yabai -m window --resize top:0:40
+resize < shift - l : yabai -m window east --resize left:-40:0 2> /dev/null || yabai -m window --resize left:-40:0
+
+resize < e : yabai -m space --balance
+
+
+## Move
+:: move @ : borders active_color=0xff1e90ff
+ctrl + alt + cmd - m ; move
+move < ctrl + alt + cmd - m ; default
+
+# increase window size
+move < h : yabai -m window --move rel:-25:0
+move < j : yabai -m window --move rel:0:25
+move < k : yabai -m window --move rel:0:-25
+move < l : yabai -m window --move rel:25:0
+
+
+## Pane
+:: pane @ : borders active_color=0xff1e90ff
+ctrl + alt + cmd - p ; pane 
+pane < ctrl + alt + cmd - p ; default
+
+pane < h : yabai -m window --grid 1:2:0:0:1:1 
+pane < j : yabai -m window --grid 2:1:0:1:1:1 
+pane < k : yabai -m window --grid 2:1:0:0:1:1 
+pane < l : yabai -m window --grid 1:2:1:0:1:1 
+pane < m : yabai -m window --grid 1:1:0:0:1:1 
+
+# q,w,e a,s,d, z,x,c
+pane < q : yabai -m window --grid 2:2:0:0:1:1 
+pane < e : yabai -m window --grid 2:2:1:0:1:1 
+pane < z : yabai -m window --grid 2:2:0:1:1:1 
+pane < c : yabai -m window --grid 2:2:1:1:1:1 
+pane < a : yabai -m window --grid 1:2:0:0:1:1 
+pane < x : yabai -m window --grid 2:1:0:1:1:1 
+pane < w : yabai -m window --grid 2:1:0:0:1:1 
+pane < d : yabai -m window --grid 1:2:1:0:1:1 
+pane < s : yabai -m window --grid 4:4:1:1:2:2 
+
+pane < 0 : yabai -m window --grid 20:20:1:1:18:18
+pane < 9 : yabai -m window --grid 20:20:2:2:16:16
+pane < 8 : yabai -m window --grid 20:20:3:3:14:14
+
+resize, pane < alt - h : yabai -m window --focus west  || yabai -m display --focus west
+resize, pane < alt - j : yabai -m window --focus south || yabai -m display --focus south
+resize, pane < alt - k : yabai -m window --focus north || yabai -m display --focus north
+resize, pane < alt - l : yabai -m window --focus east  || yabai -m display --focus east
+resize, pane < u : yabai -m window --focus "$( \
+          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | reverse | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
+resize, pane < d : yabai -m window --focus "$( \
+          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
+resize, pane < 0x18 :  yabai -m window --resize top_left:-25:-25; yabai -m window --resize bottom_right:25:25
+resize, pane < 0x1B :  yabai -m window --resize top_left:25:25; yabai -m window --resize bottom_right:-25:-25
+
+resize, move, pane < escape ; default
+resize, move, pane < space ; default
+          
+
+#####################################################################################################################
+#                                                     Not In Use                                                    #
+#####################################################################################################################
+# move window
+# resize < cmd - left : yabai -m window --move rel:-25:0
+# resize < cmd - down : yabai -m window -move rel:0:25
+# resize < cmd - up : yabai -m window --move rel:0:-25
+# resize < cmd - right : yabai -m window --move rel:25:0
+# 
+# ctrl + alt - h : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
+# ctrl + alt - j : yabai -m window north --resize bottom:0:40 2> /dev/null || yabai -m window --resize bottom:0:40
+# ctrl + alt - k : yabai -m window south --resize top:0:-40 2> /dev/null || yabai -m window --resize top:0:-40
+# ctrl + alt - l : yabai -m window east --resize left:40:0 2> /dev/null || yabai -m window --resize left:40:0
+# ctrl + alt - 0x1B : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
+# ctrl + alt - 0x1B : yabai -m window west --resize right:-40:0 2> /dev/null || yabai -m window --resize right:-40:0
 
 ## DESKTOP
 # ctrl + alt + cmd - n : yabai -m space --create && \
@@ -104,13 +182,17 @@ shift + ctrl - u : window=$(yabai -m query --windows --window | jq -r '.id') && 
 #             yabai -m window --space "${index}" && \
 #             yabai -m space --focus "${index}"
              
-# move window to display left and right
-# shift + alt - n : yabai -m window --display east; yabai -m display --focus east;
-# shift + alt - p : yabai -m window --display west; yabai -m display --focus west;
-# ctrl + alt - z  : yabai -m display --focus prev
-# ctrl + alt - 3  : yabai -m display --focus 3
- 
-# resize floating windows
-# ctrl + alt - 0x24 : yabai -m window --grid 1:1:0:0:1:1
-# ctrl + alt - left : yabai -m --grid 1:2:0:0:1:1
-# ctrl + alt - right : yabai -m --grid 1:2:1:0:1:1
+# move above/below
+# shift + alt - u : yabai -m window --layer above
+# shift + alt - d : yabai -m window --layer below
+
+#################
+# ASCII KeyCode #
+# 0x2F : .      #
+# 0x21 : [      #
+# 0x1E : ]      #
+# 0x2A : \      #
+# 0x1B : -      #
+# 0x18 : +      #
+# 0x24 : <CR>   #
+#################
