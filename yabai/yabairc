@@ -30,17 +30,19 @@ yabai -m config                                 \
     split_ratio                  0.50           \
     split_type                   auto           \
     auto_balance                 off            \
-    top_padding                  06             \
-    bottom_padding               06             \
-    left_padding                 06             \
-    right_padding                06             \
-    window_gap                   08             \
+    top_padding                  08             \
+    bottom_padding               08             \
+    left_padding                 08             \
+    right_padding                08             \
+    window_gap                   10             \
     layout                       bsp            \
     mouse_modifier               alt            \
     mouse_action1                move           \
     mouse_action2                resize         \
     mouse_drop_action            swap
 
+# Border Colour
+borders active_color=0xff00ff00 inactive_color=0xff494d64 width=7.0 &
 
 # Disable specific apps
 yabai -m rule --add app="^(System Settings|시스템 설정)$" manage=off
