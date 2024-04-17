@@ -38,6 +38,3 @@ export LESSHISTFILE=-
 # fasd
 export _FASD_DATA="$XDG_CACHE_HOME/fasd/fasd"
 export _FASD_VIMINFO="$XDG_CACHE_HOME/fasd/viminfo"
-
-# fzf-zsh-plugin
-export FZF_PATH="$XDG_DATA_HOME/fzf"

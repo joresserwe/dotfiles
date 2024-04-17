@@ -6,7 +6,6 @@ plugins=(
 	zsh-autosuggestions
 	tmux
 	fasd
-	fzf-zsh-plugin
 	sprunge
 	sdk
 )
@@ -29,18 +28,12 @@ then
   compinit
 fi
 
-
 # nvm
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
-# find Port Num
 # nvim
 export PATH=/opt/nvim/bin:$PATH
-
-# fzf
-export FZF_DEFAULT_COMMAND="fd -t f"
-[ -f "$XDG_CACHE_HOME/fzf/fzf.zsh" ] && . "$XDG_CACHE_HOME/fzf/fzf.zsh"
 
 # The Fuck
 eval $(thefuck --alias)
