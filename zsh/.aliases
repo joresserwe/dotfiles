@@ -1,0 +1,53 @@
+# zsh
+alias szr="source $ZDOTDIR/.zshrc"
+alias ezr="$EDITOR $ZDOTDIR/.zshrc" # edit zshrc
+alias ea="$EDITOR $ZDOTDIR/.aliases"
+alias eze="$EDITOR $HOME/.zshenv"
+alias et="$EDITOR $XDG_CONFIG_HOME/tmux/tmux.conf"
+
+# Preview
+alias preview="open -a Preview"
+
+# vim
+alias vi="nvim"
+alias vid="nvim -d"
+alias vidiff="nvim -d"
+
+# Bat
+alias cat="bat"
+
+# fasd
+alias v="f -e nvim"
+alias o="a -e open"
+
+# eza
+eza_params=('--git' '--icons' '--classify' '--group-directories-first' '--time-style="+%y/%m/%d %H:%M"' '--group' '--color-scale')
+alias ls="eza ${eza_params}"
+alias l='ls -la'
+alias la='ls -la'
+alias lam='ls -la --sort=modified'
+alias ll='ls -l'
+alias llm='ls -l --sort=modified'
+alias lt='ls --tree'
+ 
+# htop
+alias top="htop"
+
+# tcping
+alias ping="ping_or_tcping"
+ 
+# lazygit
+alias lg="lazygit"
+
+# trash-cli
+alias rm="echo Use 'del' or 'trash', or the full path i.e. '/bin/rm'"
+alias del="trash"
+
+# k8s
+# alias k="kubectl"
+# alias mk="minikube"
+# alias kgp="kubectl get pod -o wide"
+
+# find port num
+alias portall="sudo lsof -nP | grep LISTEN"
+
