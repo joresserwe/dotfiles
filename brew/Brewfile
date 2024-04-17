@@ -107,6 +107,12 @@ brew "koekeishiya/formulae/yabai"
 cask "arc"
 # Enable Windows-like alt-tab
 cask "alt-tab"
+# Tool to customise input devices and automate computer systems
+cask "bettertouchtool"
+# Tool to remove unnecessary files and folders from disk
+cask "cleanmymac"
+# Screen capturing tool
+cask "cleanshot"
 # Developer targeted fonts with a high number of glyphs
 cask "font-hack-nerd-font"
 # Sans-serif variant of "San Francisco" by Apple
@@ -119,6 +125,8 @@ cask "iterm2"
 cask "jetbrains-toolbox"
 # Keyboard customiser
 cask "karabiner-elements"
+# Media player
+cask "movist-pro"
 # App to write, plan, collaborate, and get organised
 cask "notion"
 # Control your tools with a few keystrokes
