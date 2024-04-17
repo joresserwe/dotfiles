@@ -1,0 +1,129 @@
+# brew bundle dump --describe --file='Brewfile_20240417'
+
+tap "arl/arl"
+tap "felixkratz/formulae"
+tap "homebrew/bundle"
+tap "homebrew/cask-fonts"
+tap "homebrew/services"
+tap "koekeishiya/formulae"
+
+# Extendable version manager with support for Ruby, Node.js, Erlang & more
+brew "asdf"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.10"
+# Shell extension to jump to frequently used directories
+brew "autojump"
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
+# Yet another cross-platform graphical process/system monitor
+brew "bottom"
+# Fix common misspellings in source code and text files
+brew "codespell"
+# Reimplementation of ctags(1)
+brew "ctags"
+# GNU internationalization (i18n) and localization (l10n) library
+brew "gettext"
+# Get a file from an HTTP, HTTPS or FTP server
+brew "curl"
+# Secure runtime for JavaScript and TypeScript
+brew "deno"
+# Modern, maintained replacement for ls
+brew "eza"
+# CLI tool for quick access to files and directories
+brew "fasd"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# Disk usage analyzer with console interface written in Go
+brew "gdu"
+# Distributed revision control system
+brew "git"
+# GNU implementation of the famous stream editor
+brew "gnu-sed"
+# Open source programming language to build simple/reliable/efficient software
+brew "go"
+# Improved top (interactive process viewer)
+brew "htop"
+# User-friendly cURL replacement (command-line HTTP client)
+brew "httpie"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# Kubernetes command-line interface
+brew "kubernetes-cli"
+# Simple terminal UI for git commands
+brew "lazygit"
+# Tool for linting and static analysis of Lua code
+brew "luacheck"
+# Package manager for the Lua programming language
+brew "luarocks"
+# Mac app store
+brew "mas"
+# Ambitious Vim-fork focused on extensibility and agility
+brew "neovim"
+# Manage multiple Node.js versions
+brew "nvm"
+# Renders an animated, color, ANSI-text loop of the Poptart Cat
+brew "nyancat"
+# Search tool like grep and The Silver Searcher
+brew "ripgrep"
+# TCP connect to the given IP/port combo
+brew "tcping"
+# User interface to the TELNET protocol
+brew "telnet"
+# Programmatically correct mistyped console commands
+brew "thefuck"
+# Terminal multiplexer
+brew "tmux"
+# Plugin manager for tmux
+brew "tpm"
+# Command-line interface to the freedesktop.org trashcan
+brew "trash-cli"
+# Display directories as trees (with optional color/HTML output)
+brew "tree"
+# Executes a program periodically, showing output fullscreen
+brew "watch"
+# Watch files and take action when they change
+brew "watchman"
+# Internet file retriever
+brew "wget"
+# Blazing fast terminal file manager written in Rust, based on async I/O
+brew "yazi"
+# Shell extension to navigate your filesystem faster
+brew "zoxide"
+# Fish shell like syntax highlighting for zsh
+brew "zsh-syntax-highlighting"
+# Git in your tmux status bar.
+brew "arl/arl/gitmux"
+
+# A window border system for macOS
+brew "felixkratz/formulae/borders"
+# Simple hotkey-daemon for macOS.
+brew "koekeishiya/formulae/skhd"
+# A tiling window manager for macOS based on binary space partitioning.
+brew "koekeishiya/formulae/yabai"
+
+# Web browser
+cask "arc"
+# Enable Windows-like alt-tab
+cask "alt-tab"
+# Developer targeted fonts with a high number of glyphs
+cask "font-hack-nerd-font"
+# Sans-serif variant of "San Francisco" by Apple
+cask "font-sf-pro"
+# Web browser
+cask "google-chrome"
+# Terminal emulator as alternative to Apple's Terminal app
+cask "iterm2"
+# Jetbrains
+cask "jetbrains-toolbox"
+# Keyboard customiser
+cask "karabiner-elements"
+# App to write, plan, collaborate, and get organised
+cask "notion"
+# Control your tools with a few keystrokes
+cask "raycast"
+# Tool to reverse the direction of scrolling
+cask "scroll-reverser"
+# Tool that provides consistent, highly configurable symbols for apps
+cask "sf-symbols"
