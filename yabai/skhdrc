@@ -17,11 +17,20 @@ alt - f : yabai -m window --focus first
 alt - z : yabai -m space --focus recent
 
 # focus above/below
-alt - u : yabai -m window --focus "$( \
-          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | reverse | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
-alt - d : yabai -m window --focus "$( \
-          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
-
+alt - u : yabai -m query --windows | jq -re " \
+          map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | sort_by(.display, .frame.x, .frame.y, .id) | to_entries as \$entries | \
+	  (\$entries | map(select(.value.\"has-focus\" == true)) | .[0]) as \$focus_entry | \
+	  (\$entries | map(select(.value.display == \$focus_entry.value.display))) as \$same_display_entries | \
+	  (\$same_display_entries | map(select(.key < \$focus_entry.key)) | if length == 0 then \$same_display_entries | max_by(.key) else last end).value.id" | \
+	  xargs -I {} yabai -m window --focus {}
+	  
+alt - d : yabai -m query --windows | jq -re " \
+          map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | sort_by(.display, .frame.x, .frame.y, .id) | to_entries as \$entries | \
+	  (\$entries | map(select(.value.\"has-focus\" == true)) | .[0]) as \$focus_entry | \
+	  (\$entries | map(select(.value.display == \$focus_entry.value.display))) as \$same_display_entries | \
+	  (\$same_display_entries | map(select(.key > \$focus_entry.key)) | if length == 0 then \$same_display_entries | min_by(.key) else .[0] end).value.id" | \
+	  xargs -I {} yabai -m window --focus {}
+	  
 # float / unfloat window and center on screen 
 alt - space :  yabai -m window --toggle float --grid 20:20:1:1:18:18
 
@@ -146,10 +155,21 @@ resize, pane < alt - h : yabai -m window --focus west  || yabai -m display --foc
 resize, pane < alt - j : yabai -m window --focus south || yabai -m display --focus south
 resize, pane < alt - k : yabai -m window --focus north || yabai -m display --focus north
 resize, pane < alt - l : yabai -m window --focus east  || yabai -m display --focus east
-resize, pane < u : yabai -m window --focus "$( \
-          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | reverse | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
-resize, pane < d : yabai -m window --focus "$( \
-          yabai -m query --windows | jq -re "sort_by(.display, .frame.x, .frame.y, .id) | map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | nth(index(map(select(.\"has-focus\" == true))) - 1).id")"
+
+resize, pane < u : yabai -m query --windows | jq -re " \
+          map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | sort_by(.display, .frame.x, .frame.y, .id) | to_entries as \$entries | \
+	  (\$entries | map(select(.value.\"has-focus\" == true)) | .[0]) as \$focus_entry | \
+	  (\$entries | map(select(.value.display == \$focus_entry.value.display))) as \$same_display_entries | \
+	  (\$same_display_entries | map(select(.key < \$focus_entry.key)) | if length == 0 then \$same_display_entries | max_by(.key) else last end).value.id" | \
+	  xargs -I {} yabai -m window --focus {}
+	  
+resize, pane < d : yabai -m query --windows | jq -re " \
+          map(select(.\"is-visible\" == true and .role != \"AXUnknown\")) | sort_by(.display, .frame.x, .frame.y, .id) | to_entries as \$entries | \
+	  (\$entries | map(select(.value.\"has-focus\" == true)) | .[0]) as \$focus_entry | \
+	  (\$entries | map(select(.value.display == \$focus_entry.value.display))) as \$same_display_entries | \
+	  (\$same_display_entries | map(select(.key > \$focus_entry.key)) | if length == 0 then \$same_display_entries | min_by(.key) else .[0] end).value.id" | \
+	  xargs -I {} yabai -m window --focus {}
+
 resize, pane < 0x18 :  yabai -m window --resize top_left:-25:-25; yabai -m window --resize bottom_right:25:25
 resize, pane < 0x1B :  yabai -m window --resize top_left:25:25; yabai -m window --resize bottom_right:-25:-25
 
