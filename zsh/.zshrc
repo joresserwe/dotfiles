@@ -38,6 +38,15 @@ export PATH=/opt/nvim/bin:$PATH
 # The Fuck
 eval $(thefuck --alias)
 
+# fasd
+eval "$(fasd --init auto)"
+fasd_cache="$HOME/.cache/fasd/fasd-init-bash"
+if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+  fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install >| "$fasd_cache"
+fi
+source "$fasd_cache"
+unset fasd_cache
+
 # K8S
 # . <(kubectl completion zsh)
 # . ~/.minikube/.minikube-completion
