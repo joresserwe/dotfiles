@@ -5,10 +5,10 @@ alt - k : yabai -m window --focus north || yabai -m display --focus north
 alt - l : yabai -m window --focus east  || yabai -m display --focus east
 
 # swap managed window (through display)
-shift + alt - h : yabai -m window --warp west || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display west && yabai -m window --warp last && yabai -m window --focus $WID)
+shift + alt - h : yabai -m window --warp west || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display west && yabai -m window --focus $WID && yabai -m window --warp last)
 shift + alt - j : yabai -m window --warp south || $(yabai -m window --display south && yabai -m display --focus south)
 shift + alt - k : yabai -m window --warp north || $(yabai -m window --display north && yabai -m display --focus north)
-shift + alt - l : yabai -m window --warp east || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display east && yabai -m window --warp first && yabai -m window --focus $WID)
+shift + alt - l : yabai -m window --warp east || $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display east && yabai -m window --focus $WID && yabai -m window --warp first)
 
 # focus first window in this space
 alt - f : yabai -m window --focus first
@@ -49,9 +49,11 @@ shift + alt - r : yabai -m space --rotate 270
 # change split
 shift + alt - s : yabai -m window --toggle split
 
-# focus display
+# focus display / move display
 alt - 0x21 : yabai -m display --focus west
 alt - 0x1E : yabai -m display --focus east
+shift + alt - 0x21 : $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display west && yabai -m window --focus $WID)
+shift + alt - 0x1E : $(WID=($(yabai -m query --windows --window | jq -r '.id')) && yabai -m window --display east && yabai -m window --focus $WID)
 
 # Warp space
 alt - 1 : SPACES=($(yabai -m query --displays --display | jq '.spaces[]')) && [[ -n $SPACES[1] ]] && yabai -m space --focus $SPACES[1]
