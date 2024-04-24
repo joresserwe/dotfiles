@@ -1,16 +1,11 @@
-# brew bundle dump --describe --file='Brewfile_20240417'
-
 tap "arl/arl"
 tap "felixkratz/formulae"
 tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
 tap "homebrew/services"
 tap "koekeishiya/formulae"
-
 # Extendable version manager with support for Ruby, Node.js, Erlang & more
 brew "asdf"
-# Interpreted, interactive, object-oriented programming language
-brew "python@3.10"
 # Shell extension to jump to frequently used directories
 brew "autojump"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -21,16 +16,10 @@ brew "bottom"
 brew "codespell"
 # Reimplementation of ctags(1)
 brew "ctags"
-# GNU internationalization (i18n) and localization (l10n) library
-brew "gettext"
 # Get a file from an HTTP, HTTPS or FTP server
 brew "curl"
-# Secure runtime for JavaScript and TypeScript
-brew "deno"
 # Modern, maintained replacement for ls
 brew "eza"
-# CLI tool for quick access to files and directories
-brew "fasd"
 # Simple, fast and user-friendly alternative to find
 brew "fd"
 # Command-line fuzzy finder written in Go
@@ -57,7 +46,7 @@ brew "lazygit"
 brew "luacheck"
 # Package manager for the Lua programming language
 brew "luarocks"
-# Mac app store
+# Mac App Store command-line interface
 brew "mas"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
@@ -65,6 +54,8 @@ brew "neovim"
 brew "nvm"
 # Renders an animated, color, ANSI-text loop of the Poptart Cat
 brew "nyancat"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.10"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
 # TCP connect to the given IP/port combo
@@ -95,24 +86,22 @@ brew "zoxide"
 brew "zsh-syntax-highlighting"
 # Git in your tmux status bar.
 brew "arl/arl/gitmux"
-
 # A window border system for macOS
 brew "felixkratz/formulae/borders"
 # Simple hotkey-daemon for macOS.
 brew "koekeishiya/formulae/skhd"
 # A tiling window manager for macOS based on binary space partitioning.
 brew "koekeishiya/formulae/yabai"
-
-# Web browser
-cask "arc"
 # Enable Windows-like alt-tab
 cask "alt-tab"
+# Chromium based browser
+cask "arc"
 # Tool to customise input devices and automate computer systems
 cask "bettertouchtool"
+# Tool to list all active shortcuts of the current application
+cask "cheatsheet"
 # Tool to remove unnecessary files and folders from disk
 cask "cleanmymac"
-# Screen capturing tool
-cask "cleanshot"
 # Developer targeted fonts with a high number of glyphs
 cask "font-hack-nerd-font"
 # Sans-serif variant of "San Francisco" by Apple
@@ -121,7 +110,7 @@ cask "font-sf-pro"
 cask "google-chrome"
 # Terminal emulator as alternative to Apple's Terminal app
 cask "iterm2"
-# Jetbrains
+# JetBrains tools manager
 cask "jetbrains-toolbox"
 # Keyboard customiser
 cask "karabiner-elements"
@@ -135,3 +124,10 @@ cask "raycast"
 cask "scroll-reverser"
 # Tool that provides consistent, highly configurable symbols for apps
 cask "sf-symbols"
+mas "Hidden Bar", id: 1452453066
+mas "Keynote", id: 409183694
+mas "Microsoft PowerPoint", id: 462062816
+mas "OneDrive", id: 823766827
+mas "QuickFTP", id: 1451646819
+mas "RunCat", id: 1429033973
+mas "Vimari", id: 1480933944
