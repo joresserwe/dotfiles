@@ -58,6 +58,7 @@ yabai -m rule --add app="^(무비스트 프로)$" title="(일반)" manage=off
 yabai -m rule --add app="^(활성 상태 보기)$" manage=off
 yabai -m rule --add app="^(League of Legends|Riot Client)$" manage=off
 yabai -m rule --add app="^(Finder)$" manage=off
+yabai -m rule --add app="^(OneDrive)$" manage=off
 
 # Managed 
 # apps=$(awk -v ORS='|' '{if($0!="") print $0}' $XDG_CONFIG_HOME/yabai/yabaimanaged)
