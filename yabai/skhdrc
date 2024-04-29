@@ -128,7 +128,7 @@ move < l : yabai -m window --move rel:25:0
 
 
 ## Pane
-:: pane @ : borders active_color=0xff1e90ff
+:: pane @ : borders active_color=0xffffd700
 ctrl + alt + cmd - p ; pane 
 pane < ctrl + alt + cmd - p ; default
 
