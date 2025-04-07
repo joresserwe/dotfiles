@@ -26,8 +26,9 @@ export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$GOPATH/pkg/mod"
 export PATH="$PATH:$GOPATH/bin"
 
-# nvm
+# npm
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 
 # remove less history
 export LESSHISTFILE=-
