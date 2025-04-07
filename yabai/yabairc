@@ -53,12 +53,14 @@ yabai -m rule --add app="^(스티커)$" manage=off
 yabai -m rule --add app="^(Raycast)$" manage=off
 yabai -m rule --add app="^CleanMyMac X$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
-yabai -m rule --add app="^(Arc)$" subrole="^AXSystemDialog$" manage=off mouse_follows_focus=off
 yabai -m rule --add app="^(무비스트 프로)$" title="(일반)" manage=off
 yabai -m rule --add app="^(활성 상태 보기)$" manage=off
 yabai -m rule --add app="^(League of Legends|Riot Client)$" manage=off
 yabai -m rule --add app="^(Finder)$" manage=off
 yabai -m rule --add app="^(OneDrive)$" manage=off
+yabai -m rule --add app="^(IntelliJ IDEA)$" subrole="(AXStandardWindow)" manage=off
+yabai -m rule --add app="^(PyCharm)$" subrole="(AXStandardWindow)" manage=off
+# yabai -m rule --add app="^(Arc)$" manage=off
 
 # Managed 
 # apps=$(awk -v ORS='|' '{if($0!="") print $0}' $XDG_CONFIG_HOME/yabai/yabaimanaged)
