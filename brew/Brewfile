@@ -1,8 +1,5 @@
 tap "arl/arl"
 tap "felixkratz/formulae"
-tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
-tap "homebrew/services"
 tap "koekeishiya/formulae"
 # Extendable version manager with support for Ruby, Node.js, Erlang & more
 brew "asdf"
@@ -124,6 +121,8 @@ cask "raycast"
 cask "scroll-reverser"
 # Tool that provides consistent, highly configurable symbols for apps
 cask "sf-symbols"
+cask "keyclu"
+
 mas "Hidden Bar", id: 1452453066
 mas "Microsoft PowerPoint", id: 462062816
 mas "OneDrive", id: 823766827
