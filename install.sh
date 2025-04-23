@@ -153,7 +153,7 @@ defaults write com.dwarvesv.minimalbar numberOfSecondForAutoHide -int 30
 
 defaults write com.pilotmoon.scroll-reverser InvertScrollingOn = 1
 
- -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
 
 echo "설정파일 Symbolic Lync 연결..."
 create_link() {
@@ -205,7 +205,7 @@ open -a Arc
 open -a Hidden\ Bar
 open -a RunCat
 open -a CheatSheet
-open -a "CleanMyMac X"
+open -a CleanMyMac
 
 # open -a "CleanShot X"
 # open -a BetterTouchTool
