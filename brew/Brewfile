@@ -56,9 +56,9 @@ brew "tcping"
 # User interface to the TELNET protocol
 brew "telnet"
 # Terminal multiplexer
-brew "tmux"
+# brew "tmux"
 # Plugin manager for tmux
-brew "tpm"
+# brew "tpm"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Executes a program periodically, showing output fullscreen
@@ -80,6 +80,7 @@ brew "koekeishiya/formulae/skhd"
 # A tiling window manager for macOS based on binary space partitioning.
 brew "koekeishiya/formulae/yabai"
 # Enable Windows-like alt-tab
+cask "wezterm"
 cask "alt-tab"
 # Chromium based browser
 cask "arc"
@@ -91,12 +92,12 @@ cask "cheatsheet"
 cask "cleanmymac"
 # Developer targeted fonts with a high number of glyphs
 cask "font-hack-nerd-font"
+# Nerd Font patched version of 0xProto
+cask "font-0xproto-nerd-font"
 # Sans-serif variant of "San Francisco" by Apple
 cask "font-sf-pro"
 # Web browser
 cask "google-chrome"
-# Terminal emulator as alternative to Apple's Terminal app
-cask "iterm2"
 # JetBrains tools manager
 cask "jetbrains-toolbox"
 # Keyboard customiser
