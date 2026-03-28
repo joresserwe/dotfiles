@@ -1,13 +1,10 @@
-## Symbolic Lync
+## Symbolic Link
 
 ```bash
-# .zshenv
+# zsh
 ln -sf ~/.config/.dotfiles/zsh/.zshenv ~/.zshenv
-
-# .zshrc
 ln -sf ~/.config/.dotfiles/zsh/.zshrc ~/.config/zsh/.zshrc
-
-# .zshfun
+ln -sf ~/.config/.dotfiles/zsh/.aliases ~/.config/zsh/.aliases
 ln -sf ~/.config/.dotfiles/zsh/zfunc ~/.config/zsh/zfunc
 
 # ideavim
@@ -24,6 +21,16 @@ ln -sf ~/.config/.dotfiles/tmux/gitmux.conf ~/.config/tmux/gitmux.conf
 # yabai
 ln -sf ~/.config/.dotfiles/yabai/skhdrc ~/.config/skhd/skhdrc
 ln -sf ~/.config/.dotfiles/yabai/yabairc ~/.config/yabai/yabairc
+
+# yazi
+ln -sf ~/.config/.dotfiles/yazi/yazi.toml ~/.config/yazi/yazi.toml
+ln -sf ~/.config/.dotfiles/yazi/theme.toml ~/.config/yazi/theme.toml
+ln -sf ~/.config/.dotfiles/yazi/keymap.toml ~/.config/yazi/keymap.toml
+
+# claude code
+ln -sf ~/.config/.dotfiles/claude/settings.json ~/.local/share/claude/settings.json
+ln -sf ~/.config/.dotfiles/claude/skills ~/.local/share/claude/skills
+ln -sf ~/.local/share/claude ~/.claude  # XDG 미지원 우회
 ```
 
 ## Yabai Setup
@@ -47,7 +54,7 @@ skhd --start-service
 ## Tmux Plugins Setup
 - `prefix(ctrl + a) + I` : Installs all plugins listed in my tmux config
 
-### tmux-sessionx issues 
+### tmux-sessionx issues
 - There is a known issue with the latest version of the 'tmux-sessionx' plugin as of 04-21, 2025.
 - The last confirmed working version is commit **3a1911e**
 - [issue link](https://github.com/omerxx/tmux-sessionx/issues/166)
@@ -58,4 +65,3 @@ cd ~/.config/tmux/plugins/tmux-sessionx
 git checkout 3a1911e
 
 ```
-
