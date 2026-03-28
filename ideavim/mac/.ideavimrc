@@ -17,6 +17,10 @@ set incsearch
 set smartcase
 
 nnoremap <C-a> gg<S-v>G
+nnoremap <C-i> <nop>
+nnoremap <C-o> <nop>
+nnoremap <C-n> :action Forward<CR>
+nnoremap <C-p> :action Back<CR>
 
 nmap <C-z> :action ToggleDistractionFreeMode<CR>
 vmap <C-j> :action EditorUnSelectWord<CR>
@@ -28,6 +32,7 @@ nmap <Leader>x viwx
 nmap <Leader>d viwd
 nmap <Leader>o o<ESC>
 nmap <Leader>O O<ESC>
+nmap <Leader><CR> i<CR><ESC>k
 
 map '<CR> <ESC>
 inoremap jj <ESC>
@@ -35,8 +40,8 @@ inoremap jk <ESC>
 inoremap kl <ESC>
 map <S-h> h
 map <S-l> l
-map ( 10k
-map ) 10j
+map ( 7k
+map ) 7j
 
 noremap c "_c
 noremap x "_x
@@ -96,6 +101,14 @@ map ge :action GotoNextError<CR>
 map gE :action GotoPreviousError<CR>
 map gD :action GotoImplementation<CR>
 map gu :action GotoSuperMethod<CR>
+map ]c :action VcsShowNextChangeMarker<CR>
+map [c :action VcsShowPrevChangeMarker<CR>
+map ]e :action GotoNextError<CR>
+map [e :action GotoPreviousError<CR>
+map ]f :action MethodDown<CR>
+map [f :action MethodUp<CR>
+map ]u :action GotoNextElementUnderCaretUsage<CR>
+map [u :action GotoPrevElementUnderCaretUsage<CR>
 
 """ Source Code Navigation
 map <Leader>ll :action RecentLocations<CR>
@@ -133,10 +146,10 @@ map <Leader>rr :action RenameElement<CR>
 
 """ Running and Debugging
 nnoremap ,r :action Run<CR>
-nnoremap ,c :action RunClass<CR>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+nnoremap ,c :action RunClass<CR>
 nnoremap ,p :action ChooseRunConfiguration<CR>
 nnoremap ,s :action Stop<CR>
-"""nnoremap ,t :action ActivateRunToolWindow<CR>
+" nnoremap ,t :action ActivateRunToolWindow<CR>
 nnoremap ,u :action Rerun<CR>
 nnoremap ,f :action RerunFailedTests<CR>
 nnoremap ,b :action ToggleLineBreakpoint<CR>
@@ -144,7 +157,6 @@ nnoremap ,d :action ContextDebug<CR>
 nnoremap ,n :action ActivateDebugToolWindow<CR>
 
 """ Tool windows
-nnoremap <C-p> :action JumpToLastWindow<CR>
 nnoremap <C-x> :action HideAllWindows<CR>
 
 """ easy motion
@@ -171,9 +183,9 @@ set commentary
 
 set quickscope
 
-""" surrround
+""" surround
 set surround
-map <Leader>y ysiw
+nmap <Leader>y ysiw
 
 """ replace with register
 set ReplaceWithRegister
@@ -181,5 +193,5 @@ set ReplaceWithRegister
 """ which-key
 set which-key
 set notimeout
-"""set timeoutlen=2000
+" set timeoutlen=2000
 
