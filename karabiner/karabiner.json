@@ -215,13 +215,13 @@
                         ]
                     },
                     {
-                        "description": "Open iTerm2 with Ctrl+T globally",
+                        "description": "Open WezTerm with Ctrl+T globally",
                         "manipulators": [
                             {
                                 "conditions": [
                                     {
                                         "bundle_identifiers": [
-                                            "^com\\.googlecode\\.iterm2$"
+                                            "^com\\.github\\.wez\\.wezterm$"
                                         ],
                                         "type": "frontmost_application_unless"
                                     }
@@ -236,7 +236,7 @@
                                 },
                                 "to": [
                                     {
-                                        "shell_command": "open -a iTerm"
+                                        "shell_command": "open -a WezTerm"
                                     }
                                 ],
                                 "type": "basic"
