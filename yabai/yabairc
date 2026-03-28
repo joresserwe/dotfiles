@@ -51,7 +51,7 @@ yabai -m rule --add app="^(App Store)$" manage=off
 yabai -m rule --add app="^(kakaoTalk|카카오톡)$" manage=off
 yabai -m rule --add app="^(스티커)$" manage=off
 yabai -m rule --add app="^(Raycast)$" manage=off
-yabai -m rule --add app="^CleanMyMac X$" manage=off
+yabai -m rule --add app="^CleanMyMac$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="^(무비스트 프로)$" title="(일반)" manage=off
 yabai -m rule --add app="^(활성 상태 보기)$" manage=off
