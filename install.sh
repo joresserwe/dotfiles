@@ -1,18 +1,27 @@
 #!/bin/zsh
-config_dir="$HOME/.config"
-dotfiles_dir="$config_dir/.dotfiles"
+
+# XDG 변수 기본값 설정 (스크립트 실행 시 XDG 변수가 설정되지 않은 경우를 대비)
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
+
+DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 
 # -----------------------------------------------------------------------------------------------
 
 echo "필요 경로 생성..."
 directories=(
-	"$HOME/.cache"
-	"$HOME/.config"
-	"$HOME/.config/karabiner"
-	"$HOME/.config/npm"
-	"$HOME/.local/share"
-	"$HOME/.local/state"
-	"$HOME/Library/Caches/Runtime"
+	"$XDG_CACHE_HOME"
+	"$XDG_CONFIG_HOME"
+	"$XDG_CONFIG_HOME/karabiner"
+	"$XDG_CONFIG_HOME/npm"
+	"$XDG_CONFIG_HOME/vim"
+	"$XDG_STATE_HOME/vim"
+	"$XDG_DATA_HOME"
+	"$XDG_STATE_HOME"
+	"$XDG_RUNTIME_DIR"
 )
 for dir in "${directories[@]}"; do
 	if [ -d "$dir" ]; then
@@ -22,7 +31,7 @@ for dir in "${directories[@]}"; do
 		mkdir -p "$dir"
 	fi
 done
-chmod 700 $HOME/Library/Caches/Runtime # XDG에 따르면, runtime의 경로는 700 권한을 줘야한다.
+chmod 700 "$XDG_RUNTIME_DIR" # XDG에 따르면, runtime의 경로는 700 권한을 줘야한다.
 
 # -----------------------------------------------------------------------------------------------
 
@@ -38,80 +47,67 @@ brew analytics off
 
 echo "git clone dotfiles..."
 brew install git
-if [ -d "$dotfiles_dir" ]; then
-	/bin/rm -rf "$dotfiles_dir"
+if [ -d "$DOTFILES_PATH" ]; then
+	/bin/rm -rf "$DOTFILES_PATH"
 fi
-git clone https://github.com/joresserwe/dotfiles $dotfiles_dir
+git clone https://github.com/joresserwe/dotfiles "$DOTFILES_PATH"
+
 
 # -----------------------------------------------------------------------------------------------
 
 echo "XDG 환경변수 설정..."
-source $dotfiles_dir/zsh/.zshenv
+source "$DOTFILES_PATH/zsh/.zshenv"
 
 # -----------------------------------------------------------------------------------------------
 
 echo "brew install..."
-brew bundle install --file $dotfiles_dir/brew/Brewfile
+brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 # -----------------------------------------------------------------------------------------------
 
 echo "node 설치..."
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
-nvm install --lts
-npm config set cache $config_dir/npm/npmrc --global
+eval "$(fnm env --shell zsh)"
+fnm install --lts
 packages=(
 	"yarn"
 	"npm-check-updates"
-	"stylelint"
+	"mcp-hub"
 )
 for package in "${packages[@]}"; do
-	if npm list -g --depth=0 | grep "$package" >/dev/null; then
+	if pnpm list -g --depth=0 | grep "$package" >/dev/null; then
 		echo "$package is already installed."
 	else
 		echo "Installing $package..."
-		npm install -g "$package"
+		pnpm install -g "$package"
 	fi
 done
+
 
 # -----------------------------------------------------------------------------------------------
 
 echo "karabiner 설정..."
-cp $dotfiles_dir/karabiner/karabiner.json $config_dir/karabiner/karabiner.json
+cp "$DOTFILES_PATH/karabiner/karabiner.json" "$XDG_CONFIG_HOME/karabiner/karabiner.json"
 
 # -----------------------------------------------------------------------------------------------
 
 echo "oh-my-zsh / powerlevel10k 설치..."
-ZSH="$config_dir/zsh/oh-my-zsh" RUNZSH="no" KEEP_ZSHRC="yes" sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-cp $dotfiles_dir/zsh/.p10k.zsh $config_dir/zsh/.p10k.zsh
+ZSH="$XDG_CONFIG_HOME/zsh/oh-my-zsh" RUNZSH="no" KEEP_ZSHRC="yes" sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+cp "$DOTFILES_PATH/zsh/.p10k.zsh" "$XDG_CONFIG_HOME/zsh/.p10k.zsh"
 
-if [ ! -d "$config_dir/zsh/oh-my-zsh/custom/themes/powerlevel10k" ]; then
-	git clone --depth=1 https://github.com/joresserwe/powerlevel10k.git $config_dir/zsh/oh-my-zsh/custom/themes/powerlevel10k
+if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/themes/powerlevel10k" ]; then
+	git clone --depth=1 https://github.com/joresserwe/powerlevel10k.git "$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/themes/powerlevel10k"
 fi
-if [ ! -d "$config_dir/zsh/oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
-	git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $config_dir/zsh/oh-my-zsh/custom/plugins/zsh-autosuggestions
+if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
+	git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/plugins/zsh-autosuggestions"
 fi
 
-# -----------------------------------------------------------------------------------------------
- 
-echo "fasd 실행..."
-if [ -f "/usr/local/bin/fasd" ]; then
-	echo "fasd is already installed"
-else 
-	fasd_path="$HOME/.local/share/fasd"
-	git clone https://github.com/clvv/fasd.git $fasd_path
-	cd $fasd_path
-	sudo make install
-	cd ~
-	/bin/rm -rf $fasd_path
-fi
- 
 # -----------------------------------------------------------------------------------------------
 
 echo "astronvim 설치..."
-if [ -d "$config_dir/nvim" ]; then
-	mv $config_dir/nvim $config_dir/nvim_backup
+if [ -d "$XDG_CONFIG_HOME/nvim" ]; then
+	mv "$XDG_CONFIG_HOME/nvim" "$XDG_CONFIG_HOME/nvim_backup"
 fi
-git clone https://github.com/joresserwe/astronvim_config $config_dir/nvim
+git clone https://github.com/joresserwe/astronvim_config "$XDG_CONFIG_HOME/nvim"
 
 # -----------------------------------------------------------------------------------------------
 
@@ -144,14 +140,14 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores true
 
 defaults write com.apple.finder AppleShowAllFiles -bool true
 
-defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$dotfiles_dir/iterm2"
+defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$DOTFILES_PATH/iterm2"
 defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
 
 defaults write com.dwarvesv.minimalbar isAutoStart -int 1
 defaults write com.dwarvesv.minimalbar isShowPreferences -int 0
 defaults write com.dwarvesv.minimalbar numberOfSecondForAutoHide -int 30
 
-defaults write com.pilotmoon.scroll-reverser InvertScrollingOn = 1
+defaults write com.pilotmoon.scroll-reverser InvertScrollingOn -int 1
 
 # -----------------------------------------------------------------------------------------------
 
@@ -168,31 +164,34 @@ create_link() {
 }
 
 # zsh
-create_link $dotfiles_dir/zsh/.zshenv ~/.zshenv
-create_link $dotfiles_dir/zsh/.zshrc $config_dir/zsh/.zshrc
-create_link $dotfiles_dir/zsh/.aliases $config_dir/zsh/.aliases
-ln -sf $dotfiles_dir/zsh/zfunc $config_dir/zsh/zfunc
+create_link "$DOTFILES_PATH/zsh/.zshenv" ~/.zshenv
+create_link "$DOTFILES_PATH/zsh/.zshrc" "$XDG_CONFIG_HOME/zsh/.zshrc"
+create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
+ln -sf "$DOTFILES_PATH/zsh/zfunc" "$XDG_CONFIG_HOME/zsh/zfunc"
 # ideavim
-create_link $dotfiles_dir/ideavim/mac/.ideavimrc $config_dir/ideavim/ideavimrc
+create_link "$DOTFILES_PATH/ideavim/mac/.ideavimrc" "$XDG_CONFIG_HOME/ideavim/ideavimrc"
 # git
-create_link $dotfiles_dir/git/config $config_dir/git/config
+create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 # tmux
-create_link $dotfiles_dir/tmux/tmux.conf $config_dir/tmux/tmux.conf
-create_link $dotfiles_dir/tmux/tmux.mapping.conf $config_dir/tmux/tmux.mapping.conf
-create_link $dotfiles_dir/tmux/gitmux.conf $config_dir/tmux/gitmux.conf
+create_link "$DOTFILES_PATH/tmux/tmux.conf" "$XDG_CONFIG_HOME/tmux/tmux.conf"
+create_link "$DOTFILES_PATH/tmux/tmux.mapping.conf" "$XDG_CONFIG_HOME/tmux/tmux.mapping.conf"
+create_link "$DOTFILES_PATH/tmux/gitmux.conf" "$XDG_CONFIG_HOME/tmux/gitmux.conf"
 # yabai
-create_link $dotfiles_dir/yabai/skhdrc $config_dir/skhd/skhdrc
-create_link $dotfiles_dir/yabai/yabairc $config_dir/yabai/yabairc
+create_link "$DOTFILES_PATH/yabai/skhdrc" "$XDG_CONFIG_HOME/skhd/skhdrc"
+create_link "$DOTFILES_PATH/yabai/yabairc" "$XDG_CONFIG_HOME/yabai/yabairc"
 # yazi
-create_link $dotfiles_dir/yazi/yazi.toml $config_dir/yazi/yazi.toml
-create_link $dotfiles_dir/yazi/theme.toml $config_dir/yazi/theme.toml
-create_link $dotfiles_dir/yazi/keymap.toml $config_dir/yazi/keymap.toml
+create_link "$DOTFILES_PATH/yazi/yazi.toml" "$XDG_CONFIG_HOME/yazi/yazi.toml"
+create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
+create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
+# claude code
+create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
+ln -sf "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"
+ln -sf "$XDG_DATA_HOME/claude" ~/.claude # claude code가 XDG를 완전히 지원하지 않아 ~/.claude를 참조하는 문제 우회
 
 # -----------------------------------------------------------------------------------------------
 
 echo "zshrc 적용..."
-source $config_dir/zsh/.zshrc
-
+source "$XDG_CONFIG_HOME/zsh/.zshrc"
 # -----------------------------------------------------------------------------------------------
 
 open -a Karabiner-Elements
