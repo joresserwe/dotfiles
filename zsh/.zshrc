@@ -9,7 +9,7 @@ plugins=(
 	git
 	fzf
 	zsh-autosuggestions
-	tmux
+	# tmux
 
 	sprunge
 	sdk
