@@ -16,10 +16,6 @@ alias vidiff="nvim -d"
 # Bat
 alias cat="bat"
 
-# fasd
-alias v="f -e nvim"
-alias o="a -e open"
-
 # eza
 eza_params=('--git' '--icons' '--classify' '--group-directories-first' '--time-style="+%y/%m/%d %H:%M"' '--group' '--color-scale')
 alias ls="eza ${eza_params}"
@@ -30,9 +26,6 @@ alias ll='ls -l'
 alias llm='ls -l --sort=modified'
 alias lt='ls --tree'
  
-# htop
-alias top="htop"
-
 # tcping
 alias ping="ping_or_tcping"
  
@@ -47,6 +40,12 @@ alias del="trash"
 # alias k="kubectl"
 # alias mk="minikube"
 # alias kgp="kubectl get pod -o wide"
+
+# fzf
+alias vf='nvim $(fd --type f --hidden --exclude .git | fzf --preview "bat --color=always {}")'
+alias cdf='cd $(fd --type d --hidden --exclude .git | fzf)'
+alias edot='nvim $(fd --type f . ~/.config/.dotfiles | fzf --preview "bat --color=always {}")'
+alias myalias='grep "^alias" ~/.config/zsh/.aliases | fzf'
 
 # find port num
 alias portall="sudo lsof -nP | grep LISTEN"

@@ -1,3 +1,8 @@
+# p10k instant prompt (must be at the very top)
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
@@ -5,7 +10,7 @@ plugins=(
 	fzf
 	zsh-autosuggestions
 	tmux
-	fasd
+
 	sprunge
 	sdk
 )
@@ -14,9 +19,6 @@ plugins=(
 [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && . "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # p10k
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh"
-fi 
 [ -f "$ZDOTDIR/.p10k.zsh" ] && . "$ZDOTDIR/.p10k.zsh"
 
 # brew
@@ -28,27 +30,11 @@ then
   compinit
 fi
 
-# nvm
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+# fnm
+eval "$(fnm env --use-on-cd --shell zsh)"
 
 # nvim
 export PATH=/opt/nvim/bin:$PATH
-
-# The Fuck
-eval $(thefuck --alias)
-
-# fasd
-eval "$(fasd --init auto)"
-fasd_cache="$HOME/.cache/fasd/fasd-init-bash"
-if [ ! -d $fasd_cache ]; then
-	mkdir -p $fasd_cache
-fi
-if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
-  fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install >| "$fasd_cache"
-fi
-source "$fasd_cache"
-unset fasd_cache
 
 # K8S
 # . <(kubectl completion zsh)
@@ -72,10 +58,10 @@ autoload -Uz $ZDOTDIR/zfunc/**/*
 # zle -N src
 # bindkey '^e' src # ^e를 누르면 src 명령어가 나간다.
 
-# asdf
-[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ] && . "/opt/homebrew/opt/asdf/libexec/asdf.sh"
-
 # aliases
 [ -f "$XDG_CONFIG_HOME/zsh/.aliases" ] && . "$XDG_CONFIG_HOME/zsh/.aliases"
 
 #neofetch
+
+# Created by `pipx` on 2025-04-30 21:26:38
+export PATH="$PATH:$HOME/.local/bin"
