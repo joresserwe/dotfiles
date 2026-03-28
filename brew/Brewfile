@@ -1,18 +1,14 @@
 tap "arl/arl"
 tap "felixkratz/formulae"
 tap "koekeishiya/formulae"
-# Extendable version manager with support for Ruby, Node.js, Erlang & more
-brew "asdf"
-# Shell extension to jump to frequently used directories
-brew "autojump"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
 # Yet another cross-platform graphical process/system monitor
 brew "bottom"
 # Fix common misspellings in source code and text files
 brew "codespell"
-# Reimplementation of ctags(1)
-brew "ctags"
+# Maintained ctags implementation
+brew "universal-ctags"
 # Get a file from an HTTP, HTTPS or FTP server
 brew "curl"
 # Modern, maintained replacement for ls
@@ -29,8 +25,6 @@ brew "git"
 brew "gnu-sed"
 # Open source programming language to build simple/reliable/efficient software
 brew "go"
-# Improved top (interactive process viewer)
-brew "htop"
 # User-friendly cURL replacement (command-line HTTP client)
 brew "httpie"
 # Lightweight and flexible command-line JSON processor
@@ -47,34 +41,30 @@ brew "luarocks"
 brew "mas"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
-# Manage multiple Node.js versions
-brew "nvm"
+# Fast Node.js version manager
+brew "fnm"
 # Renders an animated, color, ANSI-text loop of the Poptart Cat
 brew "nyancat"
-# Interpreted, interactive, object-oriented programming language
-brew "python@3.10"
+# Fast, disk space efficient package manager
+brew "pnpm"
+# Python package installer and resolver
+brew "uv"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
 # TCP connect to the given IP/port combo
 brew "tcping"
 # User interface to the TELNET protocol
 brew "telnet"
-# Programmatically correct mistyped console commands
-brew "thefuck"
 # Terminal multiplexer
 brew "tmux"
 # Plugin manager for tmux
 brew "tpm"
-# Command-line interface to the freedesktop.org trashcan
-brew "trash-cli"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Executes a program periodically, showing output fullscreen
 brew "watch"
 # Watch files and take action when they change
 brew "watchman"
-# Internet file retriever
-brew "wget"
 # Blazing fast terminal file manager written in Rust, based on async I/O
 brew "yazi"
 # Shell extension to navigate your filesystem faster
