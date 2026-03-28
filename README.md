@@ -27,6 +27,9 @@ ln -sf ~/.config/.dotfiles/yazi/yazi.toml ~/.config/yazi/yazi.toml
 ln -sf ~/.config/.dotfiles/yazi/theme.toml ~/.config/yazi/theme.toml
 ln -sf ~/.config/.dotfiles/yazi/keymap.toml ~/.config/yazi/keymap.toml
 
+# wezterm
+ln -sf ~/.config/.dotfiles/wezterm/wezterm.lua ~/.config/wezterm/wezterm.lua
+
 # claude code
 ln -sf ~/.config/.dotfiles/claude/settings.json ~/.local/share/claude/settings.json
 ln -sf ~/.config/.dotfiles/claude/skills ~/.local/share/claude/skills

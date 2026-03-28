@@ -140,9 +140,6 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores true
 
 defaults write com.apple.finder AppleShowAllFiles -bool true
 
-defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$DOTFILES_PATH/iterm2"
-defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
-
 defaults write com.dwarvesv.minimalbar isAutoStart -int 1
 defaults write com.dwarvesv.minimalbar isShowPreferences -int 0
 defaults write com.dwarvesv.minimalbar numberOfSecondForAutoHide -int 30
@@ -183,6 +180,8 @@ create_link "$DOTFILES_PATH/yabai/yabairc" "$XDG_CONFIG_HOME/yabai/yabairc"
 create_link "$DOTFILES_PATH/yazi/yazi.toml" "$XDG_CONFIG_HOME/yazi/yazi.toml"
 create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
+# wezterm
+create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
 # claude code
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
 ln -sf "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"
