@@ -1,0 +1,755 @@
+local wezterm = require 'wezterm'
+local act = wezterm.action
+local config = wezterm.config_builder()
+local workspace_switcher = wezterm.plugin.require 'https://github.com/MLFlexer/smart_workspace_switcher.wezterm'
+local resurrect = wezterm.plugin.require 'https://github.com/MLFlexer/resurrect.wezterm'
+
+local is_windows = wezterm.target_triple:find 'windows' ~= nil
+workspace_switcher.zoxide_path = '/opt/homebrew/bin/zoxide'
+
+---------------------------------------------------------------------------
+-- AI Tools (여기에 추가하면 C-a+A 메뉴에 자동 반영)
+---------------------------------------------------------------------------
+local ai_tools = {
+  { key = 'c', label = 'Claude Code',          cmd = { 'claude' } },
+  { key = 'r', label = 'Claude Code (resume)',  cmd = { 'claude', '-r' } },
+  -- { key = 'x', label = 'Codex',              cmd = { 'codex' } },
+  -- { key = 'g', label = 'Gemini CLI',          cmd = { 'gemini' } },
+}
+
+-- 자주 쓰는 프로젝트 경로 (C-a+A 메뉴에서 프로젝트 선택 후 AI 도구 실행)
+local projects = {
+  -- { label = 'my-project', path = '/Users/cyan/dev/my-project' },
+}
+
+local function spawn_ai_tool(args)
+  return wezterm.action_callback(function(win, pane)
+    local cwd = pane:get_current_working_dir()
+    pane:split {
+      direction = 'Right',
+      size = 0.5,
+      args = args,
+      cwd = cwd and cwd.file_path or nil,
+    }
+  end)
+end
+
+---------------------------------------------------------------------------
+-- Appearance
+---------------------------------------------------------------------------
+-- config.color_scheme = 'Catppuccin Mocha'
+
+-- 현재 테마에서 색상 자동 추출
+local scheme = config.color_scheme
+  and wezterm.color.get_builtin_schemes()[config.color_scheme]
+  or wezterm.color.get_default_colors()
+local ansi = scheme.ansi or {}
+local brights = scheme.brights or {}
+
+local bg = scheme.background or '#000000'
+local bg_color = wezterm.color.parse(bg)
+
+local C = {
+  red = brights[2] or ansi[2] or '#cc6666',
+  green = brights[3] or ansi[3] or '#b5bd68',
+  yellow = brights[4] or ansi[4] or '#f0c674',
+  blue = brights[5] or ansi[5] or '#81a2be',
+  mauve = brights[6] or ansi[6] or '#b294bb',
+  sky = brights[7] or ansi[7] or '#8abeb7',
+  maroon = ansi[2] or '#cc6666',
+  lavender = brights[5] or '#81a2be',
+  text = scheme.foreground or '#c5c8c6',
+  overlay1 = ansi[8] or '#707880',
+  surface1 = bg_color:lighten(0.15),
+  surface0 = bg_color:lighten(0.10),
+  base = bg,
+  mantle = bg_color:darken(0.03),
+  crust = bg_color:darken(0.06),
+}
+config.font = wezterm.font('0xProto Nerd Font')
+config.font_size = 14.0
+
+-- 외부 모니터(non-Retina) 감지 시 폰트 크기 자동 조정
+wezterm.on('update-status', function(window)
+  local overrides = window:get_config_overrides() or {}
+  local dpi = window:get_dimensions().dpi
+  local want = dpi <= 96 and 16.0 or 14.0
+  if overrides.font_size ~= want then
+    overrides.font_size = want
+    window:set_config_overrides(overrides)
+  end
+end)
+
+config.custom_block_glyphs = true
+config.window_decorations = 'RESIZE'
+config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
+config.window_background_opacity = 0.7
+config.macos_window_background_blur = 10
+
+config.use_fancy_tab_bar = false
+config.tab_bar_at_bottom = false
+config.hide_tab_bar_if_only_one_tab = false
+config.tab_max_width = 32
+config.show_new_tab_button_in_tab_bar = false
+
+config.window_frame = {
+  font = wezterm.font('0xProto Nerd Font'),
+  font_size = 14.0,
+  active_titlebar_bg = 'none',
+  inactive_titlebar_bg = 'none',
+}
+
+config.scrollback_lines = 200000
+config.automatically_reload_config = true
+config.status_update_interval = 200
+
+local tab_bar_bg
+if config.tab_bar_at_bottom then
+  tab_bar_bg = 'rgba(0, 0, 0, 0)'
+else
+  local r, g, b = wezterm.color.parse(C.base):srgba_u8()
+  tab_bar_bg = string.format('rgba(%d, %d, %d, %s)', r, g, b, config.window_background_opacity)
+end
+config.colors = {
+  tab_bar = {
+    background = tab_bar_bg,
+  },
+}
+
+---------------------------------------------------------------------------
+-- Leader key (C-a, tmux 호환)
+---------------------------------------------------------------------------
+config.leader = { key = 'phys:a', mods = 'CTRL', timeout_milliseconds = 1000 }
+
+---------------------------------------------------------------------------
+-- Key bindings
+---------------------------------------------------------------------------
+config.keys = {
+  -- C-a 두번 입력 시 C-a 전달
+  { key = 'phys:a', mods = 'LEADER|CTRL', action = act.SendKey { key = 'a', mods = 'CTRL' } },
+
+  -- Split panes
+  { key = '\\', mods = 'LEADER', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '-', mods = 'LEADER', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
+
+  -- Pane resize
+  { key = 'UpArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Up', 5 } },
+  { key = 'DownArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Down', 5 } },
+  { key = 'LeftArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Left', 5 } },
+  { key = 'RightArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Right', 5 } },
+
+  -- Maximize pane (zoom)
+  { key = 'phys:m', mods = 'LEADER', action = act.TogglePaneZoomState },
+
+  -- Tab
+  { key = 'phys:t', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
+  { key = 'phys:l', mods = 'LEADER', action = act.ActivateTabRelative(1) },
+  { key = 'phys:h', mods = 'LEADER', action = act.ActivateTabRelative(-1) },
+
+  -- Copy mode
+  { key = 'phys:v', mods = 'LEADER', action = act.ActivateCopyMode },
+
+  -- QuickSelect: URL → 브라우저, 그 외 → 클립보드 복사
+  { key = 'phys:q', mods = 'LEADER', action = act.QuickSelectArgs {
+    label = 'quick select',
+    patterns = {
+      'https?://\\S+',                           -- URL
+      '[\\w.-]+/[\\w.-]+(?:#\\d+)?',             -- owner/repo or owner/repo#123
+      '/[\\w.-/]+\\.\\w+',                       -- file path
+      '[0-9a-f]{7,40}',                          -- git hash
+      '\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(?::\\d+)?', -- IP(:port)
+    },
+    action = wezterm.action_callback(function(window, pane)
+      local text = window:get_selection_text_for_pane(pane)
+      if text:match '^https?://' then
+        wezterm.open_with(text)
+      else
+        window:copy_to_clipboard(text)
+      end
+    end),
+  }},
+
+  -- 검색 모드 (fzf로 스크롤백 검색, 한글 지원)
+  { key = '/', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
+    local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
+    local tmp = '/tmp/wezterm_search_' .. tostring(os.time())
+    local f = io.open(tmp, 'w')
+    if not f then return end
+    f:write(text)
+    f:close()
+    pane:split {
+      direction = 'Bottom',
+      size = 0.4,
+      args = { '/bin/bash', '-c',
+        'result=$(/opt/homebrew/bin/fzf --tac --no-sort --exact --layout=default --prompt="Search> " < "'
+        .. tmp .. '"); rm -f "' .. tmp .. '"; '
+        .. '[ -n "$result" ] && printf "%s" "$result" | pbcopy'
+      },
+    }
+  end)},
+
+  -- 패인 위치 스왑
+  { key = '=', mods = 'LEADER', action = act.PaneSelect { mode = 'SwapWithActive' } },
+
+  -- 커맨드 팔레트
+  { key = ':', mods = 'LEADER', action = act.ActivateCommandPalette },
+
+  -- Close pane
+  { key = 'phys:x', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
+
+  -- Reload config
+  { key = 'phys:r', mods = 'LEADER', action = act.ReloadConfiguration },
+
+  -- Workspace (zoxide 연동 fuzzy 검색)
+  { key = 'phys:p', mods = 'LEADER', action = workspace_switcher.switch_workspace() },
+  { key = 'phys:s', mods = 'LEADER', action = workspace_switcher.switch_to_prev_workspace() },
+  { key = ']', mods = 'LEADER', action = act.SwitchWorkspaceRelative(1) },
+  { key = '[', mods = 'LEADER', action = act.SwitchWorkspaceRelative(-1) },
+
+  -- New workspace
+  { key = 'phys:n', mods = 'LEADER', action = act.PromptInputLine {
+    description = 'New workspace name:',
+    action = wezterm.action_callback(function(window, pane, line)
+      if line then
+        window:perform_action(act.SwitchToWorkspace { name = line }, pane)
+      end
+    end),
+  }},
+
+  -- Keybinding cheat sheet (C-a+?)
+  { key = '?', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
+    pane:split {
+      direction = 'Bottom',
+      size = 0.95,
+      args = { 'bash', '-c', table.concat({
+        'clear',
+        'echo ""',
+        'echo "  Keybindings"',
+        'echo "  ─────────────────────────────────"',
+        'echo ""',
+        'echo "  C-a ?       이 도움말"',
+        'echo "  C-a \\\\       수평 분할"',
+        'echo "  C-a -       수직 분할"',
+        'echo "  C-a ↑↓←→    패인 크기 조절"',
+        'echo "  C-a m       패인 줌 토글"',
+        'echo "  C-a x       패인 닫기"',
+        'echo "  C-a t       새 탭"',
+        'echo "  C-a h/l     이전/다음 탭"',
+        'echo "  C-a ,       탭 이름 변경"',
+        'echo "  C-a v       복사 모드"',
+        'echo "  C-a /       검색 모드"',
+        'echo "  C-a q       QuickSelect (URL/경로/hash/IP)"',
+        'echo "  C-a =       패인 위치 스왑"',
+        'echo "  C-a :       커맨드 팔레트"',
+        'echo "  C-a r       설정 리로드"',
+        'echo "  C-a p       워크스페이스 (zoxide fuzzy)"',
+        'echo "  C-a s       이전 워크스페이스로 전환"',
+        'echo "  C-a [/]     이전/다음 워크스페이스"',
+        'echo "  C-a n       새 워크스페이스"',
+        'echo "  C-a w       워크스페이스 저장"',
+        'echo "  C-a R       세션 복원 (fuzzy)"',
+        'echo "  C-a \\$       세션명 변경"',
+        'echo "  C-a g       lazygit"',
+        'echo ""',
+        'echo "  AI (C-a a 후)"',
+        'echo "  ─────────────────────────────────"',
+        'echo ""',
+        'echo "  a           Claude Code"',
+        'echo "  r           Claude Code resume"',
+        'echo "  p           프로젝트 선택 → Claude"',
+        'echo "  l           AI 도구 목록"',
+        'echo ""',
+        'echo "  Navigation"',
+        'echo "  ─────────────────────────────────"',
+        'echo ""',
+        'echo "  C-h/j/k/l   패인 이동 (nvim 연동)"',
+        'echo ""',
+        'read -n1 -s -p "  아무 키나 누르면 닫힙니다..."',
+      }, '; ')},
+    }
+  end)},
+
+  -- Rename session (C-a+$)
+  { key = '$', mods = 'LEADER', action = act.PromptInputLine {
+    description = 'Session name:',
+    action = wezterm.action_callback(function(window, pane, line)
+      if line then
+        wezterm.mux.rename_workspace(window:active_workspace(), line)
+      end
+    end),
+  }},
+
+  -- Rename tab (C-a+,)
+  { key = ',', mods = 'LEADER', action = act.PromptInputLine {
+    description = 'Tab name:',
+    action = wezterm.action_callback(function(window, pane, line)
+      if line then
+        window:active_tab():set_title(line)
+      end
+    end),
+  }},
+
+  -- AI tools (C-a+a → AI 모드)
+  { key = 'phys:a', mods = 'LEADER', action = act.ActivateKeyTable { name = 'ai', one_shot = true } },
+
+  -- Lazygit (새 탭에서 열기, 종료 시 탭 자동 닫힘)
+  { key = 'phys:g', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
+    local cwd = pane:get_current_working_dir()
+    win:perform_action(act.SpawnCommandInNewTab {
+      args = { 'lazygit' },
+      cwd = cwd and cwd.file_path or nil,
+    }, pane)
+  end)},
+}
+
+---------------------------------------------------------------------------
+-- Pane navigation (nvim-aware, vim-tmux-navigator 대체)
+---------------------------------------------------------------------------
+local function is_vim(pane)
+  local name = pane:get_foreground_process_name() or ''
+  return name:find 'n?vim' ~= nil
+end
+
+local nav_keys = {
+  { key = 'h', dir = 'Left' },
+  { key = 'j', dir = 'Down' },
+  { key = 'k', dir = 'Up' },
+  { key = 'l', dir = 'Right' },
+}
+for _, nav in ipairs(nav_keys) do
+  table.insert(config.keys, {
+    key = 'phys:' .. nav.key,
+    mods = 'CTRL',
+    action = wezterm.action_callback(function(win, pane)
+      if is_vim(pane) then
+        win:perform_action(act.SendKey { key = nav.key, mods = 'CTRL' }, pane)
+      else
+        win:perform_action(act.ActivatePaneDirection(nav.dir), pane)
+      end
+    end),
+  })
+end
+
+---------------------------------------------------------------------------
+-- Status bar (catppuccin 스타일)
+---------------------------------------------------------------------------
+local git_cache = {} -- { [cwd] = { info = ..., time = ... } }
+
+-- .git 디렉토리 찾기 (cwd에서 위로 탐색)
+local function find_git_dir(cwd)
+  local dir = cwd
+  while dir and dir ~= '' and dir ~= '/' do
+    local f = io.open(dir .. '/.git/HEAD', 'r')
+    if f then
+      f:close()
+      return dir .. '/.git'
+    end
+    dir = dir:match '(.+)/[^/]*$'
+  end
+  return nil
+end
+
+-- .git/HEAD에서 브랜치명 직접 읽기 (서브프로세스 없음, 즉시 반환)
+local function read_branch(git_dir)
+  if not git_dir then return nil end
+  local f = io.open(git_dir .. '/HEAD', 'r')
+  if not f then return nil end
+  local head = f:read '*l'
+  f:close()
+  if not head then return nil end
+  return head:match 'ref: refs/heads/(.+)' or head:sub(1, 7)
+end
+
+local function get_git_info(cwd)
+  if not cwd or cwd == '' then return nil end
+
+  -- 브랜치는 항상 파일에서 즉시 읽기
+  local git_dir = find_git_dir(cwd)
+  local branch = read_branch(git_dir)
+  if not branch then return nil end
+
+  -- 상세 정보(modified/staged 등)는 gitmux + per-cwd 10초 캐시
+  local now = os.time()
+  local entry = git_cache[cwd]
+  local cached = entry and entry.info
+  if not cached or (now - (entry and entry.time or 0)) >= 10 then
+    local ok, handle = pcall(io.popen, "/opt/homebrew/bin/gitmux -dbg -timeout 500ms '" .. cwd:gsub("'", "'\\''") .. "' 2>/dev/null")
+    if ok and handle then
+      local raw = handle:read '*a'
+      handle:close()
+      local function num(key) return tonumber(raw:match('"' .. key .. '":%s*(%d+)')) or 0 end
+      local function bool(key) return raw:match('"' .. key .. '":%s*true') ~= nil end
+      local function str(key) return raw:match('"' .. key .. '":%s*"([^"]*)"') end
+      cached = {
+        modified = num 'NumModified',
+        staged = num 'NumStaged',
+        untracked = num 'NumUntracked',
+        ahead = num 'AheadCount',
+        behind = num 'BehindCount',
+        clean = bool 'IsClean',
+        remote = str 'RemoteBranch',
+      }
+      git_cache[cwd] = { info = cached, time = now }
+    end
+  end
+
+  return {
+    branch = branch,
+    modified = cached and cached.modified or 0,
+    staged = cached and cached.staged or 0,
+    untracked = cached and cached.untracked or 0,
+    ahead = cached and cached.ahead or 0,
+    behind = cached and cached.behind or 0,
+    clean = cached and cached.clean or true,
+    remote = cached and cached.remote or '',
+  }
+end
+
+-- tmux catppuccin 스타일 (build_status_module: fill=icon, connect=no)
+-- ROUND_L fg=color bg=default, icon fg=thm_gray bg=color, text fg=thm_fg bg=thm_gray, ROUND_R fg=thm_gray bg=default
+local ROUND_L = utf8.char(0xe0b6)
+local ROUND_R = utf8.char(0xe0b4)
+local TAB_BG = tab_bar_bg
+
+local function append(tbl, items)
+  for _, v in ipairs(items) do table.insert(tbl, v) end
+end
+
+local function make_module(icon, text, icon_color)
+  icon_color = icon_color or C.surface0
+  return {
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = icon_color } },
+    { Text = ROUND_L },
+    { Background = { Color = icon_color } },
+    { Foreground = { Color = C.crust } },
+    { Text = icon },
+    { Foreground = { Color = icon_color } },
+    { Text = '█' },
+    { Background = { Color = C.surface0 } },
+    { Foreground = { Color = C.text } },
+    { Text = ' ' .. text },
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = C.surface0 } },
+    { Text = ROUND_R .. ' ' },
+  }
+end
+
+wezterm.on('update-status', function(window, pane)
+  local cwd_uri = pane:get_current_working_dir()
+  local cwd = cwd_uri and cwd_uri.file_path or ''
+
+  -- Left: session (터미널 아이콘은 초록/빨강 배경, 세션명은 기존 스타일)
+  local workspace = window:active_workspace()
+  local leader_active = window:leader_is_active()
+  local session_color = leader_active and C.red or C.green
+  window:set_left_status(wezterm.format {
+    -- 반원
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = session_color } },
+    { Text = '  ' .. ROUND_L },
+    -- 터미널 아이콘
+    { Background = { Color = session_color } },
+    { Foreground = { Color = C.crust } },
+    { Text = utf8.char(0xe795) },
+    { Foreground = { Color = session_color } },
+    { Text = '█' },
+    -- 세션명 (기존 surface0 배경)
+    { Background = { Color = C.surface0 } },
+    { Foreground = { Color = C.text } },
+    { Text = ' ' .. workspace },
+    -- 오른쪽 반원
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = C.surface0 } },
+    { Text = ROUND_R .. ' ' },
+  })
+
+  -- Right: directory | git | datetime
+  local dir_name = cwd:match '([^/\\]+)$' or cwd
+  local datetime = wezterm.strftime '%y-%m-%d %H:%M'
+  local git = get_git_info(cwd)
+
+  local right = {}
+
+  -- directory
+  append(right, make_module(utf8.char(0xe5ff), dir_name, C.maroon))
+
+  -- git
+  if git then
+    local git_icon_color = C.green
+    -- 반원 + 아이콘
+    append(right, {
+      { Background = { Color = TAB_BG } },
+      { Foreground = { Color = git_icon_color } },
+      { Text = ROUND_L },
+      { Background = { Color = git_icon_color } },
+      { Foreground = { Color = C.crust } },
+      { Text = utf8.char(0xf418) },
+      { Foreground = { Color = git_icon_color } },
+      { Text = '█' },
+      -- 텍스트 영역
+      { Background = { Color = C.surface0 } },
+      { Foreground = { Color = C.text } },
+      { Text = ' ' .. git.branch },
+    })
+    if git.remote ~= '' then
+      append(right, {
+        { Foreground = { Color = C.sky } },
+        { Text = ' ' .. git.remote },
+      })
+    end
+    if git.ahead > 0 then
+      append(right, {
+        { Foreground = { Color = C.yellow } },
+        { Text = ' ↑·' .. git.ahead },
+      })
+    end
+    if git.behind > 0 then
+      append(right, {
+        { Foreground = { Color = C.yellow } },
+        { Text = ' ↓·' .. git.behind },
+      })
+    end
+    if git.staged > 0 then
+      append(right, {
+        { Foreground = { Color = C.green } },
+        { Text = ' ● ' .. git.staged },
+      })
+    end
+    if git.modified > 0 then
+      append(right, {
+        { Foreground = { Color = C.red } },
+        { Text = ' ✚ ' .. git.modified },
+      })
+    end
+    if git.untracked > 0 then
+      append(right, {
+        { Foreground = { Color = C.yellow } },
+        { Text = ' … ' .. git.untracked },
+      })
+    end
+    if git.clean then
+      append(right, {
+        { Foreground = { Color = C.green } },
+        { Text = ' ✔' },
+      })
+    end
+    -- 닫기
+    append(right, {
+      { Background = { Color = TAB_BG } },
+      { Foreground = { Color = C.surface0 } },
+      { Text = ROUND_R .. ' ' },
+    })
+  end
+
+  -- datetime
+  append(right, make_module('󰃰', datetime, C.lavender))
+  table.insert(right, { Background = { Color = TAB_BG } })
+  table.insert(right, { Text = ' ' })
+
+  window:set_right_status(wezterm.format(right))
+end)
+
+---------------------------------------------------------------------------
+-- Tab title (catppuccin pill 스타일, zoom 표시)
+---------------------------------------------------------------------------
+wezterm.on('format-tab-title', function(tab)
+  local raw_title = tab.active_pane.title or ''
+  local tab_title = tab.tab_title
+  local proc = tab.active_pane.foreground_process_name or ''
+  local pname
+  if tab_title and #tab_title > 0 then
+    pname = tab_title
+  else
+    pname = proc:match('([^/\\]+)$') or raw_title
+  end
+  -- raw_title의 첫 문자(아이콘)를 추출
+  local icon = raw_title:match('^([%z\1-\127\194-\244][\128-\191]*)') or ''
+  local title = icon ~= '' and (icon .. ' ' .. pname) or pname
+  if #title > 24 then title = title:sub(1, 22) .. '..' end
+  local index = tab.tab_index + 1
+  local zoomed = tab.active_pane.is_zoomed and ' ()' or ''
+
+  local tab_bg, tab_fg
+  if tab.is_active then
+    tab_bg, tab_fg = C.surface1, C.text
+  else
+    tab_bg, tab_fg = C.surface0, C.overlay1
+  end
+
+  local accent = tab.is_active and C.mauve or C.surface1
+  local num_bg = tab.is_active and C.surface0 or C.surface0
+  local num_fg = tab.is_active and C.text or C.overlay1
+
+  return {
+    -- 왼쪽 반원 + 프로세스명 (같은 색)
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = accent } },
+    { Text = ROUND_L },
+    { Background = { Color = accent } },
+    { Foreground = { Color = C.crust } },
+    { Text = title .. zoomed },
+    { Foreground = { Color = accent } },
+    { Text = '█' },
+    -- 인덱스
+    { Background = { Color = num_bg } },
+    { Foreground = { Color = num_bg } },
+    { Text = '█' },
+    { Foreground = { Color = num_fg } },
+    { Text = tostring(index) },
+    -- 오른쪽 반원
+    { Background = { Color = TAB_BG } },
+    { Foreground = { Color = num_bg } },
+    { Text = ROUND_R },
+  }
+end)
+
+---------------------------------------------------------------------------
+-- Key tables
+---------------------------------------------------------------------------
+config.key_tables = {
+  -- C-a, a → AI 모드
+  --   a: Claude Code (현재 cwd)
+  --   r: Claude Code resume
+  --   p: 프로젝트 선택 → Claude Code
+  --   l: AI 도구 선택
+  ai = {
+    { key = 'phys:a', action = spawn_ai_tool(ai_tools[1].cmd) },
+    { key = 'phys:r', action = spawn_ai_tool(ai_tools[2].cmd) },
+    { key = 'phys:p', action = wezterm.action_callback(function(win, pane)
+      if #projects == 0 then
+        win:perform_action(act.PromptInputLine {
+          description = 'Project path:',
+          action = wezterm.action_callback(function(_, inner_pane, line)
+            if line and line ~= '' then
+              inner_pane:split {
+                direction = 'Right',
+                size = 0.5,
+                args = ai_tools[1].cmd,
+                cwd = line,
+              }
+            end
+          end),
+        }, pane)
+        return
+      end
+      local choices = {}
+      for _, proj in ipairs(projects) do
+        table.insert(choices, { label = proj.label, id = proj.path })
+      end
+      win:perform_action(act.InputSelector {
+        title = 'Select Project',
+        choices = choices,
+        action = wezterm.action_callback(function(_, inner_pane, id)
+          if id then
+            inner_pane:split {
+              direction = 'Right',
+              size = 0.5,
+              args = ai_tools[1].cmd,
+              cwd = id,
+            }
+          end
+        end),
+      }, pane)
+    end)},
+    { key = 'phys:l', action = wezterm.action_callback(function(win, pane)
+      local choices = {}
+      for _, tool in ipairs(ai_tools) do
+        table.insert(choices, { label = tool.label, id = tool.label })
+      end
+      win:perform_action(act.InputSelector {
+        title = 'AI Tools',
+        choices = choices,
+        action = wezterm.action_callback(function(_, inner_pane, id)
+          if id then
+            for _, tool in ipairs(ai_tools) do
+              if tool.label == id then
+                local cwd = inner_pane:get_current_working_dir()
+                inner_pane:split {
+                  direction = 'Right',
+                  size = 0.5,
+                  args = tool.cmd,
+                  cwd = cwd and cwd.file_path or nil,
+                }
+                break
+              end
+            end
+          end
+        end),
+      }, pane)
+    end)},
+    { key = 'Escape', action = 'PopKeyTable' },
+  },
+}
+
+---------------------------------------------------------------------------
+-- Session persistence (resurrect.wezterm)
+---------------------------------------------------------------------------
+-- 15분마다 워크스페이스 자동 저장
+resurrect.state_manager.periodic_save {
+  interval_seconds = 900,
+  save_workspaces = true,
+  save_windows = true,
+  save_tabs = true,
+}
+
+-- 워크스페이스 전환 시 자동 저장/복원 (smart_workspace_switcher 연동)
+wezterm.on('smart_workspace_switcher.workspace_switcher.selected', function()
+  resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
+end)
+
+wezterm.on('smart_workspace_switcher.workspace_switcher.created', function(window, path, label)
+  local state = resurrect.state_manager.load_state(label, 'workspace')
+  resurrect.workspace_state.restore_workspace(state, {
+    window = window,
+    relative = true,
+    restore_text = true,
+    on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+  })
+end)
+
+-- 세션 저장/복원 키바인딩
+table.insert(config.keys, {
+  key = 'phys:w', mods = 'LEADER',
+  action = wezterm.action_callback(function()
+    resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
+    wezterm.log_info 'Workspace state saved'
+  end),
+})
+
+table.insert(config.keys, {
+  key = 'phys:r', mods = 'LEADER|SHIFT',
+  action = wezterm.action_callback(function(win, pane)
+    resurrect.fuzzy_loader.fuzzy_load(win, pane, function(id)
+      local type = string.match(id, '^([^/]+)')
+      id = string.match(id, '([^/]+)$')
+      id = string.match(id, '(.+)%..+$')
+      local opts = {
+        relative = true,
+        restore_text = true,
+        on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+      }
+      if type == 'workspace' then
+        local state = resurrect.state_manager.load_state(id, 'workspace')
+        resurrect.workspace_state.restore_workspace(state, opts)
+      elseif type == 'window' then
+        local state = resurrect.state_manager.load_state(id, 'window')
+        resurrect.window_state.restore_window(pane:window(), state, opts)
+      elseif type == 'tab' then
+        local state = resurrect.state_manager.load_state(id, 'tab')
+        resurrect.tab_state.restore_tab(pane:tab(), state, opts)
+      end
+    end)
+  end),
+})
+
+---------------------------------------------------------------------------
+-- OS-specific
+---------------------------------------------------------------------------
+if is_windows then
+  config.default_prog = { 'pwsh.exe', '-NoLogo' }
+  config.window_background_opacity = 1.0
+  config.macos_window_background_blur = nil
+end
+
+return config
