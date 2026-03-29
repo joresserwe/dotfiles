@@ -81,13 +81,9 @@ brew "koekeishiya/formulae/skhd"
 brew "koekeishiya/formulae/yabai"
 # Enable Windows-like alt-tab
 cask "wezterm"
+# AeroSpace is an i3-like tiling window manager for macOS
+cask "aerospace"
 cask "alt-tab"
-# Chromium based browser
-cask "arc"
-# Tool to customise input devices and automate computer systems
-cask "bettertouchtool"
-# Tool to list all active shortcuts of the current application
-cask "cheatsheet"
 # Tool to remove unnecessary files and folders from disk
 cask "cleanmymac"
 # Developer targeted fonts with a high number of glyphs

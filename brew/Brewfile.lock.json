@@ -1790,18 +1790,6 @@
           "full_name": "alt-tab"
         }
       },
-      "arc": {
-        "version": "1.40.0,49176",
-        "options": {
-          "full_name": "arc"
-        }
-      },
-      "bettertouchtool": {
-        "version": "4.504,45040",
-        "options": {
-          "full_name": "bettertouchtool"
-        }
-      },
       "cheatsheet": {
         "version": "1.6.4",
         "options": {
