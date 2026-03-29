@@ -99,6 +99,12 @@ config.window_frame = {
   inactive_titlebar_bg = 'none',
 }
 
+-- Active pane highlighting
+config.inactive_pane_hsb = {
+  saturation = 0.5,
+  brightness = 0.42,
+}
+
 config.scrollback_lines = 200000
 config.automatically_reload_config = true
 config.status_update_interval = 200
@@ -125,18 +131,49 @@ config.leader = { key = 'phys:a', mods = 'CTRL', timeout_milliseconds = 1000 }
 -- Key bindings
 ---------------------------------------------------------------------------
 config.keys = {
-  -- C-a 두번 입력 시 C-a 전달
-  { key = 'phys:a', mods = 'LEADER|CTRL', action = act.SendKey { key = 'a', mods = 'CTRL' } },
+  -- C-a 두번 입력 시 화면 전체 선택 (Copy Mode → 스크롤백 맨 위 → 맨 아래까지 선택)
+  { key = 'phys:a', mods = 'LEADER|CTRL', action = act.Multiple {
+    act.ActivateCopyMode,
+    act.CopyMode 'MoveToScrollbackTop',
+    act.CopyMode { SetSelectionMode = 'Line' },
+    act.CopyMode 'MoveToScrollbackBottom',
+  }},
+
+  -- Disable default C-S-Arrow (pane activate)
+  { key = 'LeftArrow', mods = 'CTRL|SHIFT', action = act.DisableDefaultAssignment },
+  { key = 'RightArrow', mods = 'CTRL|SHIFT', action = act.DisableDefaultAssignment },
+  { key = 'UpArrow', mods = 'CTRL|SHIFT', action = act.DisableDefaultAssignment },
+  { key = 'DownArrow', mods = 'CTRL|SHIFT', action = act.DisableDefaultAssignment },
+  { key = 'LeftArrow', mods = 'CTRL|SHIFT|ALT', action = act.DisableDefaultAssignment },
+  { key = 'RightArrow', mods = 'CTRL|SHIFT|ALT', action = act.DisableDefaultAssignment },
+  { key = 'UpArrow', mods = 'CTRL|SHIFT|ALT', action = act.DisableDefaultAssignment },
+  { key = 'DownArrow', mods = 'CTRL|SHIFT|ALT', action = act.DisableDefaultAssignment },
+  { key = 'L', mods = 'CTRL|SHIFT', action = act.DisableDefaultAssignment },
+
+  -- Debug overlay
+  { key = 'phys:d', mods = 'LEADER', action = act.ShowDebugOverlay },
 
   -- Split panes
   { key = '\\', mods = 'LEADER', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
   { key = '-', mods = 'LEADER', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
 
-  -- Pane resize
-  { key = 'UpArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Up', 5 } },
-  { key = 'DownArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Down', 5 } },
-  { key = 'LeftArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Left', 5 } },
-  { key = 'RightArrow', mods = 'LEADER', action = act.AdjustPaneSize { 'Right', 5 } },
+  -- Pane resize (C-a+Arrow → resize 모드 진입, 1초 무입력 시 자동 종료)
+  { key = 'UpArrow', mods = 'LEADER', action = act.Multiple {
+    act.AdjustPaneSize { 'Up', 5 },
+    act.ActivateKeyTable { name = 'resize_pane', one_shot = false, timeout_milliseconds = 1000 },
+  }},
+  { key = 'DownArrow', mods = 'LEADER', action = act.Multiple {
+    act.AdjustPaneSize { 'Down', 5 },
+    act.ActivateKeyTable { name = 'resize_pane', one_shot = false, timeout_milliseconds = 1000 },
+  }},
+  { key = 'LeftArrow', mods = 'LEADER', action = act.Multiple {
+    act.AdjustPaneSize { 'Left', 5 },
+    act.ActivateKeyTable { name = 'resize_pane', one_shot = false, timeout_milliseconds = 1000 },
+  }},
+  { key = 'RightArrow', mods = 'LEADER', action = act.Multiple {
+    act.AdjustPaneSize { 'Right', 5 },
+    act.ActivateKeyTable { name = 'resize_pane', one_shot = false, timeout_milliseconds = 1000 },
+  }},
 
   -- Maximize pane (zoom)
   { key = 'phys:m', mods = 'LEADER', action = act.TogglePaneZoomState },
@@ -181,7 +218,7 @@ config.keys = {
       direction = 'Bottom',
       size = 0.4,
       args = { '/bin/bash', '-c',
-        'result=$(/opt/homebrew/bin/fzf --tac --no-sort --exact --layout=default --prompt="Search> " < "'
+        'result=$(/opt/homebrew/bin/fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
         .. tmp .. '"); rm -f "' .. tmp .. '"; '
         .. '[ -n "$result" ] && printf "%s" "$result" | pbcopy'
       },
@@ -436,7 +473,8 @@ local function make_module(icon, text, icon_color)
 end
 
 wezterm.on('update-status', function(window, pane)
-  local cwd_uri = pane:get_current_working_dir()
+  local ok, cwd_uri = pcall(pane.get_current_working_dir, pane)
+  if not ok then return end
   local cwd = cwd_uri and cwd_uri.file_path or ''
 
   -- Left: session (터미널 아이콘은 초록/빨강 배경, 세션명은 기존 스타일)
@@ -568,7 +606,7 @@ wezterm.on('format-tab-title', function(tab)
   local title = icon ~= '' and (icon .. ' ' .. pname) or pname
   if #title > 24 then title = title:sub(1, 22) .. '..' end
   local index = tab.tab_index + 1
-  local zoomed = tab.active_pane.is_zoomed and ' ()' or ''
+  local zoomed = tab.active_pane.is_zoomed and (' ' .. utf8.char(0xeb81)) or ''
 
   local tab_bg, tab_fg
   if tab.is_active then
@@ -608,6 +646,28 @@ end)
 -- Key tables
 ---------------------------------------------------------------------------
 config.key_tables = {
+  -- Copy mode: 기본 + vi 스타일 검색(/, ?, n, N)
+  copy_mode = (function()
+    local t = wezterm.gui.default_key_tables().copy_mode
+    local extra = {
+      { key = '/', mods = 'NONE', action = act.Search 'CurrentSelectionOrEmptyString' },
+      { key = '?', mods = 'NONE', action = act.Search 'CurrentSelectionOrEmptyString' },
+      { key = 'n', mods = 'NONE', action = act.CopyMode 'NextMatch' },
+      { key = 'phys:n', mods = 'SHIFT', action = act.CopyMode 'PriorMatch' },
+    }
+    for _, k in ipairs(extra) do table.insert(t, k) end
+    return t
+  end)(),
+
+  -- Pane resize 모드 (C-a+Arrow로 진입, 방향키 반복, Escape로 종료)
+  resize_pane = {
+    { key = 'UpArrow', action = act.AdjustPaneSize { 'Up', 5 } },
+    { key = 'DownArrow', action = act.AdjustPaneSize { 'Down', 5 } },
+    { key = 'LeftArrow', action = act.AdjustPaneSize { 'Left', 5 } },
+    { key = 'RightArrow', action = act.AdjustPaneSize { 'Right', 5 } },
+    { key = 'Escape', action = 'PopKeyTable' },
+  },
+
   -- C-a, a → AI 모드
   --   a: Claude Code (현재 cwd)
   --   r: Claude Code resume
@@ -748,7 +808,8 @@ table.insert(config.keys, {
 ---------------------------------------------------------------------------
 if is_windows then
   config.default_prog = { 'pwsh.exe', '-NoLogo' }
-  config.window_background_opacity = 1.0
+  config.window_background_opacity = 0.7
+  config.win32_system_backdrop = 'Acrylic'
   config.macos_window_background_blur = nil
 end
 
