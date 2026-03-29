@@ -60,7 +60,6 @@ yabai -m rule --add app="^(Finder)$" manage=off
 yabai -m rule --add app="^(OneDrive)$" manage=off
 yabai -m rule --add app="^(IntelliJ IDEA)$" subrole="(AXStandardWindow)" manage=off
 yabai -m rule --add app="^(PyCharm)$" subrole="(AXStandardWindow)" manage=off
-# yabai -m rule --add app="^(Arc)$" manage=off
 
 # Managed 
 # apps=$(awk -v ORS='|' '{if($0!="") print $0}' $XDG_CONFIG_HOME/yabai/yabaimanaged)

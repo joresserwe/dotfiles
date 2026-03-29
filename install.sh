@@ -111,9 +111,11 @@ git clone https://github.com/joresserwe/astronvim_config "$XDG_CONFIG_HOME/nvim"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "yabai 설정..."
-echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
-sudo nvram boot-args=-arm64e_preview_abi
+echo "aerospace 설정..."
+# [DEPRECATED] yabai/skhd → aerospace로 대체됨 (SIP/sudoers 불필요)
+# echo "yabai 설정..."
+# echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
+# sudo nvram boot-args=-arm64e_preview_abi
 
 # -----------------------------------------------------------------------------------------------
 
@@ -173,13 +175,19 @@ create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 create_link "$DOTFILES_PATH/tmux/tmux.conf" "$XDG_CONFIG_HOME/tmux/tmux.conf"
 create_link "$DOTFILES_PATH/tmux/tmux.mapping.conf" "$XDG_CONFIG_HOME/tmux/tmux.mapping.conf"
 create_link "$DOTFILES_PATH/tmux/gitmux.conf" "$XDG_CONFIG_HOME/tmux/gitmux.conf"
-# yabai
-create_link "$DOTFILES_PATH/yabai/skhdrc" "$XDG_CONFIG_HOME/skhd/skhdrc"
-create_link "$DOTFILES_PATH/yabai/yabairc" "$XDG_CONFIG_HOME/yabai/yabairc"
+# [DEPRECATED] yabai/skhd → aerospace로 대체됨
+# create_link "$DOTFILES_PATH/yabai/skhdrc" "$XDG_CONFIG_HOME/skhd/skhdrc"
+# create_link "$DOTFILES_PATH/yabai/yabairc" "$XDG_CONFIG_HOME/yabai/yabairc"
+# aerospace
+create_link "$DOTFILES_PATH/aerospace/aerospace.toml" "$XDG_CONFIG_HOME/aerospace/aerospace.toml"
 # yazi
 create_link "$DOTFILES_PATH/yazi/yazi.toml" "$XDG_CONFIG_HOME/yazi/yazi.toml"
 create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
+ya pkg add boydaihungst/mediainfo
+ya pkg add ndtoan96/ouch
+ya pkg add yazi-rs/plugins:jump-to-char
+ya pkg add KKV9/archive
 # wezterm
 create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
 # claude code
@@ -193,17 +201,15 @@ echo "zshrc 적용..."
 source "$XDG_CONFIG_HOME/zsh/.zshrc"
 # -----------------------------------------------------------------------------------------------
 
+echo "기본 브라우저 설정..."
+open -a "Google Chrome" --args --make-default-browser
+
 open -a Karabiner-Elements
 open -a JetBrains\ Toolbox
 open -a AltTab
 open -a Google\ Chrome
 open -a Raycast
 open -a Scroll\ Reverser
-open -a Arc
 open -a Hidden\ Bar
 open -a RunCat
-open -a CheatSheet
 open -a CleanMyMac
-
-# open -a "CleanShot X"
-# open -a BetterTouchTool

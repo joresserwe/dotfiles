@@ -1,0 +1,282 @@
+config-version = 2
+start-at-login = true
+after-startup-command = ['exec-and-forget borders style=round "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)" "inactive_color=0x33494d64" width=6.5']
+
+# Normalizations
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# Layout
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+# Mouse
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# Gaps (yabai: top/bottom 8, left/right 8, window_gap 10)
+[gaps]
+inner.horizontal = 10
+inner.vertical = 10
+outer.left = 8
+outer.right = 8
+outer.top = 8
+outer.bottom = 8
+
+#####################################################################################################################
+#                                              Window Rules                                                         #
+#####################################################################################################################
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^(System Settings|시스템 설정)$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^(Calculator|계산기)$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^App Store$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^(kakaoTalk|카카오톡)$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^스티커$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^Raycast$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^CleanMyMac$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^Karabiner-Elements$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^활성 상태 보기$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^(League of Legends|Riot Client)$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^Finder$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^OneDrive$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^IntelliJ IDEA$'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = '^PyCharm$'
+run = 'layout floating'
+
+#####################################################################################################################
+#                                           Main Mode                                                               #
+#####################################################################################################################
+
+[mode.main.binding]
+
+# Disable default workspace bindings (A-Z, 5-9)
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = []
+alt-a = []
+alt-b = []
+alt-c = []
+alt-e = []
+alt-g = []
+alt-i = []
+alt-n = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && next=$((cur + 1)) && [ $next -le 8 ] && aerospace workspace $next'
+alt-o = []
+alt-p = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && prev=$((cur - 1)) && [ $prev -ge 1 ] && aerospace workspace $prev'
+ctrl-left = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && prev=$((cur - 1)) && [ $prev -ge 1 ] && aerospace workspace $prev'
+ctrl-right = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && next=$((cur + 1)) && [ $next -le 8 ] && aerospace workspace $next'
+alt-q = []
+alt-r = []
+alt-s = []
+alt-t = []
+alt-v = []
+alt-w = []
+alt-x = []
+alt-y = []
+alt-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+alt-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+alt-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+alt-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+alt-shift-9 = []
+alt-shift-a = []
+alt-shift-b = []
+alt-shift-c = []
+alt-shift-e = []
+alt-shift-f = []
+alt-shift-g = []
+alt-shift-i = []
+alt-shift-o = []
+alt-shift-q = []
+alt-shift-r = []
+alt-shift-t = []
+alt-shift-v = []
+alt-shift-w = []
+alt-shift-x = []
+alt-shift-y = []
+alt-shift-z = []
+alt-tab = []
+alt-shift-tab = []
+alt-slash = []
+alt-comma = []
+alt-shift-semicolon = []
+alt-shift-comma = []
+alt-shift-period = []
+
+# Focus window (hjkl) — fallback to monitor focus like yabai
+alt-h = 'focus --boundaries all-monitors-outer-frame left'
+alt-j = 'focus --boundaries all-monitors-outer-frame down'
+alt-k = 'focus --boundaries all-monitors-outer-frame up'
+alt-l = 'focus --boundaries all-monitors-outer-frame right'
+
+# Move/warp window (shift+alt+hjkl) — move across monitors
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+# Focus first window (alt-f)
+alt-f = ['focus --dfs-index 0']
+
+# Focus recent workspace (alt-z)
+alt-z = 'workspace-back-and-forth'
+
+# Focus prev/next window in display (alt-u / alt-d)
+alt-u = 'focus --boundaries workspace --boundaries-action wrap-around-the-workspace dfs-prev'
+alt-d = 'focus --boundaries workspace --boundaries-action wrap-around-the-workspace dfs-next'
+
+# Float / unfloat window (alt-space)
+alt-space = 'layout floating tiling'
+
+# Zoom fullscreen (alt-m)
+alt-m = 'fullscreen'
+
+# Toggle split (shift+alt+s) — join-with 사용 (normalization과 호환)
+alt-shift-s = 'layout tiles horizontal vertical'
+
+# Focus monitor (alt-[ / alt-])
+alt-leftSquareBracket = 'focus-monitor left'
+alt-rightSquareBracket = 'focus-monitor right'
+
+# Move window to monitor (shift+alt+[ / shift+alt+])
+alt-shift-leftSquareBracket = 'move-node-to-monitor --focus-follows-window left'
+alt-shift-rightSquareBracket = 'move-node-to-monitor --focus-follows-window right'
+
+# Workspace focus (alt+1~4) — per display relative
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+
+# Move window to workspace (shift+alt+1~4)
+alt-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+alt-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+alt-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+alt-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+
+# Move window to prev/next workspace
+alt-shift-p = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && prev=$((cur - 1)) && [ $prev -ge 1 ] && aerospace move-node-to-workspace --focus-follows-window $prev'
+alt-shift-n = 'exec-and-forget cur=$(aerospace list-workspaces --focused) && next=$((cur + 1)) && [ $next -le 8 ] && aerospace move-node-to-workspace --focus-follows-window $next'
+
+# Switch layout (workspace-wide)
+ctrl-alt-cmd-b = 'exec-and-forget aerospace list-windows --workspace focused --format "%{window-id}" | while read id; do aerospace layout --window-id "$id" tiling; aerospace layout --window-id "$id" tiles horizontal; done'
+ctrl-alt-cmd-s = 'exec-and-forget aerospace list-windows --workspace focused --format "%{window-id}" | while read id; do aerospace layout --window-id "$id" tiling; aerospace layout --window-id "$id" accordion horizontal; done'
+
+# Quick resize (ctrl+alt + / -)
+ctrl-alt-equal = 'resize smart +25'
+ctrl-alt-minus = 'resize smart -25'
+
+# Balance (ctrl+alt+e)
+ctrl-alt-e = 'balance-sizes'
+
+# Summon workspace to current monitor (ctrl+alt+cmd+1~4)
+ctrl-alt-cmd-1 = 'summon-workspace 1'
+ctrl-alt-cmd-2 = 'summon-workspace 2'
+ctrl-alt-cmd-3 = 'summon-workspace 3'
+ctrl-alt-cmd-4 = 'summon-workspace 4'
+ctrl-alt-cmd-5 = 'summon-workspace 5'
+ctrl-alt-cmd-6 = 'summon-workspace 6'
+ctrl-alt-cmd-7 = 'summon-workspace 7'
+ctrl-alt-cmd-8 = 'summon-workspace 8'
+# summon-workspace는 이름 지정만 가능 (prev/next 미지원)
+
+# Enter modes
+ctrl-alt-cmd-r = ['mode resize', 'exec-and-forget borders "active_color=gradient(top_left=0xffFF1493,bottom_right=0xffFF6B6B)"']
+ctrl-alt-cmd-m = ['mode move', 'exec-and-forget borders "active_color=gradient(top_left=0xff1E90FF,bottom_right=0xff00CED1)"']
+
+#####################################################################################################################
+#                                           Resize Mode                                                             #
+#####################################################################################################################
+
+[mode.resize.binding]
+
+# Resize in direction (floating: osascript, tiling: aerospace resize)
+h = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x-40,y}" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w+40,h}"; else aerospace resize width -40; fi'
+j = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w,h+40}"; else aerospace resize height +40; fi'
+k = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x,y-40}" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w,h+40}"; else aerospace resize height -40; fi'
+l = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w+40,h}"; else aerospace resize width +40; fi'
+
+# Reverse resize (shift)
+shift-h = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x+40,y}" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w-40,h}"; else aerospace resize width +40; fi'
+shift-j = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w,h-40}"; else aerospace resize height -40; fi'
+shift-k = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x,y+40}" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w,h-40}"; else aerospace resize height +40; fi'
+shift-l = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {w,h} to size of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set size of window 1 to {w-40,h}"; else aerospace resize width -40; fi'
+
+# Balance
+e = 'balance-sizes'
+
+# Focus navigation in resize mode
+alt-h = 'focus --boundaries all-monitors-outer-frame left'
+alt-j = 'focus --boundaries all-monitors-outer-frame down'
+alt-k = 'focus --boundaries all-monitors-outer-frame up'
+alt-l = 'focus --boundaries all-monitors-outer-frame right'
+
+# Prev/next window
+u = 'focus --boundaries workspace --boundaries-action wrap-around-the-workspace dfs-prev'
+d = 'focus --boundaries workspace --boundaries-action wrap-around-the-workspace dfs-next'
+
+# Quick resize
+equal = 'resize smart +25'
+minus = 'resize smart -25'
+
+# Exit
+esc = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+space = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+ctrl-alt-cmd-r = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+
+#####################################################################################################################
+#                                           Move Mode                                                               #
+#####################################################################################################################
+
+[mode.move.binding]
+
+# Move window (floating: osascript position, tiling: aerospace move)
+h = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x-40,y}"; else aerospace move left; fi'
+j = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x,y+40}"; else aerospace move down; fi'
+k = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x,y-40}"; else aerospace move up; fi'
+l = 'exec-and-forget if [ "$(aerospace list-windows --focused --format "%{window-layout}")" = "floating" ]; then osascript -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set {x,y} to position of window 1" -e "tell application \"System Events\" to tell (first process whose frontmost is true) to set position of window 1 to {x+40,y}"; else aerospace move right; fi'
+
+# Exit
+esc = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+space = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+ctrl-alt-cmd-m = ['mode main', 'exec-and-forget borders "active_color=gradient(top_left=0xff8B5CF6,bottom_right=0xff06B6D4)"']
+
