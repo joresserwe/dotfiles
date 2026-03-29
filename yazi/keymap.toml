@@ -4,6 +4,13 @@
 
 [mgr]
 
+prepend_keymap = [
+	# Plugins
+	{ on = "F",                  run = "plugin jump-to-char",  desc = "Jump to char" },
+	{ on = "C",                  run = "plugin ouch",          desc = "Compress with ouch" },
+	{ on = [ "c", "a", "a" ],   run = "plugin archive",       desc = "Archive selected files" },
+]
+
 keymap = [
 	{ on = "<Esc>", run = "escape",             desc = "Exit visual mode, clear selection, or cancel search" },
 	{ on = "<C-[>", run = "escape",             desc = "Exit visual mode, clear selection, or cancel search" },
