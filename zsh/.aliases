@@ -45,7 +45,22 @@ alias del="trash"
 alias vf='nvim $(fd --type f --hidden --exclude .git | fzf --preview "bat --color=always {}")'
 alias cdf='cd $(fd --type d --hidden --exclude .git | fzf)'
 alias edot='nvim $(fd --type f . ~/.config/.dotfiles | fzf --preview "bat --color=always {}")'
-alias myalias='grep "^alias" ~/.config/zsh/.aliases | fzf'
+alias myalias='eval $(grep "^alias" ~/.config/zsh/.aliases | fzf | sed "s/alias \([^=]*\)=.*/\1/")'
+
+# yazi
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
+# todo
+alias todo="$EDITOR $XDG_DATA_HOME/todo/todo.md"
+
+# gdu
+alias disk="gdu-go"
 
 # find port num
 alias portall="sudo lsof -nP | grep LISTEN"

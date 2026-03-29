@@ -33,6 +33,9 @@ fi
 # fnm
 eval "$(fnm env --use-on-cd --shell zsh)"
 
+# zoxide
+eval "$(zoxide init zsh)"
+
 # nvim
 export PATH=/opt/nvim/bin:$PATH
 
