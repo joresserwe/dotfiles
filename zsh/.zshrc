@@ -30,14 +30,14 @@ then
   compinit
 fi
 
+# pyenv
+eval "$(pyenv init -)"
+
 # fnm
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 # zoxide
 eval "$(zoxide init zsh)"
-
-# nvim
-export PATH=/opt/nvim/bin:$PATH
 
 # K8S
 # . <(kubectl completion zsh)
@@ -66,5 +66,3 @@ autoload -Uz $ZDOTDIR/zfunc/**/*
 
 #neofetch
 
-# Created by `pipx` on 2025-04-30 21:26:38
-export PATH="$PATH:$HOME/.local/bin"

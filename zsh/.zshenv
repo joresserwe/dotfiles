@@ -44,6 +44,15 @@ export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+
+# nvim
+export PATH="/opt/nvim/bin:$PATH"
+
+# pipx
+export PATH="$PATH:$HOME/.local/bin"
+
 # claude code
 export CLAUDE_CONFIG_DIR="$XDG_DATA_HOME/claude"
 
