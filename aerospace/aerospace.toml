@@ -154,8 +154,8 @@ alt-shift-j = 'move down'
 alt-shift-k = 'move up'
 alt-shift-l = 'move right'
 
-# Focus first window (alt-f)
-alt-f = ['focus --dfs-index 0']
+# Focus first window (alt-f) — macOS가 Finder로 포커스를 뺏어간 경우 대비, open -a로 강제 activate
+alt-f = 'exec-and-forget open -a "$(aerospace list-windows --workspace focused --format "%{app-name}" | head -1)"'
 
 # Focus recent workspace (alt-z)
 alt-z = 'workspace-back-and-forth'
