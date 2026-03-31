@@ -41,11 +41,112 @@ alias del="trash"
 # alias mk="minikube"
 # alias kgp="kubectl get pod -o wide"
 
-# fzf
-alias vf='nvim $(fd --type f --hidden --exclude .git | fzf --preview "bat --color=always {}")'
-alias cdf='cd $(fd --type d --hidden --exclude .git | fzf)'
+# fzf — f* series
+# ff: find file (Ctrl+E to open in editor)
+ff() {
+  local out key file
+  out=$(fzf \
+    --height=100% --layout=reverse --border \
+    --border-label " C-e:edit | C-y:copy | C-o:cd | C-p:preview " \
+    --preview "bat --color=always --style=numbers --line-range=:500 {}" \
+    --preview-window=right:50%:wrap \
+    --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
+    --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+    --bind "ctrl-p:toggle-preview" \
+    --bind "ctrl-y:execute-silent(echo -n {} | pbcopy)+abort" \
+    --expect=ctrl-e,ctrl-o \
+    < <(fd --type f --hidden --exclude .git))
+  key=$(echo "$out" | head -1)
+  file=$(echo "$out" | tail -1)
+  [ -z "$file" ] && return
+  case "$key" in
+    ctrl-e) $EDITOR "$file" ;;
+    ctrl-o) cd "$(dirname "$file")" ;;
+    *) echo "$file" ;;
+  esac
+}
+
+# f/: live grep (rg + fzf + bat)
+f/() {
+  local RG_CMD="rg --color=always --smart-case --line-number --no-heading"
+  local out key selection file line
+  out=$(fzf --disabled --ansi --multi --delimiter=: \
+    --height=100% --layout=reverse --border \
+    --border-label " C-e:edit | C-y:copy | C-p:preview | live grep " \
+    --bind "start:reload:$RG_CMD {q} || :" \
+    --bind "change:reload:sleep 0.1; $RG_CMD {q} || :" \
+    --preview 'f={1}; l={2}; f=${f//\x1b\[[0-9;]*m/}; l=${l//\x1b\[[0-9;]*m/}; bat --color=always --style=numbers --highlight-line "$l" --line-range=$(( l-10 > 0 ? l-10 : 1 )):$(( l+20 )) "$f"' \
+    --preview-window=right:50%:wrap \
+    --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
+    --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+    --bind "ctrl-p:toggle-preview" \
+    --bind "ctrl-y:execute-silent(echo -n {1} | pbcopy)+abort" \
+    --expect=ctrl-e \
+    --query "$*")
+  key=$(echo "$out" | head -1)
+  selection=$(echo "$out" | sed -n '2p')
+  [ -z "$selection" ] && return
+  file=$(echo "$selection" | cut -d: -f1)
+  line=$(echo "$selection" | cut -d: -f2)
+  case "$key" in
+    ctrl-e) $EDITOR "$file" +"$line" ;;
+    *) echo "$selection" ;;
+  esac
+}
+
+# fz: fuzzy zoxide directory jump
+fz() {
+  local dir
+  dir=$(fzf \
+    --height=100% --layout=reverse --border \
+    --border-label " enter:cd | C-y:copy | C-p:preview " \
+    --nth 2.. --no-sort --query "$*" \
+    --preview "eza --icons --tree --level=2 --color=always {2..}" \
+    --preview-window=right:50%:wrap \
+    --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
+    --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+    --bind "ctrl-p:toggle-preview" \
+    --bind "ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort" \
+    --bind 'enter:become:echo {2..}' \
+    < <(zoxide query --list --score))
+  [ -n "$dir" ] && cd "$dir"
+}
+
+
+# fh: fuzzy history (atuin)
+fh() {
+  local stats_pane current_pane
+  current_pane=$(wezterm cli list --format json | python3 -c "import sys,json;[print(p['pane_id']) for p in json.loads(sys.stdin.read()) if p.get('is_active')]" 2>/dev/null)
+  stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c 'atuin stats; printf "\e[?25l"; cat > /dev/null')
+  wezterm cli activate-pane --pane-id "$current_pane"
+  atuin search -i "$@"
+  wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
+}
+
+# legacy
 alias edot='nvim $(fd --type f . ~/.config/.dotfiles | fzf --preview "bat --color=always {}")'
-alias myalias='eval $(grep "^alias" ~/.config/zsh/.aliases | fzf | sed "s/alias \([^=]*\)=.*/\1/")'
+# fa: find alias/function and execute
+fa() {
+  local out key cmd
+  out=$(fzf \
+    --height=100% --layout=reverse --border \
+    --border-label " enter:execute | C-y:copy | C-e:edit | C-p:preview " \
+    --preview 'grep -n -A10 "$(echo {} | cut -d= -f1 | sed "s/ (function)//;s/^ *//;s/ *$//")" ~/.config/zsh/.aliases | bat --color=always -l zsh --style=numbers' \
+    --preview-window=right:50%:wrap \
+    --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
+    --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+    --bind "ctrl-p:toggle-preview" \
+    --bind "ctrl-y:execute-silent(echo -n {} | pbcopy)+abort" \
+    --expect=ctrl-e \
+    < <({ grep -E '^alias ' "$XDG_CONFIG_HOME/zsh/.aliases" | sed 's/^alias //'; grep -E '^[a-z].*\(\)' "$XDG_CONFIG_HOME/zsh/.aliases" | sed 's/() {.*/ (function)/' }))
+  key=$(echo "$out" | head -1)
+  cmd=$(echo "$out" | tail -1 | cut -d'=' -f1 | sed 's/ (function)//')
+  [ -z "$cmd" ] && return
+  case "$key" in
+    ctrl-e) $EDITOR "$XDG_CONFIG_HOME/zsh/.aliases" ;;
+    *) print -z "$cmd" ;;
+  esac
+}
 
 # yazi
 function y() {
@@ -64,4 +165,23 @@ alias disk="gdu-go"
 
 # find port num
 alias portall="sudo lsof -nP | grep LISTEN"
+
+# port: find process using a specific port
+port() {
+  sudo lsof -nP -i4TCP:$1 | grep LISTEN
+}
+
+# ping: ping or tcping with port
+ping_or_tcping() {
+  if [ "$#" -lt 1 ]; then
+    echo "Usage: ping <IP address> [Port]"
+    return 1
+  fi
+  local IP=$1
+  if [ "$#" -eq 2 ]; then
+    tcping -t 5 $IP $2
+  else
+    command ping $IP
+  fi
+}
 

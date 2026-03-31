@@ -44,8 +44,9 @@ export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 
-# pyenv
-export PYENV_ROOT="$HOME/.pyenv"
+# pyenv (XDG: 데이터는 $XDG_DATA_HOME 아래로)
+export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
+export PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
 
 # nvim
 export PATH="/opt/nvim/bin:$PATH"
