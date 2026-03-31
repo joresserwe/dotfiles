@@ -239,7 +239,6 @@ config.keys = {
 
   -- Workspace (zoxide 연동 fuzzy 검색)
   { key = 'phys:p', mods = 'LEADER', action = workspace_switcher.switch_workspace() },
-  { key = 'phys:s', mods = 'LEADER', action = workspace_switcher.switch_to_prev_workspace() },
   { key = ']', mods = 'LEADER', action = act.SwitchWorkspaceRelative(1) },
   { key = '[', mods = 'LEADER', action = act.SwitchWorkspaceRelative(-1) },
 
@@ -286,7 +285,7 @@ config.keys = {
         'echo "  C-a w       워크스페이스 저장"',
         'echo "  C-a R       세션 복원 (fuzzy)"',
         'echo "  C-a \\$       세션명 변경"',
-        'echo "  C-a g       lazygit"',
+        'echo "  C-]         패인 이동 모드 (HJKL, 1초)"',
         'echo ""',
         'echo "  AI (C-a a 후)"',
         'echo "  ─────────────────────────────────"',
@@ -329,14 +328,8 @@ config.keys = {
   -- AI tools (C-a+a → AI 모드)
   { key = 'phys:a', mods = 'LEADER', action = act.ActivateKeyTable { name = 'ai', one_shot = true } },
 
-  -- Lazygit (새 탭에서 열기, 종료 시 탭 자동 닫힘)
-  { key = 'phys:g', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
-    local cwd = pane:get_current_working_dir()
-    win:perform_action(act.SpawnCommandInNewTab {
-      args = { 'lazygit' },
-      cwd = cwd and cwd.file_path or nil,
-    }, pane)
-  end)},
+  -- Pane 이동 모드 (C-] → 1초간 HJKL로 pane 전환)
+  { key = ']', mods = 'CTRL', action = act.ActivateKeyTable { name = 'move_pane', one_shot = false, timeout_milliseconds = 1000 } },
 }
 
 ---------------------------------------------------------------------------
@@ -344,7 +337,8 @@ config.keys = {
 ---------------------------------------------------------------------------
 local function is_vim(pane)
   local name = pane:get_foreground_process_name() or ''
-  return name:find 'n?vim' ~= nil
+  if name:find 'yazi' ~= nil then return false end
+  return name:find 'n?vim' ~= nil or pane:is_alt_screen_active()
 end
 
 local nav_keys = {
@@ -358,7 +352,8 @@ for _, nav in ipairs(nav_keys) do
     key = 'phys:' .. nav.key,
     mods = 'CTRL',
     action = wezterm.action_callback(function(win, pane)
-      if is_vim(pane) then
+      local tab = pane:tab()
+      if is_vim(pane) or (tab and #tab:panes() == 1) then
         win:perform_action(act.SendKey { key = nav.key, mods = 'CTRL' }, pane)
       else
         win:perform_action(act.ActivatePaneDirection(nav.dir), pane)
@@ -480,7 +475,8 @@ wezterm.on('update-status', function(window, pane)
   -- Left: session (터미널 아이콘은 초록/빨강 배경, 세션명은 기존 스타일)
   local workspace = window:active_workspace()
   local leader_active = window:leader_is_active()
-  local session_color = leader_active and C.red or C.green
+  local move_pane_active = window:active_key_table() == 'move_pane'
+  local session_color = leader_active and C.red or move_pane_active and C.sky or C.green
   window:set_left_status(wezterm.format {
     -- 반원
     { Background = { Color = TAB_BG } },
@@ -665,6 +661,15 @@ config.key_tables = {
     { key = 'DownArrow', action = act.AdjustPaneSize { 'Down', 5 } },
     { key = 'LeftArrow', action = act.AdjustPaneSize { 'Left', 5 } },
     { key = 'RightArrow', action = act.AdjustPaneSize { 'Right', 5 } },
+    { key = 'Escape', action = 'PopKeyTable' },
+  },
+
+  -- Pane 이동 모드 (C-] 로 진입, HJKL로 pane 전환, 1초 무입력 시 자동 종료)
+  move_pane = {
+    { key = 'phys:h', action = act.ActivatePaneDirection 'Left' },
+    { key = 'phys:j', action = act.ActivatePaneDirection 'Down' },
+    { key = 'phys:k', action = act.ActivatePaneDirection 'Up' },
+    { key = 'phys:l', action = act.ActivatePaneDirection 'Right' },
     { key = 'Escape', action = 'PopKeyTable' },
   },
 
