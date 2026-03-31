@@ -1,0 +1,35 @@
+# 검색 설정
+search_mode = "fuzzy"
+filter_mode = "global"
+workspaces = true
+
+# UI 설정
+style = "full"
+inline_height = 0
+invert = true
+show_preview = true
+max_preview_height = 4
+enter_accept = true
+
+# Emacs 스타일 키맵
+keymap_mode = "emacs"
+
+# 도움말 표시
+show_help = true
+show_tabs = true
+
+# 보안 필터
+secrets_filter = true
+
+# 테마
+[theme]
+name = "catppuccin-mocha-mauve"
+
+# 통계 - 하위 명령어가 있는 도구
+[stats]
+common_subcommands = ["cargo", "docker", "git", "kubectl", "npm", "pnpm", "brew"]
+common_prefix = ["sudo"]
+
+# 로그 디렉터리 (기본값 ~/.atuin/logs → XDG 경로로 변경)
+[logs]
+dir = "~/.local/state/atuin/logs"

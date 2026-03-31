@@ -39,6 +39,9 @@ eval "$(fnm env --use-on-cd --shell zsh)"
 # zoxide
 eval "$(zoxide init zsh)"
 
+# atuin
+eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
+
 # K8S
 # . <(kubectl completion zsh)
 # . ~/.minikube/.minikube-completion
@@ -50,11 +53,6 @@ eval "$(zoxide init zsh)"
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && . "$HOME/.config/envman/load.sh"
 
-# Auto Function
-# 함수로 추가할 디렉토리를 auto complete 목록에 포함합니다.
-# autoload에 zfunc이하 모든 항목을 선언합니다.
-fpath=($fpath $ZDOTDIR/zfunc)
-autoload -Uz $ZDOTDIR/zfunc/**/*
 
 # BindKey
 # zle (Z-shell Line Editor)를 등록한 후, 단축키를 Binding 한다.

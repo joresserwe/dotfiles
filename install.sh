@@ -22,6 +22,7 @@ directories=(
 	"$XDG_DATA_HOME"
 	"$XDG_STATE_HOME"
 	"$XDG_RUNTIME_DIR"
+	"$XDG_STATE_HOME/atuin/logs"
 )
 for dir in "${directories[@]}"; do
 	if [ -d "$dir" ]; then
@@ -184,10 +185,20 @@ create_link "$DOTFILES_PATH/aerospace/aerospace.toml" "$XDG_CONFIG_HOME/aerospac
 create_link "$DOTFILES_PATH/yazi/yazi.toml" "$XDG_CONFIG_HOME/yazi/yazi.toml"
 create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
+create_link "$DOTFILES_PATH/yazi/init.lua" "$XDG_CONFIG_HOME/yazi/init.lua"
 ya pkg add boydaihungst/mediainfo
 ya pkg add ndtoan96/ouch
 ya pkg add yazi-rs/plugins:jump-to-char
 ya pkg add KKV9/archive
+ya pkg add yazi-rs/plugins:full-border
+ya pkg add yazi-rs/plugins:git
+ya pkg add yazi-rs/plugins:smart-filter
+ya pkg add yazi-rs/plugins:chmod
+ya pkg add yazi-rs/plugins:toggle-pane
+ya pkg add Reledia/glow
+ya pkg add yazi-rs/flavors:catppuccin-mocha
+# atuin
+create_link "$DOTFILES_PATH/atuin/config.toml" "$XDG_CONFIG_HOME/atuin/config.toml"
 # wezterm
 create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
 # claude code

@@ -1,6 +1,8 @@
 tap "arl/arl"
 tap "felixkratz/formulae"
 tap "koekeishiya/formulae"
+# 쉘 히스토리를 SQLite에 저장하고 동기화하는 도구
+brew "atuin"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
 # Yet another cross-platform graphical process/system monitor
@@ -21,6 +23,8 @@ brew "fzf"
 brew "gdu"
 # Distributed revision control system
 brew "git"
+# Render markdown on the CLI
+brew "glow"
 # GNU implementation of the famous stream editor
 brew "gnu-sed"
 # Open source programming language to build simple/reliable/efficient software
