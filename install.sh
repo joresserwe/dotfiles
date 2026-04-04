@@ -37,7 +37,12 @@ chmod 700 "$XDG_RUNTIME_DIR" # XDG에 따르면, runtime의 경로는 700 권한
 # -----------------------------------------------------------------------------------------------
 
 echo "Homebrew 설치..."
-brew_path=/opt/homebrew/bin
+# Apple Silicon: /opt/homebrew, Intel: /usr/local
+if [[ "$(uname -m)" == "arm64" ]]; then
+	brew_path=/opt/homebrew/bin
+else
+	brew_path=/usr/local/bin
+fi
 if [[ ":$PATH:" != *":$brew_path:"* ]]; then
 	export PATH="$PATH:$brew_path"
 fi

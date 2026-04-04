@@ -12,8 +12,8 @@ export ZSH="$ZDOTDIR/oh-my-zsh"
 # bash_history
 export HISTFILE="$XDG_STATE_HOME/bash/history"
 
-# brew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# brew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
 
 # use vim as the editor
 # VIMINIT은 nvim의 기본 init 로딩을 막으므로, vim 전용 MYVIMRC만 설정
