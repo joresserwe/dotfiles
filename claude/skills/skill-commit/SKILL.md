@@ -63,3 +63,7 @@ If none of these fit precisely, pick the closest one or use another imperative v
 - Specific over vague: "Fix bufferline background color" not "Fix UI issue"
 - When multiple things change in one commit, summarize the theme: "Set colorscheme to tokyonight and remove unused files"
 - When describing the commit plan to the user, use Korean for explanations
+
+## Gotchas
+
+- **NEVER** add `Co-Authored-By` trailers or any attribution lines to commit messages. GitHub parses these as contributors, polluting the repo's contributor list.
