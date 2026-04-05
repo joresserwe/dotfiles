@@ -67,3 +67,4 @@ If none of these fit precisely, pick the closest one or use another imperative v
 ## Gotchas
 
 - **NEVER** add `Co-Authored-By` trailers or any attribution lines to commit messages. GitHub parses these as contributors, polluting the repo's contributor list.
+- When rewriting git history (message edits, author changes, etc.), use `git filter-repo`.
