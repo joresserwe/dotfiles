@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# wezterm smart split - 현재 pane 비율에 따라 자동 방향 결정
+# 사용: smart-split [-- 명령어 인자들]
+set -euo pipefail
+
+pane_id="${WEZTERM_PANE:?WEZTERM_PANE 환경변수가 없습니다 (WezTerm 밖에서 실행됨)}"
+
+# 현재 pane의 cols/rows 추출
+dims=$(wezterm cli list --format json | jq -r \
+  --argjson id "$pane_id" \
+  '.[] | select(.pane_id == $id) | "\(.size.cols) \(.size.rows)"')
+
+cols=${dims%% *}
+rows=${dims##* }
+
+# 셀 종횡비 보정 (셀 높이 ≈ 폭의 2배)
+if (( cols / 2 > rows )); then
+  wezterm cli split-pane --pane-id "$pane_id" --right "$@"
+else
+  wezterm cli split-pane --pane-id "$pane_id" --bottom "$@"
+fi
