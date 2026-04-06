@@ -1,0 +1,2 @@
+; XDG 경로 설정 — .zshenv를 거치지 않는 프로세스(MCP 서버 등)에서도 적용
+cache=~/.cache/npm
