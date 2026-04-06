@@ -1,6 +1,37 @@
 {
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Agent",
+      "WebFetch",
+      "WebSearch",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh search:*)",
+      "Bash(gh release:*)",
+      "Bash(npm view:*)",
+      "Bash(npm list:*)",
+      "Bash(npm search:*)",
+      "Bash(nvim:*)",
+      "Bash(macism)",
+      "Bash(im-select)",
+      "Bash(wezterm:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
+    ]
+  },
   "enabledPlugins": {
-    "context7@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true
   }

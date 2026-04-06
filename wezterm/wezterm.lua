@@ -83,7 +83,7 @@ end)
 config.custom_block_glyphs = true
 config.window_decorations = 'RESIZE'
 config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
-config.window_background_opacity = 0.7
+config.window_background_opacity = 0.85
 config.macos_window_background_blur = 10
 
 config.use_fancy_tab_bar = false
