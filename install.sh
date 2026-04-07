@@ -71,16 +71,16 @@ brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "node 설치..."
-eval "$(fnm env --shell zsh)"
-fnm install --lts
+echo "node 설치 (via mise)..."
+eval "$(mise activate zsh)"
+mise use -g node@lts
 packages=(
 	"yarn"
 	"npm-check-updates"
 	"mcp-hub"
 )
 for package in "${packages[@]}"; do
-	if pnpm list -g --depth=0 | grep "$package" >/dev/null; then
+	if pnpm list -g --depth=0 2>/dev/null | grep "$package" >/dev/null; then
 		echo "$package is already installed."
 	else
 		echo "Installing $package..."

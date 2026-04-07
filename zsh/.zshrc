@@ -33,8 +33,8 @@ fi
 # pyenv
 eval "$(pyenv init -)"
 
-# fnm
-eval "$(fnm env --use-on-cd --shell zsh)"
+# mise (replaces fnm + pyenv)
+eval "$(mise activate zsh)"
 
 # zoxide
 eval "$(zoxide init zsh)"

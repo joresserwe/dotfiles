@@ -20,8 +20,11 @@ eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shell
 export MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc"
 export EDITOR=nvim
 
-# fnm
-export FNM_DIR="$XDG_DATA_HOME/fnm"
+# mise (replaces fnm + pyenv; manages node, python, go, ruby, etc.)
+export MISE_DATA_DIR="$XDG_DATA_HOME/mise"
+export MISE_CONFIG_DIR="$XDG_CONFIG_HOME/mise"
+export MISE_CACHE_DIR="$XDG_CACHE_HOME/mise"
+
 # npm
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
@@ -43,10 +46,6 @@ export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
 # fzf
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
-
-# pyenv (XDG: 데이터는 $XDG_DATA_HOME 아래로)
-export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
-export PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
 
 # nvim
 export PATH="/opt/nvim/bin:$PATH"
