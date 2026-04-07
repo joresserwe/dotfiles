@@ -1,6 +1,5 @@
 tap "arl/arl"
 tap "felixkratz/formulae"
-tap "koekeishiya/formulae"
 # 쉘 히스토리를 SQLite에 저장하고 동기화하는 도구
 brew "atuin"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -79,18 +78,24 @@ brew "yazi"
 brew "zoxide"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
+# Reminds you of existing aliases when you type the full command
+brew "zsh-you-should-use"
+# Vim keybindings for zsh line editor
+brew "zsh-vi-mode"
+# Multi-shell unified completion engine for 600+ CLIs
+brew "carapace"
 # Git in your tmux status bar.
 brew "arl/arl/gitmux"
 # A window border system for macOS
 brew "felixkratz/formulae/borders"
-# Simple hotkey-daemon for macOS.
-brew "koekeishiya/formulae/skhd"
-# A tiling window manager for macOS based on binary space partitioning.
-brew "koekeishiya/formulae/yabai"
-# Enable Windows-like alt-tab
+# [DEPRECATED] yabai/skhd → replaced by aerospace
+# brew "koekeishiya/formulae/skhd"
+# brew "koekeishiya/formulae/yabai"
+# GPU-accelerated cross-platform terminal emulator
 cask "wezterm"
 # AeroSpace is an i3-like tiling window manager for macOS
 cask "aerospace"
+# Enable Windows-like alt-tab
 cask "alt-tab"
 # Tool to remove unnecessary files and folders from disk
 cask "cleanmymac"
