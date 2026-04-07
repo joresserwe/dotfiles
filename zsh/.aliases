@@ -171,17 +171,16 @@ port() {
   sudo lsof -nP -i4TCP:$1 | grep LISTEN
 }
 
-# ping: ping or tcping with port
+# ping: gping (graph) when 1 arg, tcping when host+port
 ping_or_tcping() {
   if [ "$#" -lt 1 ]; then
     echo "Usage: ping <IP address> [Port]"
     return 1
   fi
-  local IP=$1
   if [ "$#" -eq 2 ]; then
-    tcping -t 5 $IP $2
+    tcping -t 5 "$1" "$2"
   else
-    command ping $IP
+    gping "$1"
   fi
 }
 
