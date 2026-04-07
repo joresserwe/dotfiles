@@ -17,8 +17,8 @@ alias vidiff="nvim -d"
 alias cat="bat"
 
 # eza
-eza_params=('--git' '--icons' '--classify' '--group-directories-first' '--time-style="+%y/%m/%d %H:%M"' '--group' '--color-scale')
-alias ls="eza ${eza_params}"
+eza_params=('--git' '--icons' '--classify' '--group-directories-first' '--time-style=+%y/%m/%d\ %H:%M' '--group' '--color-scale')
+alias ls="eza ${eza_params[*]}"
 alias l='ls -la'
 alias la='ls -la'
 alias lam='ls -la --sort=modified'
@@ -116,9 +116,10 @@ fz() {
 # fh: fuzzy history (atuin)
 fh() {
   local stats_pane current_pane
-  current_pane=$(wezterm cli list --format json | python3 -c "import sys,json;[print(p['pane_id']) for p in json.loads(sys.stdin.read()) if p.get('is_active')]" 2>/dev/null)
+  current_pane="$WEZTERM_PANE"
   stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c 'atuin stats; printf "\e[?25l"; cat > /dev/null')
-  wezterm cli activate-pane --pane-id "$current_pane"
+  wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
+  wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
   atuin search -i "$@"
   wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
 }
