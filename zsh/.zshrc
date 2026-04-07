@@ -20,14 +20,6 @@ plugins=(
 
 [ -f "$ZSH/oh-my-zsh.sh" ] && . "$ZSH/oh-my-zsh.sh"
 [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && . "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-
-# you-should-use: alias reminder (max visibility mode)
-export YSU_MODE=ALL                     # check exact + prefix + global aliases
-export YSU_MESSAGE_POSITION="after"     # show after command output to avoid breaking pipes
-export YSU_HARDCORE=0                   # warn only, do not block execution
-export YSU_MESSAGE_FORMAT="$(printf '\033[1;33mYSU:\033[0m alias \033[1;36m%%alias\033[0m  ->  %%command')"
-[ -f "$HOMEBREW_PREFIX/share/zsh-you-should-use/you-should-use.plugin.zsh" ] && . "$HOMEBREW_PREFIX/share/zsh-you-should-use/you-should-use.plugin.zsh"
-
 # zsh-vi-mode: vim keybindings in the shell
 [ -f "$HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ] && . "$HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 

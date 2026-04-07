@@ -78,8 +78,6 @@ brew "yazi"
 brew "zoxide"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
-# Reminds you of existing aliases when you type the full command
-brew "zsh-you-should-use"
 # Vim keybindings for zsh line editor
 brew "zsh-vi-mode"
 # Multi-shell unified completion engine for 600+ CLIs
