@@ -3,6 +3,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zs
   . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Restore XDG-compliant HISTFILE (macOS /etc/zshrc overrides .zshenv)
+export HISTFILE="$XDG_STATE_HOME/zsh/history"
+
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(

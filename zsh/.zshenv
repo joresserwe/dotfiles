@@ -9,8 +9,8 @@ export XDG_STATE_HOME="$HOME/.local/state"
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export ZSH="$ZDOTDIR/oh-my-zsh"
 
-# bash_history
-export HISTFILE="$XDG_STATE_HOME/bash/history"
+# NOTE: HISTFILE is set in .zshrc — macOS /etc/zshrc runs after .zshenv
+# and overrides it, so the export must happen later in .zshrc.
 
 # brew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
 eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"

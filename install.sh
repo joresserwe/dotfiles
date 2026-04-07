@@ -23,6 +23,7 @@ directories=(
 	"$XDG_STATE_HOME"
 	"$XDG_RUNTIME_DIR"
 	"$XDG_STATE_HOME/atuin/logs"
+	"$XDG_STATE_HOME/zsh"
 )
 for dir in "${directories[@]}"; do
 	if [ -d "$dir" ]; then
