@@ -8,6 +8,9 @@ case "$OSTYPE" in
       _dotfiles_copy() { wl-copy; }
     elif command -v xclip >/dev/null 2>&1; then
       _dotfiles_copy() { xclip -selection clipboard; }
+    elif command -v win32yank.exe >/dev/null 2>&1; then
+      # WSL: win32yank is preferred over clip.exe — no CRLF mangling, supports paste
+      _dotfiles_copy() { win32yank.exe -i --crlf; }
     elif command -v clip.exe >/dev/null 2>&1; then
       # WSL fallback: pipe to Windows clipboard
       _dotfiles_copy() { clip.exe; }

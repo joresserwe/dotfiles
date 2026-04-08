@@ -117,6 +117,29 @@ create_link "$DOTFILES_PATH/yazi/theme.toml"  "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
 create_link "$DOTFILES_PATH/yazi/init.lua"    "$XDG_CONFIG_HOME/yazi/init.lua"
 
+# win32yank (WSL-only): clipboard tool for WSL. Preferred over clip.exe
+# because it handles CRLF correctly and supports paste. Installed into
+# ~/.local/bin (already on PATH via .zshenv). Pinned version for reproducibility.
+if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+  WIN32YANK_BIN="$HOME/.local/bin/win32yank.exe"
+  WIN32YANK_VERSION="v0.1.1"
+  if [ ! -x "$WIN32YANK_BIN" ]; then
+    log_step "Installing win32yank ${WIN32YANK_VERSION}"
+    ensure_dir "$HOME/.local/bin"
+    tmp_zip="$(mktemp --suffix=.zip)"
+    curl -fsSL -o "$tmp_zip" \
+      "https://github.com/equalsraf/win32yank/releases/download/${WIN32YANK_VERSION}/win32yank-x64.zip"
+    unzip -p "$tmp_zip" win32yank.exe > "$WIN32YANK_BIN"
+    chmod +x "$WIN32YANK_BIN"
+    rm -f "$tmp_zip"
+    log_done "win32yank installed: $WIN32YANK_BIN"
+  else
+    log_skip "win32yank already installed"
+  fi
+else
+  log_skip "win32yank: not running under WSL"
+fi
+
 # WezTerm (Windows side): write a stub at %USERPROFILE%\.wezterm.lua that
 # dofile()s the real config over the \\wsl.localhost UNC path. The real config
 # self-registers in WezTerm's reload watch list so auto-reload works.
