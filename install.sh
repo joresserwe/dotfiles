@@ -9,6 +9,8 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
 
 DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 
+source "$DOTFILES_PATH/lib/common.sh"
+
 # -----------------------------------------------------------------------------------------------
 
 echo "필요 경로 생성..."
@@ -158,16 +160,6 @@ defaults write com.pilotmoon.scroll-reverser InvertScrollingOn -int 1
 # -----------------------------------------------------------------------------------------------
 
 echo "설정파일 Symbolic Lync 연결..."
-create_link() {
-	local target_file="$1"
-	local link_path="$2"
-	local link_dir=$(dirname "$link_path")
-	if [ ! -d "$link_dir" ]; then
-		echo "Directory does not exist, creating: $link_dir"
-		mkdir -p "$link_dir"
-	fi
-	ln -sf "$target_file" "$link_path"
-}
 
 # zsh
 create_link "$DOTFILES_PATH/zsh/.zshenv" ~/.zshenv

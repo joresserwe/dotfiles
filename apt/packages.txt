@@ -1,0 +1,9 @@
+build-essential
+ca-certificates
+curl
+file
+git
+inotify-tools
+procps
+unzip
+zsh

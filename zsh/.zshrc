@@ -71,5 +71,13 @@ eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 # aliases
 [ -f "$XDG_CONFIG_HOME/zsh/.aliases" ] && . "$XDG_CONFIG_HOME/zsh/.aliases"
 
+# wezterm config auto-reload bridge (WSL only).
+# Touches the Windows-side stub when wezterm.lua changes, since \\wsl.localhost
+# does not propagate inotify events to Windows. Idempotent — second invocation
+# exits via flock inside the script.
+if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [[ -x "$DOTFILES_PATH/wezterm/wezterm-watch.sh" ]]; then
+  (nohup "$DOTFILES_PATH/wezterm/wezterm-watch.sh" >/dev/null 2>&1 &) 2>/dev/null
+fi
+
 #neofetch
 

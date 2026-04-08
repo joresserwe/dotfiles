@@ -3,7 +3,6 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
-# export XDG_RUNTIME_DIR="$HOME/Library/Caches/Runtime"
 
 # zsh
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
@@ -12,8 +11,22 @@ export ZSH="$ZDOTDIR/oh-my-zsh"
 # NOTE: HISTFILE is set in .zshrc — macOS /etc/zshrc runs after .zshenv
 # and overrides it, so the export must happen later in .zshrc.
 
-# brew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
-eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
+# OS-specific: XDG_RUNTIME_DIR and Homebrew prefix
+case "$OSTYPE" in
+  darwin*)
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
+    if [ -x /opt/homebrew/bin/brew ]; then
+      export HOMEBREW_PREFIX="/opt/homebrew"
+    else
+      export HOMEBREW_PREFIX="/usr/local"
+    fi
+    ;;
+  linux*)
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+    export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
+    ;;
+esac
+[ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
 
 # use vim as the editor
 # VIMINIT은 nvim의 기본 init 로딩을 막으므로, vim 전용 MYVIMRC만 설정

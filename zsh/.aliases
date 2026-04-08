@@ -1,12 +1,32 @@
 # zsh
+
+# OS-portable clipboard copy (used by fzf bind functions below)
+case "$OSTYPE" in
+  darwin*) _dotfiles_copy() { pbcopy; } ;;
+  linux*)
+    if command -v wl-copy >/dev/null 2>&1; then
+      _dotfiles_copy() { wl-copy; }
+    elif command -v xclip >/dev/null 2>&1; then
+      _dotfiles_copy() { xclip -selection clipboard; }
+    elif command -v clip.exe >/dev/null 2>&1; then
+      # WSL fallback: pipe to Windows clipboard
+      _dotfiles_copy() { clip.exe; }
+    else
+      _dotfiles_copy() { cat >/dev/null; }
+    fi
+    ;;
+esac
+
 alias szr="source $ZDOTDIR/.zshrc"
 alias ezr="$EDITOR $ZDOTDIR/.zshrc" # edit zshrc
 alias ea="$EDITOR $ZDOTDIR/.aliases"
 alias eze="$EDITOR $HOME/.zshenv"
 alias et="$EDITOR $XDG_CONFIG_HOME/tmux/tmux.conf"
 
-# Preview
-alias preview="open -a Preview"
+# Preview (macOS Preview.app)
+case "$OSTYPE" in
+  darwin*) alias preview="open -a Preview" ;;
+esac
 
 # vim
 alias vi="nvim"
@@ -53,7 +73,7 @@ ff() {
     --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
     --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
     --bind "ctrl-p:toggle-preview" \
-    --bind "ctrl-y:execute-silent(echo -n {} | pbcopy)+abort" \
+    --bind "ctrl-y:execute-silent(echo -n {} | _dotfiles_copy)+abort" \
     --expect=ctrl-e,ctrl-o \
     < <(fd --type f --hidden --exclude .git))
   key=$(echo "$out" | head -1)
@@ -80,7 +100,7 @@ f/() {
     --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
     --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
     --bind "ctrl-p:toggle-preview" \
-    --bind "ctrl-y:execute-silent(echo -n {1} | pbcopy)+abort" \
+    --bind "ctrl-y:execute-silent(echo -n {1} | _dotfiles_copy)+abort" \
     --expect=ctrl-e \
     --query "$*")
   key=$(echo "$out" | head -1)
@@ -106,22 +126,30 @@ fz() {
     --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
     --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
     --bind "ctrl-p:toggle-preview" \
-    --bind "ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort" \
+    --bind "ctrl-y:execute-silent(echo -n {2..} | _dotfiles_copy)+abort" \
     --bind 'enter:become:echo {2..}' \
     < <(zoxide query --list --score))
   [ -n "$dir" ] && cd "$dir"
 }
 
 
-# fh: fuzzy history (atuin)
+# fh: fuzzy history (atuin). On macOS+wezterm, opens a side pane with stats.
 fh() {
-  local stats_pane current_pane
-  current_pane="$WEZTERM_PANE"
-  stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c 'atuin stats; printf "\e[?25l"; cat > /dev/null')
-  wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
-  wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
+  case "$OSTYPE" in
+    darwin*)
+      if [ -n "$WEZTERM_PANE" ] && command -v wezterm >/dev/null 2>&1; then
+        local stats_pane current_pane
+        current_pane="$WEZTERM_PANE"
+        stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c 'atuin stats; printf "\e[?25l"; cat > /dev/null')
+        wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
+        wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
+        atuin search -i "$@"
+        wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
+        return
+      fi
+      ;;
+  esac
   atuin search -i "$@"
-  wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
 }
 
 # legacy
@@ -137,7 +165,7 @@ fa() {
     --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
     --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
     --bind "ctrl-p:toggle-preview" \
-    --bind "ctrl-y:execute-silent(echo -n {} | pbcopy)+abort" \
+    --bind "ctrl-y:execute-silent(echo -n {} | _dotfiles_copy)+abort" \
     --expect=ctrl-e \
     < <({ grep -E '^alias ' "$XDG_CONFIG_HOME/zsh/.aliases" | sed 's/^alias //'; grep -E '^[a-z].*\(\)' "$XDG_CONFIG_HOME/zsh/.aliases" | sed 's/() {.*/ (function)/' }))
   key=$(echo "$out" | head -1)
@@ -161,8 +189,12 @@ function y() {
 # todo
 alias todo="$EDITOR $XDG_DATA_HOME/todo/todo.md"
 
-# gdu
-alias disk="gdu-go"
+# gdu — binary name differs by platform
+if command -v gdu-go >/dev/null 2>&1; then
+  alias disk="gdu-go"
+elif command -v gdu >/dev/null 2>&1; then
+  alias disk="gdu"
+fi
 
 # find port num
 alias portall="sudo lsof -nP | grep LISTEN"

@@ -1,5 +1,4 @@
-tap "arl/arl"
-tap "felixkratz/formulae"
+# ====== Cross-platform CLI ======
 # 쉘 히스토리를 SQLite에 저장하고 동기화하는 도구
 brew "atuin"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -44,8 +43,6 @@ brew "lazygit"
 brew "luacheck"
 # Package manager for the Lua programming language
 brew "luarocks"
-# Mac App Store command-line interface
-brew "mas"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
 # Polyglot runtime/version manager (replaces fnm + pyenv)
@@ -62,8 +59,6 @@ brew "ripgrep"
 brew "gping"
 # TCP connect to the given IP/port combo
 brew "tcping"
-# User interface to the TELNET protocol
-brew "telnet"
 # Terminal multiplexer
 # brew "tmux"
 # Plugin manager for tmux
@@ -72,8 +67,6 @@ brew "telnet"
 brew "tree"
 # Executes a program periodically, showing output fullscreen
 brew "watch"
-# Watch files and take action when they change
-brew "watchman"
 # Blazing fast terminal file manager written in Rust, based on async I/O
 brew "yazi"
 # Shell extension to navigate your filesystem faster
@@ -85,47 +78,60 @@ brew "zsh-vi-mode"
 # Multi-shell unified completion engine for 600+ CLIs
 brew "carapace"
 # Git in your tmux status bar.
+tap "arl/arl"
 brew "arl/arl/gitmux"
-# A window border system for macOS
-brew "felixkratz/formulae/borders"
-# [DEPRECATED] yabai/skhd → replaced by aerospace
-# brew "koekeishiya/formulae/skhd"
-# brew "koekeishiya/formulae/yabai"
-# GPU-accelerated cross-platform terminal emulator
-cask "wezterm"
-# AeroSpace is an i3-like tiling window manager for macOS
-cask "aerospace"
-# Enable Windows-like alt-tab
-cask "alt-tab"
-# Tool to remove unnecessary files and folders from disk
-cask "cleanmymac"
-# Developer targeted fonts with a high number of glyphs
-cask "font-hack-nerd-font"
-# Nerd Font patched version of 0xProto
-cask "font-0xproto-nerd-font"
-# Sans-serif variant of "San Francisco" by Apple
-cask "font-sf-pro"
-# Web browser
-cask "google-chrome"
-# JetBrains tools manager
-cask "jetbrains-toolbox"
-# Keyboard customiser
-cask "karabiner-elements"
-# Media player
-cask "movist-pro"
-# App to write, plan, collaborate, and get organised
-cask "notion"
-# Control your tools with a few keystrokes
-cask "raycast"
-# Tool to reverse the direction of scrolling
-cask "scroll-reverser"
-# Tool that provides consistent, highly configurable symbols for apps
-cask "sf-symbols"
-cask "keyclu"
 
-mas "Hidden Bar", id: 1452453066
-mas "Microsoft PowerPoint", id: 462062816
-mas "OneDrive", id: 823766827
-mas "QuickFTP", id: 1451646819
-mas "RunCat", id: 1429033973
-mas "Vimari", id: 1480933944
+# ====== macOS only ======
+if OS.mac?
+  tap "felixkratz/formulae"
+  # User interface to the TELNET protocol
+  brew "telnet"
+  # Mac App Store command-line interface
+  brew "mas"
+  # Watch files and take action when they change
+  brew "watchman"
+  # A window border system for macOS
+  brew "felixkratz/formulae/borders"
+  # [DEPRECATED] yabai/skhd → replaced by aerospace
+  # brew "koekeishiya/formulae/skhd"
+  # brew "koekeishiya/formulae/yabai"
+
+  # GPU-accelerated cross-platform terminal emulator
+  cask "wezterm"
+  # AeroSpace is an i3-like tiling window manager for macOS
+  cask "aerospace"
+  # Enable Windows-like alt-tab
+  cask "alt-tab"
+  # Tool to remove unnecessary files and folders from disk
+  cask "cleanmymac"
+  # Developer targeted fonts with a high number of glyphs
+  cask "font-hack-nerd-font"
+  # Nerd Font patched version of 0xProto
+  cask "font-0xproto-nerd-font"
+  # Sans-serif variant of "San Francisco" by Apple
+  cask "font-sf-pro"
+  # Web browser
+  cask "google-chrome"
+  # JetBrains tools manager
+  cask "jetbrains-toolbox"
+  # Keyboard customiser
+  cask "karabiner-elements"
+  # Media player
+  cask "movist-pro"
+  # App to write, plan, collaborate, and get organised
+  cask "notion"
+  # Control your tools with a few keystrokes
+  cask "raycast"
+  # Tool to reverse the direction of scrolling
+  cask "scroll-reverser"
+  # Tool that provides consistent, highly configurable symbols for apps
+  cask "sf-symbols"
+  cask "keyclu"
+
+  mas "Hidden Bar", id: 1452453066
+  mas "Microsoft PowerPoint", id: 462062816
+  mas "OneDrive", id: 823766827
+  mas "QuickFTP", id: 1451646819
+  mas "RunCat", id: 1429033973
+  mas "Vimari", id: 1480933944
+end

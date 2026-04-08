@@ -109,3 +109,39 @@ ln -sf ~/.config/.dotfiles/yazi/keymap.toml ~/.config/yazi/keymap.toml
 
 - **Aerospace** requires no SIP modification, unlike yabai which needs [partial SIP disable](https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)).
 - **Karabiner** config is _copied_ (not symlinked) because the app overwrites symlinks on save.
+
+## WSL2 / Ubuntu
+
+For Windows users running WSL2 Ubuntu, use `install.linux.sh` instead of `install.sh`:
+
+```bash
+git clone https://github.com/joresserwe/dotfiles ~/.config/.dotfiles
+~/.config/.dotfiles/install.linux.sh
+```
+
+The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powerlevel10k, neovim/AstroNvim, tmux, yazi, atuin, mise, claude code) using a hybrid **apt + Homebrew on Linux** setup. macOS-only tools (aerospace, karabiner, raycast, wallpaperkiller, casks, mas) are skipped automatically via `if OS.mac?` guards in the shared `Brewfile`.
+
+### Architecture
+
+- Single repo, single source of truth. OS differences are expressed as inline runtime branches (`case $OSTYPE` in shell, `if OS.mac?` in Brewfile) — no `darwin/`/`linux/` split folders.
+- `lib/common.sh` is a sourced-only library (mode 644) shared by both `install.sh` and `install.linux.sh`.
+- Phased structure (Phases 0–5) — fully idempotent, safe to re-run.
+
+### Phases
+
+| Phase | What |
+|:--|:--|
+| **0** | XDG dirs, apt base packages, Homebrew on Linux |
+| **1** | zsh + oh-my-zsh + powerlevel10k + zsh-autosuggestions, `chsh` |
+| **2** | `brew bundle` (Linux subset) + tmux/git/atuin/yazi configs |
+| **3** | mise + node LTS + global pnpm packages |
+| **4** | AstroNvim clone |
+| **5** | Claude Code symlinks |
+
+### Windows-side setup (manual)
+
+These are not automated — set them up once on the Windows side:
+
+1. **Nerd Font** — install `MesloLGS NF` (or any Nerd Font) and select it in Windows Terminal / wezterm-windows so powerlevel10k icons render.
+2. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
+3. **Clipboard** — works out of the box: tmux uses `set-clipboard on` (OSC 52) and the `_dotfiles_copy` shell helper falls back to `clip.exe` if no Wayland/X clipboard tool is present.

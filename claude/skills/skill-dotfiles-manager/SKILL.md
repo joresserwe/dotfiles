@@ -1,11 +1,23 @@
 ---
 name: skill-dotfiles-manager
-description: Manage the user's macOS dotfiles — add, remove, or modify tool configurations across Brewfile, install.sh, zsh configs, and symlinks. Trigger this skill whenever the user mentions dotfiles, brew packages, shell aliases, tool installation/removal, XDG config, or wants to set up/tear down any CLI tool or macOS app in their environment. Also trigger when the user says "add X", "remove X", "install X", "uninstall X" referring to dev tools or shell utilities.
+description: Manage the user's cross-platform dotfiles (macOS + WSL2/Ubuntu) — add, remove, or modify tool configurations across Brewfile, install.sh / install.linux.sh, zsh configs, and symlinks. Trigger this skill whenever the user mentions dotfiles, brew packages, shell aliases, tool installation/removal, XDG config, or wants to set up/tear down any CLI tool, macOS app, or WSL tool in their environment. Also trigger when the user says "add X", "remove X", "install X", "uninstall X" referring to dev tools or shell utilities.
 ---
 
 # Dotfiles Manager
 
-You are managing a macOS dotfiles system located at `$XDG_CONFIG_HOME/.dotfiles` (`~/.config/.dotfiles/`), version-controlled via GitHub. The goal: a single `install.sh` restores the full environment from a fresh macOS install.
+You are managing a cross-platform dotfiles system at `~/.config/.dotfiles/`, version-controlled via GitHub. One repo targets two OSes:
+
+- **macOS**: `install.sh` → full GUI + CLI environment.
+- **WinOS** (Windows + WSL2 Ubuntu): `install.linux.sh` inside WSL → full CLI environment. (Windows-side Nerd Font + Windows Terminal default profile are one-time manual steps.)
+
+## Cross-platform architecture (non-obvious)
+
+- **Single repo, no `darwin/`/`linux/` split.** OS differences are inline branches: `case $OSTYPE` in shell, `if OS.mac?` in the Brewfile.
+- **Two installers, one shared library.** `install.sh` and `install.linux.sh` both source `lib/common.sh` (sourced-only, mode 644). Shared helpers like `create_link` live there.
+- **`install.linux.sh` is phased (0–5) and idempotent.** When adding a WinOS tool, slot it into the right phase — read the file to find which.
+- **WinOS package mix**: apt for system base, **Homebrew on Linux** for userland tools shared with macOS.
+- **Node version manager differs**: macOS=`fnm`, WinOS=`mise`. The global pnpm package set must stay in sync across both.
+- **WSL clipboard**: `_dotfiles_copy` falls back to `clip.exe` when no Wayland/X clipboard tool exists — don't break this when touching copy helpers.
 
 ## Architecture
 
@@ -116,3 +128,8 @@ When updating configuration:
 ## Gotchas
 
 - All comments and docs in dotfiles must be English (not Korean).
+- **OS isolation rule (critical).** Goal: identical dev experience across macOS and WinOS, with zero risk of one OS's edits breaking the other.
+  - **WinOS-only** task → macOS configs are immutable (`install.sh`, macOS-only Brewfile entries, `OS.mac?`/`darwin*` branches).
+  - **macOS-only** task → WinOS configs are immutable (`install.linux.sh`, Linux phases, apt, `linux-gnu` branches).
+  - **Portable** change (works on both) → must be added to **both sides 1:1**: Brewfile, zsh configs, and both installers (or `lib/common.sh`).
+  - If unsure which bucket a change falls in, ask.

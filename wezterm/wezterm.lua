@@ -5,7 +5,23 @@ local workspace_switcher = wezterm.plugin.require 'https://github.com/MLFlexer/s
 local resurrect = wezterm.plugin.require 'https://github.com/MLFlexer/resurrect.wezterm'
 
 local is_windows = wezterm.target_triple:find 'windows' ~= nil
-workspace_switcher.zoxide_path = '/opt/homebrew/bin/zoxide'
+local is_darwin = wezterm.target_triple:find 'darwin' ~= nil
+
+-- Homebrew prefix differs per OS. On Windows (WSL stub case) WezTerm runs
+-- natively on Windows and cannot exec WSL-side binaries directly, so leave
+-- brew_bin empty and skip brew-path-dependent features below.
+local brew_bin = is_darwin and '/opt/homebrew/bin/'
+  or (not is_windows and '/home/linuxbrew/.linuxbrew/bin/' or '')
+
+-- On Windows, the entry config (%USERPROFILE%\.wezterm.lua) is a stub that
+-- dofile()s this file over the \\wsl.localhost UNC path. The 9P protocol
+-- powering \\wsl.localhost does not propagate inotify events, so edits to
+-- this file never trigger WezTerm's auto-reload on Windows. The workaround
+-- lives in wezterm/wezterm-watch.sh, which runs inside WSL and touches the
+-- Windows-side stub whenever this file changes.
+if brew_bin ~= '' then
+  workspace_switcher.zoxide_path = brew_bin .. 'zoxide'
+end
 
 ---------------------------------------------------------------------------
 -- AI Tools (여기에 추가하면 C-a+A 메뉴에 자동 반영)
@@ -66,14 +82,24 @@ local C = {
   mantle = bg_color:darken(0.03),
   crust = bg_color:darken(0.06),
 }
+-- Use the non-Mono Nerd Font variant: the 'Mono' variant squeezes icon
+-- glyphs into a single cell, which on Windows DPI renders them tiny.
+-- Non-Mono lets icons occupy 2 cells and show at a normal size, while
+-- regular text glyphs stay single-width as usual.
 config.font = wezterm.font('0xProto Nerd Font')
-config.font_size = 14.0
 
--- 외부 모니터(non-Retina) 감지 시 폰트 크기 자동 조정
+-- OS + DPI based font size (single source of truth).
+-- Low-DPI (≤96) usually means an external non-Retina monitor → bump up by 2.
+local function desired_font_size(dpi)
+  local base = is_windows and 12.0 or 14.0
+  return dpi <= 96 and (base + 2.0) or base
+end
+
+config.font_size = desired_font_size(96) -- initial value; replaced by handler below once a window exists
+
 wezterm.on('update-status', function(window)
   local overrides = window:get_config_overrides() or {}
-  local dpi = window:get_dimensions().dpi
-  local want = dpi <= 96 and 16.0 or 14.0
+  local want = desired_font_size(window:get_dimensions().dpi)
   if overrides.font_size ~= want then
     overrides.font_size = want
     window:set_config_overrides(overrides)
@@ -92,13 +118,6 @@ config.hide_tab_bar_if_only_one_tab = false
 config.tab_max_width = 32
 config.show_new_tab_button_in_tab_bar = false
 
-config.window_frame = {
-  font = wezterm.font('0xProto Nerd Font'),
-  font_size = 14.0,
-  active_titlebar_bg = 'none',
-  inactive_titlebar_bg = 'none',
-}
-
 -- Active pane highlighting
 config.inactive_pane_hsb = {
   saturation = 0.5,
@@ -113,8 +132,13 @@ local tab_bar_bg
 if config.tab_bar_at_bottom then
   tab_bar_bg = 'rgba(0, 0, 0, 0)'
 else
+  -- NOTE: must match the *final* window_background_opacity for the current OS.
+  -- The Windows override (0.7) is applied later in the file (in the OS-specific
+  -- block), so reading config.window_background_opacity here would still see the
+  -- mac default (0.85) and the tab bar would render darker than the terminal pane.
+  local effective_opacity = is_windows and 0.7 or 0.85
   local r, g, b = wezterm.color.parse(C.base):srgba_u8()
-  tab_bar_bg = string.format('rgba(%d, %d, %d, %s)', r, g, b, config.window_background_opacity)
+  tab_bar_bg = string.format('rgba(%d, %d, %d, %s)', r, g, b, effective_opacity)
 end
 config.colors = {
   tab_bar = {
@@ -218,7 +242,7 @@ config.keys = {
       direction = 'Bottom',
       size = 0.4,
       args = { '/bin/bash', '-c',
-        'result=$(/opt/homebrew/bin/fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
+        'result=$(' .. brew_bin .. 'fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
         .. tmp .. '"); rm -f "' .. tmp .. '"; '
         .. '[ -n "$result" ] && printf "%s" "$result" | pbcopy'
       },
@@ -405,7 +429,7 @@ local function get_git_info(cwd)
   local entry = git_cache[cwd]
   local cached = entry and entry.info
   if not cached or (now - (entry and entry.time or 0)) >= 10 then
-    local ok, handle = pcall(io.popen, "/opt/homebrew/bin/gitmux -dbg -timeout 500ms '" .. cwd:gsub("'", "'\\''") .. "' 2>/dev/null")
+    local ok, handle = pcall(io.popen, brew_bin .. "gitmux -dbg -timeout 500ms '" .. cwd:gsub("'", "'\\''") .. "' 2>/dev/null")
     if ok and handle then
       local raw = handle:read '*a'
       handle:close()
@@ -812,7 +836,8 @@ table.insert(config.keys, {
 -- OS-specific
 ---------------------------------------------------------------------------
 if is_windows then
-  config.default_prog = { 'pwsh.exe', '-NoLogo' }
+  -- Launch WSL (Ubuntu) + zsh as a login shell by default
+  config.default_prog = { 'wsl.exe', '-d', 'Ubuntu', '--cd', '~', '--', 'zsh', '-l' }
   config.window_background_opacity = 0.7
   config.win32_system_backdrop = 'Acrylic'
   config.macos_window_background_blur = nil
