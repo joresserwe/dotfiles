@@ -6,4 +6,5 @@ git
 inotify-tools
 procps
 unzip
+wslu
 zsh
