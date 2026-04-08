@@ -63,6 +63,8 @@ brew "tcping"
 # brew "tmux"
 # Plugin manager for tmux
 # brew "tpm"
+# Parser generator CLI (required by nvim-treesitter to build parsers)
+brew "tree-sitter-cli"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Executes a program periodically, showing output fullscreen
