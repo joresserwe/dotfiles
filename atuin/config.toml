@@ -21,6 +21,9 @@ show_tabs = true
 # 보안 필터
 secrets_filter = true
 
+# Disable update check on every enter (managed via Homebrew)
+update_check = false
+
 # 테마
 [theme]
 name = "catppuccin-mocha-mauve"
