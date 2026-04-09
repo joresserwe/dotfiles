@@ -208,7 +208,10 @@ config.keys = {
   { key = 'phys:h', mods = 'LEADER', action = act.ActivateTabRelative(-1) },
 
   -- Copy mode
-  { key = 'phys:v', mods = 'LEADER', action = act.ActivateCopyMode },
+  { key = 'phys:v', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
+    win:perform_action(act.ActivateCopyMode, pane)
+    win:perform_action(act.CopyMode 'ClearPattern', pane)
+  end)},
 
   -- QuickSelect: URL → 브라우저, 그 외 → 클립보드 복사
   { key = 'phys:q', mods = 'LEADER', action = act.QuickSelectArgs {
@@ -674,6 +677,28 @@ config.key_tables = {
       { key = '?', mods = 'NONE', action = act.Search 'CurrentSelectionOrEmptyString' },
       { key = 'n', mods = 'NONE', action = act.CopyMode 'NextMatch' },
       { key = 'phys:n', mods = 'SHIFT', action = act.CopyMode 'PriorMatch' },
+      { key = 'q', mods = 'NONE', action = act.Multiple {
+        act.CopyMode 'ClearPattern',
+        act.CopyMode 'Close',
+      }},
+      { key = 'Escape', mods = 'NONE', action = act.Multiple {
+        act.CopyMode 'ClearPattern',
+        act.CopyMode 'Close',
+      }},
+    }
+    for _, k in ipairs(extra) do table.insert(t, k) end
+    return t
+  end)(),
+
+  -- Search mode: Enter로 검색 확정 후 copy mode 복귀, Escape로 취소
+  search_mode = (function()
+    local t = wezterm.gui.default_key_tables().search_mode
+    local extra = {
+      { key = 'Enter', mods = 'NONE', action = act.CopyMode 'AcceptPattern' },
+      { key = 'Escape', mods = 'NONE', action = act.Multiple {
+        act.CopyMode 'ClearPattern',
+        act.CopyMode 'Close',
+      }},
     }
     for _, k in ipairs(extra) do table.insert(t, k) end
     return t
