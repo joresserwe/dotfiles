@@ -80,5 +80,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [[ -x "$DOTFILES_PATH/wezterm/wezterm-watc
   (nohup "$DOTFILES_PATH/wezterm/wezterm-watch.sh" >/dev/null 2>&1 &) 2>/dev/null
 fi
 
+# wezterm shell integration (OSC 7/133/1337: cwd tracking, prompt zones, user vars)
+if [[ -n "${WSL_DISTRO_NAME:-}" && -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]]; then
+  . "$DOTFILES_PATH/wezterm/wezterm.sh"
+fi
+
 #neofetch
 

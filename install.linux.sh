@@ -179,6 +179,18 @@ else
   log_skip "wezterm stub: not running under WSL or cmd.exe unavailable"
 fi
 
+# WezTerm shell integration script (provides OSC 7/133/1337 for cwd tracking,
+# prompt zones, and user vars). Sourced from .zshrc on WSL sessions.
+WEZTERM_SH="$DOTFILES_PATH/wezterm/wezterm.sh"
+WEZTERM_SH_URL="https://raw.githubusercontent.com/wez/wezterm/main/assets/shell-integration/wezterm.sh"
+if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+  log_step "Downloading wezterm shell integration script"
+  curl -fsSL "$WEZTERM_SH_URL" -o "$WEZTERM_SH"
+  log_done "wezterm.sh updated: $WEZTERM_SH"
+else
+  log_skip "wezterm.sh: not running under WSL"
+fi
+
 if command -v ya >/dev/null 2>&1; then
   for pkg in \
     boydaihungst/mediainfo \
