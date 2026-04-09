@@ -43,7 +43,8 @@ if command -v carapace &>/dev/null; then
 fi
 
 # mise (replaces fnm + pyenv)
-eval "$(mise activate zsh)"
+# eval "$(mise activate zsh)"
+export PATH="$HOME/.local/share/mise/shims:$PATH"
 
 # zoxide
 eval "$(zoxide init zsh)"
