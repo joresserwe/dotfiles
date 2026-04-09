@@ -133,3 +133,4 @@ When updating configuration:
   - **macOS-only** task → WinOS configs are immutable (`install.linux.sh`, Linux phases, apt, `linux-gnu` branches).
   - **Portable** change (works on both) → must be added to **both sides 1:1**: Brewfile, zsh configs, and both installers (or `lib/common.sh`).
   - If unsure which bucket a change falls in, ask.
+- **WSL: prefer native paths.** Inside WSL, use Linux-native paths (`/tmp`, `$XDG_CACHE_HOME`) over Windows mount paths (`$LOCALAPPDATA`, `/mnt/c/…`). Temp files, caches, and ephemeral state should stay within the WSL filesystem.
