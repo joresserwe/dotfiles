@@ -96,8 +96,8 @@ f/() {
   out=$(fzf --disabled --ansi --multi --delimiter=: \
     --height=100% --layout=reverse --border \
     --border-label " C-e:edit | C-y:copy | C-p:preview | live grep " \
-    --bind "start:reload:$RG_CMD {q} || :" \
-    --bind "change:reload:sleep 0.1; $RG_CMD {q} || :" \
+    --bind "start:reload:$RG_CMD -- {q} || :" \
+    --bind "change:reload:sleep 0.1; $RG_CMD -- {q} || :" \
     --preview 'f={1}; l={2}; f=${f//\x1b\[[0-9;]*m/}; l=${l//\x1b\[[0-9;]*m/}; bat --color=always --style=numbers --highlight-line "$l" --line-range=$(( l-10 > 0 ? l-10 : 1 )):$(( l+20 )) "$f"' \
     --preview-window=right:50%:wrap \
     --bind "ctrl-f:half-page-down,ctrl-b:half-page-up" \
