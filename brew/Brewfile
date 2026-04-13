@@ -73,8 +73,6 @@ brew "yazi"
 brew "zoxide"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
-# Vim keybindings for zsh line editor
-brew "zsh-vi-mode"
 # Multi-shell unified completion engine for 600+ CLIs
 brew "carapace"
 # Git in your tmux status bar.

@@ -20,26 +20,25 @@ plugins=(
 
 [ -f "$ZSH/oh-my-zsh.sh" ] && . "$ZSH/oh-my-zsh.sh"
 [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && . "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-# zsh-vi-mode: vim keybindings in the shell
-[ -f "$HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ] && . "$HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 
 # p10k
 [ -f "$ZDOTDIR/.p10k.zsh" ] && . "$ZDOTDIR/.p10k.zsh"
 
-# brew completions + compinit (must run before carapace)
-if type brew &>/dev/null
-then
-  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-
-  autoload -Uz compinit
-  compinit
+# brew completions (compinit already handled by oh-my-zsh; must run before carapace)
+if [[ -d "$HOMEBREW_PREFIX/share/zsh/site-functions" ]]; then
+  FPATH="$HOMEBREW_PREFIX/share/zsh/site-functions:${FPATH}"
 fi
 
 # carapace: unified multi-shell completion for 600+ CLIs (must be after compinit)
 if command -v carapace &>/dev/null; then
   export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
   zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
-  source <(carapace _carapace zsh)
+  local _carapace_cache="$XDG_CACHE_HOME/carapace/init.zsh"
+  if [[ ! -f "$_carapace_cache" || "$(command -v carapace)" -nt "$_carapace_cache" ]]; then
+    mkdir -p "${_carapace_cache:h}"
+    carapace _carapace zsh > "$_carapace_cache"
+  fi
+  source "$_carapace_cache"
 fi
 
 # mise (replaces fnm + pyenv)
