@@ -34,8 +34,11 @@ alt - d : yabai -m query --windows | jq -re " \
 # float / unfloat window and center on screen 
 alt - space :  yabai -m window --toggle float --grid 20:20:1:1:18:18
 
+# next/prev workspace
+alt - n : yabai -m space --focus next || yabai -m space --focus first
+alt - p : yabai -m space --focus prev || yabai -m space --focus last
+
 # toggle window zoom
-alt - n : yabai -m window --toggle zoom-parent
 alt - m : yabai -m window --toggle float --grid 1:1:0:0:1:1
 alt - 0x2F : yabai -m window --toggle sticky --toggle pip
 
