@@ -11,7 +11,9 @@ local is_darwin = wezterm.target_triple:find("darwin") ~= nil
 -- natively on Windows and cannot exec WSL-side binaries directly, so leave
 -- brew_bin empty and skip brew-path-dependent features below.
 local brew_bin = is_darwin and "/opt/homebrew/bin/" or (not is_windows and "/home/linuxbrew/.linuxbrew/bin/" or "")
-local clip_cmd = is_windows and "clip.exe" or "pbcopy"
+-- Homebrew path for commands running inside WSL panes (pane:split args)
+local wsl_brew_bin = is_windows and "/home/linuxbrew/.linuxbrew/bin/" or brew_bin
+local clip_cmd = is_windows and "win32yank.exe -i --crlf" or "pbcopy"
 
 -- On Windows, the entry config (%USERPROFILE%\.wezterm.lua) is a stub that
 -- dofile()s this file over the \\wsl.localhost UNC path. The 9P protocol
@@ -265,31 +267,50 @@ config.keys = {
 		key = "/",
 		mods = "LEADER",
 		action = wezterm.action_callback(function(win, pane)
-			local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
-			local tmp = "/tmp/wezterm_search_" .. tostring(os.time())
-			local f = io.open(tmp, "w")
-			if not f then
-				return
+			local pane_id = pane:pane_id()
+			if is_windows then
+				-- On Windows, Lua io runs on the Windows filesystem and mangles encoding.
+				-- Instead, the new pane fetches scrollback directly via wezterm.exe cli.
+				pane:split({
+					direction = "Bottom",
+					size = 0.4,
+					args = {
+						"/bin/zsh",
+						"-c",
+						"result=$(wezterm.exe cli get-text --pane-id "
+							.. tostring(pane_id)
+							.. " | "
+							.. wsl_brew_bin
+							.. 'fzf -m --tac --no-sort --exact --height=100% --layout=default --prompt="Search> "'
+							.. '); [ -n "$result" ] && printf "%s" "$result" | '
+							.. clip_cmd,
+					},
+				})
+			else
+				local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
+				local tmp = "/tmp/wezterm_search_" .. tostring(os.time())
+				local f = io.open(tmp, "w")
+				if not f then return end
+				f:write(text)
+				f:close()
+				pane:split({
+					direction = "Bottom",
+					size = 0.4,
+					args = {
+						"/bin/zsh",
+						"-c",
+						"result=$("
+							.. brew_bin
+							.. 'fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
+							.. tmp
+							.. '"); rm -f "'
+							.. tmp
+							.. '"; '
+							.. '[ -n "$result" ] && printf "%s" "$result" | '
+							.. clip_cmd,
+					},
+				})
 			end
-			f:write(text)
-			f:close()
-			pane:split({
-				direction = "Bottom",
-				size = 0.4,
-				args = {
-					"/bin/bash",
-					"-c",
-					"result=$("
-						.. brew_bin
-						.. 'fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
-						.. tmp
-						.. '"); rm -f "'
-						.. tmp
-						.. '"; '
-						.. '[ -n "$result" ] && printf "%s" "$result" | '
-						.. clip_cmd,
-				},
-			})
 		end),
 	},
 
