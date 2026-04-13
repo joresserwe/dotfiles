@@ -5,6 +5,14 @@ description: Manage the user's cross-platform dotfiles (macOS + WSL2/Ubuntu) —
 
 # Dotfiles Manager
 
+## First Run
+
+On first invocation each session, detect the current OS before doing anything else:
+- Check `$OSTYPE`: `darwin*` → **macOS**, `linux-gnu*` → **WinOS (WSL2)**.
+- Announce the result (e.g. "Detected: WinOS/WSL2") and apply the OS isolation rule accordingly.
+
+---
+
 You are managing a cross-platform dotfiles system at `~/.config/.dotfiles/`, version-controlled via GitHub. One repo targets two OSes:
 
 - **macOS**: `install.sh` → full GUI + CLI environment.
