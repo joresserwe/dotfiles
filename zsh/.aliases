@@ -136,22 +136,26 @@ fz() {
 }
 
 
-# fh: fuzzy history (atuin). On macOS+wezterm, opens a side pane with stats.
+# fh: fuzzy history (atuin). In wezterm, opens a side pane with stats.
 fh() {
+  local wez
   case "$OSTYPE" in
-    darwin*)
-      if [ -n "$WEZTERM_PANE" ] && command -v wezterm >/dev/null 2>&1; then
-        local stats_pane current_pane
-        current_pane="$WEZTERM_PANE"
-        stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c 'atuin stats; printf "\e[?25l"; cat > /dev/null')
-        wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
-        wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
-        atuin search -i "$@"
-        wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
-        return
-      fi
-      ;;
+    darwin*)  command -v wezterm >/dev/null 2>&1 && wez=wezterm ;;
+    linux-gnu*) command -v wezterm.exe >/dev/null 2>&1 && wez=wezterm.exe ;;
   esac
+
+  if [ -n "$wez" ] && [ "$TERM_PROGRAM" = "WezTerm" ]; then
+    local stats_pane current_pane
+    current_pane=${WEZTERM_PANE:-$($wez cli list --format json 2>/dev/null | jq -r '.[] | select(.is_active) | .pane_id')}
+    local stats_cmd='ATUIN_SESSION= atuin stats; printf "\e[?25l"; cat > /dev/null'
+    stats_pane=$($wez cli split-pane --right --percent 30 -- bash -c "PATH='$PATH' $stats_cmd")
+    $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
+    $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
+    atuin search -i "$@"
+    $wez cli kill-pane --pane-id "$stats_pane" 2>/dev/null
+    return
+  fi
+
   atuin search -i "$@"
 }
 
