@@ -472,12 +472,20 @@ config.keys = {
 ---------------------------------------------------------------------------
 -- Pane navigation (nvim-aware, vim-tmux-navigator 대체)
 ---------------------------------------------------------------------------
-local function is_vim(pane)
-	local name = pane:get_foreground_process_name() or ""
-	if name:find("yazi") ~= nil then
+-- nvim 측(polish.lua) 이 OSC 1337 로 broadcast 하는 user_var:
+--   IS_NVIM         : 이 pane 에 nvim 떠있음
+--   NVIM_AT_<DIR>   : 현재 nvim 창이 해당 방향 edge 에 위치 (DIR ∈ LEFT/RIGHT/UP/DOWN)
+-- 두 플래그 조합으로:
+--   nvim + non-edge  -> SendKey (nvim 내부 창 이동)
+--   nvim + edge      -> ActivatePaneDirection (wezterm 직접 전환, CLI 호출 없음)
+--   non-nvim         -> ActivatePaneDirection
+local edge_flag = { h = "NVIM_AT_LEFT", j = "NVIM_AT_DOWN", k = "NVIM_AT_UP", l = "NVIM_AT_RIGHT" }
+local function should_send_to_nvim(pane, nav_key)
+	local vars = pane:get_user_vars() or {}
+	if vars.IS_NVIM ~= "1" then
 		return false
 	end
-	return name:find("n?vim") ~= nil or pane:is_alt_screen_active()
+	return vars[edge_flag[nav_key]] ~= "1"
 end
 
 local nav_keys = {
@@ -492,7 +500,7 @@ for _, nav in ipairs(nav_keys) do
 		mods = "CTRL",
 		action = wezterm.action_callback(function(win, pane)
 			local tab = pane:tab()
-			if is_vim(pane) or (tab and #tab:panes() == 1) then
+			if should_send_to_nvim(pane, nav.key) or (tab and #tab:panes() == 1) then
 				win:perform_action(act.SendKey({ key = nav.key, mods = "CTRL" }), pane)
 			else
 				win:perform_action(act.ActivatePaneDirection(nav.dir), pane)
