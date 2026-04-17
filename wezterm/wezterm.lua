@@ -320,8 +320,25 @@ config.keys = {
 	-- 커맨드 팔레트
 	{ key = ":", mods = "LEADER", action = act.ActivateCommandPalette },
 
-	-- Close pane
-	{ key = "phys:x", mods = "LEADER", action = act.CloseCurrentPane({ confirm = true }) },
+	-- Close pane/tab (선택 후 즉시 종료, 추가 확인창 없음)
+	{
+		key = "phys:x",
+		mods = "LEADER",
+		action = act.InputSelector({
+			title = "Close",
+			choices = {
+				{ label = "Current pane", id = "pane" },
+				{ label = "Current tab (all panes)", id = "tab" },
+			},
+			action = wezterm.action_callback(function(win, pane, id, label)
+				if id == "pane" then
+					win:perform_action(act.CloseCurrentPane({ confirm = false }), pane)
+				elseif id == "tab" then
+					win:perform_action(act.CloseCurrentTab({ confirm = false }), pane)
+				end
+			end),
+		}),
+	},
 
 	-- Reload config
 	{ key = "phys:r", mods = "LEADER", action = act.ReloadConfiguration },
