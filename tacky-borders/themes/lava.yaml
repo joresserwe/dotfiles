@@ -1,0 +1,49 @@
+# Theme: lava
+# Blood-black -> blood-red -> flame. Deep, moody, intense warm.
+
+watch_config_changes: True
+rendering_backend: V2
+
+window_rules:
+  - match: Process
+    name: "zebar"
+    enabled: False
+  - match: Process
+    name: "Raycast"
+    enabled: False
+  - match: Process
+    name: "LeagueClientUx"
+    enabled: False
+  - match: Process
+    name: "League of Legends"
+    enabled: False
+  - match: Process
+    name: "RiotClientUx"
+    enabled: False
+
+global:
+  border_width: 5
+  border_offset: -1
+  border_radius: Auto
+  border_z_order: AboveWindow
+  follow_native_border: True
+  initialize_delay: 250
+  unminimize_delay: 200
+
+  active_color:
+    colors: ["#450a0a", "#dc2626", "#f97316"]
+    direction: 135deg
+
+  inactive_color: "#00000000"
+
+  animations:
+    active:
+      - type: Fade
+        duration: 200
+        easing: EaseInOutQuad
+    inactive:
+      - type: Fade
+        duration: 200
+        easing: EaseInOutQuad
+    fps: 60
+    enabled: True

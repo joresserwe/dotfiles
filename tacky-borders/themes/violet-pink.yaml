@@ -1,0 +1,53 @@
+# Theme: violet-pink
+# Vibrant violet -> hot pink diagonal gradient. Default theme — the one we
+# picked while debugging UIPI. Calm Fade animation, no rotation.
+
+watch_config_changes: True
+rendering_backend: V2
+
+window_rules:
+  - match: Process
+    name: "zebar"
+    enabled: False
+  - match: Process
+    name: "Raycast"
+    enabled: False
+  - match: Process
+    name: "LeagueClientUx"
+    enabled: False
+  - match: Process
+    name: "League of Legends"
+    enabled: False
+  - match: Process
+    name: "RiotClientUx"
+    enabled: False
+
+global:
+  border_width: 5
+  border_offset: -1
+  border_radius: Auto
+  border_z_order: AboveWindow
+  follow_native_border: True
+  initialize_delay: 250
+  unminimize_delay: 200
+
+  active_color:
+    colors: ["#8B5CF6", "#ec4899"]
+    direction: 135deg
+
+  # Inactive windows: fully transparent (RRGGBBAA, alpha=0). border_width is
+  # global in tacky-borders — we can't thin the inactive border, but we can
+  # make it invisible so only the focused window shows any chrome.
+  inactive_color: "#00000000"
+
+  animations:
+    active:
+      - type: Fade
+        duration: 150
+        easing: EaseInOutQuad
+    inactive:
+      - type: Fade
+        duration: 150
+        easing: EaseInOutQuad
+    fps: 60
+    enabled: True

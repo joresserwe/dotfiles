@@ -1,0 +1,14 @@
+# Windows-side packages installed via winget.
+# One entry per line: `<package-id> [source]`. Comments (#) and blank lines ignored.
+# Source defaults to winget. Use `msstore` for Microsoft Store-only packages.
+# Find IDs with `winget search <name>`.
+
+# Tiling window manager
+glzr-io.glazewm
+
+# Launcher / productivity tool — distributed via Microsoft Store only
+# (the winget-pkgs entry Raycast.Raycast is unmaintained as of 2025-11).
+9PFXXSHC64H3 msstore
+
+# Keyboard scripting — required by winget/winkey.ahk
+AutoHotkey.AutoHotkey

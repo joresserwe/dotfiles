@@ -1,0 +1,336 @@
+# GlazeWM v3 — Windows tiling WM config
+# Mirrors the AeroSpace (macOS) keybindings as closely as possible.
+# Uses lwin (Windows key) as the primary modifier — matches the physical
+# position of alt/option on Mac keyboards.
+# Reference: aerospace/aerospace.toml
+
+general:
+  startup_commands:
+    - 'shell-exec zebar'
+  shutdown_commands:
+    - 'shell-exec taskkill /IM zebar.exe /F'
+  config_reload_commands: []
+  focus_follows_cursor: false
+  toggle_workspace_on_refocus: true
+  cursor_jump:
+    enabled: true
+    trigger: 'monitor_focus'
+  hide_method: 'cloak'
+  show_all_in_taskbar: false
+
+# Gaps (matching AeroSpace: inner 10, outer 8)
+gaps:
+  scale_with_dpi: true
+  inner_gap: '10px'
+  outer_gap:
+    top: '8px'        # Zebar reserves its own 26px via dockToEdge
+    right: '8px'
+    bottom: '8px'
+    left: '8px'
+
+window_effects:
+  # Native DWM border is disabled — tacky-borders (Windows side) draws the
+  # focus indicator instead, which supports adjustable width, gradients and
+  # fade animations. See dotfiles/tacky-borders/config.yaml.
+  focused_window:
+    border:
+      enabled: false
+      color: '#8B5CF6'
+    hide_title_bar:
+      enabled: false
+  other_windows:
+    border:
+      enabled: false
+      color: '#494d64'
+    hide_title_bar:
+      enabled: false
+
+window_behavior:
+  initial_state: 'tiling'
+  state_defaults:
+    floating:
+      centered: true
+      shown_on_top: false
+    fullscreen:
+      maximized: true
+      shown_on_top: false
+
+# Workspaces — 3 per monitor, bound dynamically by generate-config.ps1 which
+# rewrites the BEGIN/END block on reload based on current monitor count.
+# Keybindings below have matching BEGIN/END blocks (focus/move workspace).
+# The committed content assumes 3 monitors (ws1-9) as a readable default;
+# generator reduces it to monitor_count × 3 on live config at reload.
+workspaces:
+  # BEGIN_GENERATED_WORKSPACES
+  - { name: '1', bind_to_monitor: 0, keep_alive: true }
+  - { name: '2', bind_to_monitor: 0, keep_alive: true }
+  - { name: '3', bind_to_monitor: 0, keep_alive: true }
+  - { name: '4', bind_to_monitor: 1, keep_alive: true }
+  - { name: '5', bind_to_monitor: 1, keep_alive: true }
+  - { name: '6', bind_to_monitor: 1, keep_alive: true }
+  - { name: '7', bind_to_monitor: 2, keep_alive: true }
+  - { name: '8', bind_to_monitor: 2, keep_alive: true }
+  - { name: '9', bind_to_monitor: 2, keep_alive: true }
+  # END_GENERATED_WORKSPACES
+
+# ---------------------------------------------------------------------------
+# Window Rules
+# ---------------------------------------------------------------------------
+window_rules:
+  # Ignore Zebar (status bar) and games — unmanaged, WM doesn't touch size/pos.
+  # Games prefer exclusive fullscreen/borderless, so tiling WM interference
+  # (even set-floating) can cause render/resolution issues. AeroSpace has no
+  # true `ignore` equivalent; macOS side keeps `layout floating` as the
+  # closest unmanaged state.
+  - commands: ['ignore']
+    match:
+      - window_process: { equals: 'zebar' }
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+      - window_process: { regex: 'LeagueClientUx|RiotClientUx' }
+      - window_process: { equals: 'League of Legends' }
+
+  # Float utility windows (mirrors AeroSpace floating rules)
+  - commands: ['set-floating']
+    match:
+      - window_process: { equals: 'CalculatorApp' }
+      - window_process: { equals: 'KakaoTalk' }
+      - window_process: { regex: 'SystemSettings|mmc' }
+      - window_process: { equals: 'explorer' }
+        window_class: { equals: 'CabinetWClass' }
+      - window_title: { regex: 'Task Manager|작업 관리자' }
+      - window_process: { regex: 'idea64|pycharm64' }
+
+# ---------------------------------------------------------------------------
+# Binding Modes (resize / move — mirrors AeroSpace modes)
+# ---------------------------------------------------------------------------
+binding_modes:
+  # Resize mode (AeroSpace: ctrl+alt+cmd+r)
+  - name: 'resize'
+    keybindings:
+      # Resize (hjkl)
+      - commands: ['resize --width -40px']
+        bindings: ['h', 'left']
+      - commands: ['resize --height +40px']
+        bindings: ['j', 'down']
+      - commands: ['resize --height -40px']
+        bindings: ['k', 'up']
+      - commands: ['resize --width +40px']
+        bindings: ['l', 'right']
+      # Reverse resize (shift+hjkl)
+      - commands: ['resize --width +40px']
+        bindings: ['shift+h']
+      - commands: ['resize --height -40px']
+        bindings: ['shift+j']
+      - commands: ['resize --height +40px']
+        bindings: ['shift+k']
+      - commands: ['resize --width -40px']
+        bindings: ['shift+l']
+      # Focus navigation while in resize mode
+      - commands: ['focus --direction left']
+        bindings: ['lwin+h']
+      - commands: ['focus --direction down']
+        bindings: ['lwin+j']
+      - commands: ['focus --direction up']
+        bindings: ['lwin+k']
+      - commands: ['focus --direction right']
+        bindings: ['lwin+l']
+      # Quick resize (=, -)
+      - commands: ['resize --width +25px']
+        bindings: ['oem_plus']
+      - commands: ['resize --width -25px']
+        bindings: ['oem_minus']
+      # Exit resize mode
+      - commands: ['wm-disable-binding-mode --name resize']
+        bindings: ['escape', 'space', 'ctrl+alt+lwin+r']
+
+  # Move mode (AeroSpace: ctrl+alt+cmd+m)
+  - name: 'move'
+    keybindings:
+      - commands: ['move --direction left']
+        bindings: ['h', 'left']
+      - commands: ['move --direction down']
+        bindings: ['j', 'down']
+      - commands: ['move --direction up']
+        bindings: ['k', 'up']
+      - commands: ['move --direction right']
+        bindings: ['l', 'right']
+      # Exit move mode
+      - commands: ['wm-disable-binding-mode --name move']
+        bindings: ['escape', 'space', 'ctrl+alt+lwin+m']
+
+  # Transient reload indicator — surfaces as a pill in zebar (via bindingModes).
+  # Enabled by Hyper+C reload; auto-disabled by reload-indicator.ps1 after ~2s.
+  - name: 'reloaded'
+    keybindings:
+      - commands: ['wm-disable-binding-mode --name reloaded']
+        bindings: ['escape']
+
+# ---------------------------------------------------------------------------
+# Main Keybindings
+# ---------------------------------------------------------------------------
+keybindings:
+  # ---- Focus window (win+hjkl) ----
+  - commands: ['focus --direction left']
+    bindings: ['lwin+h']
+  - commands: ['focus --direction down']
+    bindings: ['lwin+j']
+  - commands: ['focus --direction up']
+    bindings: ['lwin+k']
+  - commands: ['focus --direction right']
+    bindings: ['lwin+l']
+
+  # ---- Move window (win+shift+hjkl) ----
+  # `wm-redraw` after every move forces GlazeWM to re-apply tile sizes.
+  # Workaround for wezterm + multi-DPI bug (glzr-io/glazewm#661): on
+  # cross-monitor moves wezterm ignores GlazeWM's SetWindowPos and picks
+  # its own size from cell-grid math at the new DPI, ending up smaller
+  # than the tile or spanning two monitors.
+  # The delayed-redraw.ps1 fires a SECOND wm-redraw 1s later to catch
+  # wezterm's async DPI resize that happens AFTER the immediate redraw
+  # (upstream wezterm has no setting to suppress this — see
+  # wezterm#1983, #6374). The script scopes itself to $targets (wezterm-gui
+  # by default), so other apps aren't re-tiled unnecessarily. Launched via
+  # shell-exec --hide-window (GlazeWM v3.6.0+) spawns without a console — no
+  # cmd flash on every move. Native replacement for prior wscript/vbs wrappers.
+  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\delayed-redraw.ps1"']
+    bindings: ['lwin+shift+h']
+  - commands: ['move --direction down',  'wm-redraw', *delayed_redraw]
+    bindings: ['lwin+shift+j']
+  - commands: ['move --direction up',    'wm-redraw', *delayed_redraw]
+    bindings: ['lwin+shift+k']
+  - commands: ['move --direction right', 'wm-redraw', *delayed_redraw]
+    bindings: ['lwin+shift+l']
+
+  # ---- Workspace focus (win+1~9) ----
+  # BEGIN_GENERATED_WS_FOCUS
+  - commands: ['focus --workspace 1']
+    bindings: ['lwin+1']
+  - commands: ['focus --workspace 2']
+    bindings: ['lwin+2']
+  - commands: ['focus --workspace 3']
+    bindings: ['lwin+3']
+  - commands: ['focus --workspace 4']
+    bindings: ['lwin+4']
+  - commands: ['focus --workspace 5']
+    bindings: ['lwin+5']
+  - commands: ['focus --workspace 6']
+    bindings: ['lwin+6']
+  - commands: ['focus --workspace 7']
+    bindings: ['lwin+7']
+  - commands: ['focus --workspace 8']
+    bindings: ['lwin+8']
+  - commands: ['focus --workspace 9']
+    bindings: ['lwin+9']
+  # END_GENERATED_WS_FOCUS
+
+  # ---- Move window to workspace (win+shift+1~9) with focus follow ----
+  # Cross-monitor workspace moves trigger the same wezterm DPI resize bug as
+  # direction moves, so they get the same delayed-redraw workaround.
+  # BEGIN_GENERATED_WS_MOVE
+  - commands: ['move --workspace 1', 'focus --workspace 1', *delayed_redraw]
+    bindings: ['lwin+shift+1']
+  - commands: ['move --workspace 2', 'focus --workspace 2', *delayed_redraw]
+    bindings: ['lwin+shift+2']
+  - commands: ['move --workspace 3', 'focus --workspace 3', *delayed_redraw]
+    bindings: ['lwin+shift+3']
+  - commands: ['move --workspace 4', 'focus --workspace 4', *delayed_redraw]
+    bindings: ['lwin+shift+4']
+  - commands: ['move --workspace 5', 'focus --workspace 5', *delayed_redraw]
+    bindings: ['lwin+shift+5']
+  - commands: ['move --workspace 6', 'focus --workspace 6', *delayed_redraw]
+    bindings: ['lwin+shift+6']
+  - commands: ['move --workspace 7', 'focus --workspace 7', *delayed_redraw]
+    bindings: ['lwin+shift+7']
+  - commands: ['move --workspace 8', 'focus --workspace 8', *delayed_redraw]
+    bindings: ['lwin+shift+8']
+  - commands: ['move --workspace 9', 'focus --workspace 9', *delayed_redraw]
+    bindings: ['lwin+shift+9']
+  # END_GENERATED_WS_MOVE
+
+  # ---- Next/prev workspace on current monitor (win+n/p) ----
+  - commands: ['focus --next-active-workspace-on-monitor']
+    bindings: ['lwin+n']
+  - commands: ['focus --prev-active-workspace-on-monitor']
+    bindings: ['lwin+p']
+
+  # ---- Move to next/prev workspace on current monitor (win+shift+n/p) ----
+  - commands: ['move --next-active-workspace-on-monitor', 'focus --next-active-workspace-on-monitor']
+    bindings: ['lwin+shift+n']
+  - commands: ['move --prev-active-workspace-on-monitor', 'focus --prev-active-workspace-on-monitor']
+    bindings: ['lwin+shift+p']
+
+  # ---- Recent workspace (win+z) — workspace-back-and-forth ----
+  - commands: ['focus --recent-workspace']
+    bindings: ['lwin+z']
+
+  # ---- Toggle floating / tiling (win+space) ----
+  - commands: ['toggle-floating --centered']
+    bindings: ['lwin+space']
+
+  # ---- Fullscreen (win+m) ----
+  - commands: ['toggle-fullscreen']
+    bindings: ['lwin+m']
+
+  # ---- Toggle tiling direction (win+shift+s) ----
+  - commands: ['toggle-tiling-direction']
+    bindings: ['lwin+shift+s']
+
+  # ---- Focus monitor (win+[ / win+]) ----
+  - commands: ['focus --workspace-in-direction left']
+    bindings: ['lwin+oem_open_brackets']
+  - commands: ['focus --workspace-in-direction right']
+    bindings: ['lwin+oem_close_brackets']
+
+  # ---- Move workspace to monitor (win+shift+[ / win+shift+]) ----
+  # Moves whole workspace across monitors — guaranteed DPI change if monitors differ.
+  - commands: ['move-workspace --direction left',  *delayed_redraw]
+    bindings: ['lwin+shift+oem_open_brackets']
+  - commands: ['move-workspace --direction right', *delayed_redraw]
+    bindings: ['lwin+shift+oem_close_brackets']
+
+  # ---- Quick resize (win+= / win+-) ----
+  - commands: ['resize --width +2%']
+    bindings: ['lwin+oem_plus']
+  - commands: ['resize --width -2%']
+    bindings: ['lwin+oem_minus']
+
+  # ---- Cycle focus (win+u / win+d / win+f) handled by winkey.ahk ----
+  # wm-cycle-focus needed a focused window as anchor and no-op'd when nothing
+  # was focused (e.g. after switching monitors). AHK's CycleOnMonitor has no
+  # anchor requirement and covers unmanaged windows too.
+  # AHK cycles through visible top-level windows on current monitor,
+  # including unmanaged ones (Raycast etc.) that glazewm's
+  # wm-cycle-focus can't reach. See winget/winkey.ahk.
+
+  # ---- Enter binding modes (Hyper+R / Hyper+M, mirrors AeroSpace) ----
+  - commands: ['wm-enable-binding-mode --name resize']
+    bindings: ['ctrl+alt+lwin+r']
+  - commands: ['wm-enable-binding-mode --name move']
+    bindings: ['ctrl+alt+lwin+m']
+
+  # ---- Reload config (Hyper+C) — reloads glazewm + AHK, flashes zebar pill ----
+  # - AHK: relaunch is delegated to reload-ahk.ps1 because glazewm 3.10.1
+  #   shell-exec mis-parses two consecutive quoted paths-with-spaces (drops
+  #   the closing quote into the first token → "cannot find" dialog).
+  # - Indicator: `reloaded` binding_mode enabled, auto-disabled ~2s later
+  #   by reload-indicator.ps1. Zebar renders active bindingModes as pills.
+  - commands:
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-ahk.ps1"'
+      - 'wm-enable-binding-mode --name reloaded'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-indicator.ps1"'
+      # generate-config.ps1 regenerates live config.yaml from the WSL-side
+      # template (monitor_count × 3 workspaces) and issues wm-reload-config
+      # itself once the write is done — so no explicit wm-reload-config here.
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\generate-config.ps1"'
+      # tacky-borders v1.4.1 (issue #72): render_backend can drop to None on
+      # sleep/wake or display change and isn't recreated → borders vanish.
+      # Touching config.yaml mtime fires the in-app watcher → full reload.
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\tacky-reload.ps1"'
+      # zebar has no hot-reload and accumulates ghost tray icons from AHK
+      # relaunch cycles — full restart clears ghosts + picks up widget edits.
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-zebar.ps1"'
+    bindings: ['ctrl+alt+lwin+c']
+
+  # ---- Pause keybindings (Hyper+Q, escape hatch for games, etc.) ----
+  - commands: ['wm-toggle-pause']
+    bindings: ['ctrl+alt+lwin+q']

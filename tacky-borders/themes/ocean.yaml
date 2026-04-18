@@ -1,0 +1,49 @@
+# Theme: ocean
+# Deep blue -> teal -> cyan. Cool palette, no purple/pink. Fade only.
+
+watch_config_changes: True
+rendering_backend: V2
+
+window_rules:
+  - match: Process
+    name: "zebar"
+    enabled: False
+  - match: Process
+    name: "Raycast"
+    enabled: False
+  - match: Process
+    name: "LeagueClientUx"
+    enabled: False
+  - match: Process
+    name: "League of Legends"
+    enabled: False
+  - match: Process
+    name: "RiotClientUx"
+    enabled: False
+
+global:
+  border_width: 5
+  border_offset: -1
+  border_radius: Auto
+  border_z_order: AboveWindow
+  follow_native_border: True
+  initialize_delay: 250
+  unminimize_delay: 200
+
+  active_color:
+    colors: ["#1e40af", "#0891b2", "#06b6d4"]
+    direction: 135deg
+
+  inactive_color: "#00000000"  # transparent — hide inactive border
+
+  animations:
+    active:
+      - type: Fade
+        duration: 200
+        easing: EaseInOutQuad
+    inactive:
+      - type: Fade
+        duration: 200
+        easing: EaseInOutQuad
+    fps: 60
+    enabled: True

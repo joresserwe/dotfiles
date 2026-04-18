@@ -1,0 +1,339 @@
+@import 'https://www.nerdfonts.com/assets/css/webfont.css';
+@import 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+
+:root {
+  --fg: rgba(255, 255, 255, 0.92);
+  --fg-dim: rgba(255, 255, 255, 0.6);
+  --bg: rgba(20, 20, 24, 0.72);
+  --accent: rgba(120, 170, 255, 0.95);
+  --hot: rgba(255, 120, 120, 0.95);
+
+  /* Semantic icon tints — muted, mac-menubar style */
+  --tint-media:   rgba(205, 180, 255, 0.9);   /* soft lavender */
+  --tint-audio:   rgba(140, 210, 230, 0.9);   /* soft cyan */
+  --tint-battery: rgba(140, 220, 160, 0.95);  /* green (charging) */
+  --tint-network: rgba(150, 215, 170, 0.85);  /* soft green */
+  --tint-sun:     rgba(255, 200, 120, 0.95);  /* warm yellow */
+  --tint-moon:    rgba(180, 200, 240, 0.9);   /* cool blue */
+  --tint-rain:    rgba(140, 190, 240, 0.9);   /* rain blue */
+  --tint-snow:    rgba(220, 235, 255, 0.95);  /* snow white-blue */
+  --tint-thunder: rgba(230, 195, 120, 0.95);  /* thunder amber */
+
+  --divider: rgba(255, 255, 255, 0.12);
+
+  --font-size: 11px;
+  --icon-size: 11px;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font: var(--font-size) / 1 'Pretendard Variable', Pretendard, -apple-system,
+        BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable', 'Segoe UI',
+        ui-sans-serif, system-ui, sans-serif;
+  color: var(--fg);
+  overflow: hidden;
+  font-feature-settings: 'ss01', 'ss02', 'cv01';
+}
+
+#root {
+  background: var(--bg);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: default;
+}
+
+div, span, p, i { user-select: none; }
+
+i {
+  font-size: var(--icon-size);
+  line-height: 1;
+  color: var(--fg-dim);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  height: 100%;
+  padding: 0 10px;
+  gap: 10px;
+}
+
+.left  { display: flex; align-items: center; gap: 8px; justify-self: start; }
+.right { display: flex; align-items: center; gap: 6px; justify-self: end; }
+.ime {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 26px;
+  text-align: center;
+  transition: background 180ms, color 180ms;
+}
+.ime.ime-ko { background: rgba(120, 170, 255, 0.18); color: var(--accent); }
+.ime.ime-en { background: rgba(255, 255, 255, 0.06); color: var(--fg-dim); }
+.ime.divider-left {
+  padding-left: 6px;
+  margin-left: 10px;
+}
+.ime.divider-left::before {
+  left: -9px;
+}
+
+.divider-left {
+  position: relative;
+  padding-left: 8px;
+  margin-left: 2px;
+}
+.divider-left::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 13px;
+  background: var(--divider);
+}
+
+.systray {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  margin-left: -8px;
+}
+.systray::before,
+.systray::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 13px;
+  background: var(--divider);
+}
+.systray::before { left: 0; }
+.systray::after  { right: 0; }
+.tray-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 120ms;
+  cursor: default;
+}
+.tray-icon:hover { background: rgba(255, 255, 255, 0.1); }
+.tray-icon img {
+  width: 18px;
+  height: 18px;
+  image-rendering: -webkit-optimize-contrast;
+  display: block;
+}
+
+.clock {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sparkline {
+  width: 36px;
+  height: 14px;
+  display: block;
+  overflow: visible;
+  opacity: 0.85;
+}
+
+/* Tight icon + metric pair, graph trailing (CPU/RAM) */
+.stat.compact { gap: 2px; }
+
+/* Unified %/numeric label across all stats */
+.metric {
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  min-width: 20px;
+  text-align: right;
+  color: var(--fg-dim);
+}
+.metric.hot { color: var(--hot); }
+
+.runcat {
+  height: 20px;
+  width: auto;
+  /* Black silhouette → invert to white → sepia+saturate to gain hue → rotate hue for rainbow */
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(0deg);
+  animation: runcat-rainbow 3s linear infinite;
+  image-rendering: pixelated;
+  vertical-align: middle;
+  margin-right: -2px;
+}
+
+@keyframes runcat-rainbow {
+  from { filter: invert(1) sepia(1) saturate(5) hue-rotate(0deg); }
+  to   { filter: invert(1) sepia(1) saturate(5) hue-rotate(360deg); }
+}
+
+.logo {
+  font-size: 13px;
+  color: var(--fg);
+  margin-right: 2px;
+}
+
+.workspaces {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ws {
+  min-width: 18px;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: var(--fg-dim);
+  font-size: 10px;
+  font-weight: 500;
+  transition: background 120ms, color 120ms;
+}
+
+.ws.displayed { color: var(--fg); }
+.ws.focused   { background: rgba(255, 255, 255, 0.12); color: var(--fg); }
+.ws:hover     { background: rgba(255, 255, 255, 0.08); }
+
+.focused-title {
+  max-width: 360px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: 0.1px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--divider);
+}
+
+.pill {
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.pill.paused { background: rgba(255, 170, 80, 0.18); color: rgba(255, 190, 120, 1); }
+.pill.mode   { background: rgba(120, 170, 255, 0.18); color: var(--accent); }
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg);
+}
+
+.stat i { color: var(--fg-dim); }
+.hot { color: var(--hot); }
+
+.stat.muted, .stat.muted i { color: var(--fg-dim); }
+
+/* Semantic icon tints — text stays white, icons colored */
+.stat.media i        { color: var(--tint-media); }
+.stat.audio i        { color: var(--tint-audio); }
+.stat.network i      { color: var(--tint-network); }
+.stat.battery .charging-icon { color: var(--tint-battery); }
+.stat.battery.charging i     { color: var(--tint-battery); }
+.stat.weather i         { font-size: 17px; line-height: 1; }
+.stat.weather           { font-size: 12px; font-weight: 500; gap: 5px; }
+.stat.weather.sun i     { color: var(--tint-sun); }
+.stat.weather.moon i    { color: var(--tint-moon); }
+.stat.weather.rain i    { color: var(--tint-rain); }
+.stat.weather.snow i    { color: var(--tint-snow); }
+.stat.weather.thunder i { color: var(--tint-thunder); }
+
+.media {
+  max-width: 180px;
+  min-width: 0;
+  cursor: pointer;
+  transition: opacity 120ms;
+}
+.media:hover { opacity: 0.85; }
+.media.paused { opacity: 0.55; }
+.media-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Music visualizer — 3 animated bars */
+.viz {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 11px;
+  width: 11px;
+}
+.viz span {
+  flex: 1;
+  background: var(--tint-media);
+  border-radius: 1px;
+  animation: viz-bounce 800ms ease-in-out infinite;
+}
+.viz span:nth-child(1) { animation-delay: -200ms; }
+.viz span:nth-child(2) { animation-delay: -400ms; }
+.viz span:nth-child(3) { animation-delay: -600ms; }
+@keyframes viz-bounce {
+  0%, 100% { height: 25%; }
+  50%      { height: 100%; }
+}
+
+
+
+.traffic {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+  font-size: 8.5px;
+  line-height: 1.05;
+  color: var(--fg-dim);
+  min-width: 52px;
+}
+.traffic-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.traffic-row i { font-size: 8.5px; color: var(--fg-dim); }
+.traffic-label {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--fg-dim);
+  opacity: 0.75;
+}
