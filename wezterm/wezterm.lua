@@ -87,7 +87,20 @@ local C = {
 -- glyphs into a single cell, which on Windows DPI renders them tiny.
 -- Non-Mono lets icons occupy 2 cells and show at a normal size, while
 -- regular text glyphs stay single-width as usual.
-config.font = wezterm.font("0xProto Nerd Font")
+-- Fallback to the official VS Code codicon font for codepoints beyond the
+-- standard Nerd Font codicon range (EA60-EC1E) — e.g. U+EC21 sparkle-filled
+-- emitted by Claude Code's TUI. Install codicon.ttf from
+-- https://unpkg.com/@vscode/codicons/dist/codicon.ttf
+config.font = wezterm.font_with_fallback({
+	"0xProto Nerd Font",
+	"codicon",
+})
+
+-- Silence the missing-glyph log spam. Bash output occasionally renders
+-- unassigned codepoints (e.g. U+0378 from mis-decoded bytes) that no font
+-- will ever cover. The codicon fallback above still handles sparkle-filled
+-- and similar PUA glyphs for display purposes.
+config.warn_about_missing_glyphs = false
 
 -- OS + DPI based font size (single source of truth).
 -- Low-DPI (≤96) usually means an external non-Retina monitor → bump up by 2.
