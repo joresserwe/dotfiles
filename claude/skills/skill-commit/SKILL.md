@@ -45,7 +45,7 @@ Choose the verb that best describes the **nature** of the change, not just "what
 | Set | Minor value changes (config values, flags) |
 | Pass | Parameter or argument handling changes |
 
-If none of these fit precisely, pick the closest one or use another imperative verb that reads naturally.
+If none fit, pick the closest. Off-table verbs require explicit justification — state which table rows you considered and why each failed. "Reads naturally" is not sufficient reason.
 
 ## Commit Workflow
 
@@ -53,6 +53,7 @@ If none of these fit precisely, pick the closest one or use another imperative v
 2. Group related changes into logical units — each commit should represent one coherent purpose
 3. Present the commit plan to the user for review before executing:
    - List each proposed commit with its message and included files
+   - **Annotate each proposed message with its verb mapping inline.** Format: `verb → table row text` (e.g., `Move → "Relocating code within the project"`) or `verb → OFF-TABLE: <why every table verb fails>`. Presenting messages without this annotation violates the skill.
    - Flag anything unusual (debug code, unintended changes, sensitive files)
 4. After approval, execute commits in order
 
@@ -68,4 +69,4 @@ If none of these fit precisely, pick the closest one or use another imperative v
 
 - **NEVER** add `Co-Authored-By` trailers or any attribution lines to commit messages. GitHub parses these as contributors, polluting the repo's contributor list.
 - When rewriting git history (message edits, author changes, etc.), use `git filter-repo`.
-- Before finalizing the plan, check every leading verb against the Verb Selection table. Off-table verbs are only allowed if nothing in the table fits.
+- The inline verb→table annotation (see Workflow step 3) is the verification mechanism. Skipping the annotation means skipping the check — both violate the skill.
