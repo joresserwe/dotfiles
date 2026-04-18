@@ -644,8 +644,9 @@ wezterm.on("update-status", function(window, pane)
 	-- Right: directory | git | datetime
 	local dir_name = cwd:match("([^/\\]+)$") or cwd
 	local datetime = wezterm.strftime("%y-%m-%d %H:%M")
-	-- local git = get_git_info(cwd)
-	local git = nil
+	-- Windows: wezterm runs natively and cannot exec WSL-side gitmux, and
+	-- io.open on WSL paths from the Windows side is unreliable. Skip entirely.
+	local git = not is_windows and get_git_info(cwd) or nil
 
 	local right = {}
 
