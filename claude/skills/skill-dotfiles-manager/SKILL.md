@@ -68,7 +68,7 @@ create_link "$DOTFILES_PATH/<tool>/<config>" "$XDG_CONFIG_HOME/<tool>/<config>"
 
 ## Adding a Tool
 
-When the user asks to add a tool, follow these steps **in order**. Before writing anything, use context7 and web search to look up the tool's latest configuration options, XDG support status, and recommended setup for macOS.
+When the user asks to add a tool, follow these steps **in order**. Before writing anything, use web search (training data is stale; do not rely on it) to look up the tool's latest configuration options, XDG support status, and recommended setup for macOS.
 
 ### 1. Research
 - Search for the tool's XDG compliance (does it respect `XDG_CONFIG_HOME` natively?)
@@ -100,7 +100,7 @@ When the user asks to add a tool, follow these steps **in order**. Before writin
 ### 6. Config Files
 - Create `<tool>/` directory in dotfiles: `~/.config/.dotfiles/<tool>/`
 - Write config files there
-- Use context7/web search to find recommended config for the tool
+- Use web search to find recommended config for the tool
 
 ### 7. Symlinks (`install.sh`)
 - Add `create_link` calls in the "Symbolic Link" section of install.sh
@@ -129,7 +129,7 @@ After removal, check for orphaned dependencies — if a brew package was only ne
 
 When updating configuration:
 1. Read the current config files first
-2. Use context7/web search for the latest options and best practices
+2. Use web search for the latest options and best practices
 3. Edit the config files in the dotfiles directory (the symlinks ensure changes take effect)
 
 ## Important Conventions
