@@ -120,6 +120,13 @@ wezterm.on("update-status", function(window)
 	end
 end)
 
+-- Prevent WezTerm from resizing its own window when font_size changes.
+-- On Windows the default is true, which fights tiling WMs (GlazeWM): moving
+-- a window from a low-DPI monitor to a high-DPI one triggers the DPI-based
+-- font change above, and WezTerm then grows the window to preserve cell
+-- count, breaking out of the tile and spanning both monitors.
+config.adjust_window_size_when_changing_font_size = false
+
 config.custom_block_glyphs = true
 config.window_decorations = "RESIZE"
 config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
