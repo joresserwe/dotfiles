@@ -18,6 +18,15 @@ You are managing a cross-platform dotfiles system at `~/.config/.dotfiles/`, ver
 - **macOS**: `install.sh` → full GUI + CLI environment.
 - **WinOS** (Windows + WSL2 Ubuntu): `install.linux.sh` inside WSL → full CLI environment. (Windows-side Nerd Font + Windows Terminal default profile are one-time manual steps.)
 
+## Plan Before Execution
+
+Before editing any file, present:
+- **Research** (Adding/Modifying): XDG support, brew formula, config paths, web source URLs.
+- **Per change**: `target → summary → bucket [macOS | WinOS | portable]`.
+- **N/A steps**: state reason.
+
+No plan or no bucket annotation → skill violated.
+
 ## Cross-platform architecture (non-obvious)
 
 - **Single repo, no `darwin/`/`linux/` split.** OS differences are inline branches: `case $OSTYPE` in shell, `if OS.mac?` in the Brewfile.
