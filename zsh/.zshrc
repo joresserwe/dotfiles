@@ -29,9 +29,14 @@ if [[ -d "$HOMEBREW_PREFIX/share/zsh/site-functions" ]]; then
   FPATH="$HOMEBREW_PREFIX/share/zsh/site-functions:${FPATH}"
 fi
 
+# Case-insensitive completion (including first char). Also allow partial-word
+# matching on separators and left/right partial matches.
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
 # carapace: unified multi-shell completion for 600+ CLIs (must be after compinit)
 if command -v carapace &>/dev/null; then
   export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+  export CARAPACE_MATCH=CASE_INSENSITIVE
   zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
   local _carapace_cache="$XDG_CACHE_HOME/carapace/init.zsh"
   if [[ ! -f "$_carapace_cache" || "$(command -v carapace)" -nt "$_carapace_cache" ]]; then
