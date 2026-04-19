@@ -5,10 +5,12 @@
 # Reference: aerospace/aerospace.toml
 
 general:
+  # --hide-window suppresses the cmd console that shell-exec would otherwise
+  # flash at startup/shutdown (GlazeWM v3.6.0+).
   startup_commands:
-    - 'shell-exec zebar'
+    - 'shell-exec --hide-window zebar startup --config-dir "%DOTFILES_UNC%\zebar"'
   shutdown_commands:
-    - 'shell-exec taskkill /IM zebar.exe /F'
+    - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
   focus_follows_cursor: false
   toggle_workspace_on_refocus: true
@@ -99,6 +101,13 @@ window_rules:
         window_class: { equals: 'CabinetWClass' }
       - window_title: { regex: 'Task Manager|작업 관리자' }
       - window_process: { regex: 'idea64|pycharm64' }
+      # AutoHotkey error/info dialogs (e.g. winkey.ahk runtime errors) and
+      # tacky-borders' "already running" warning MessageBox. Without this,
+      # GlazeWM tiles them into whatever cell is next, which warps the dialog
+      # layout and buries the OK button. Matching by process covers any future
+      # dialog class these tools might use.
+      - window_process: { regex: '(?i)AutoHotkey' }
+      - window_process: { equals: 'tacky-borders' }
 
 # ---------------------------------------------------------------------------
 # Binding Modes (resize / move — mirrors AeroSpace modes)
@@ -192,7 +201,7 @@ keybindings:
   # by default), so other apps aren't re-tiled unnecessarily. Launched via
   # shell-exec --hide-window (GlazeWM v3.6.0+) spawns without a console — no
   # cmd flash on every move. Native replacement for prior wscript/vbs wrappers.
-  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\delayed-redraw.ps1"']
+  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\delayed-redraw.ps1"']
     bindings: ['lwin+shift+h']
   - commands: ['move --direction down',  'wm-redraw', *delayed_redraw]
     bindings: ['lwin+shift+j']
@@ -315,20 +324,23 @@ keybindings:
   # - Indicator: `reloaded` binding_mode enabled, auto-disabled ~2s later
   #   by reload-indicator.ps1. Zebar renders active bindingModes as pills.
   - commands:
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-ahk.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-ahk.ps1"'
       - 'wm-enable-binding-mode --name reloaded'
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-indicator.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-indicator.ps1"'
       # generate-config.ps1 regenerates live config.yaml from the WSL-side
       # template (monitor_count × 3 workspaces) and issues wm-reload-config
       # itself once the write is done — so no explicit wm-reload-config here.
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\generate-config.ps1"'
-      # tacky-borders v1.4.1 (issue #72): render_backend can drop to None on
-      # sleep/wake or display change and isn't recreated → borders vanish.
-      # Touching config.yaml mtime fires the in-app watcher → full reload.
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\tacky-reload.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\generate-config.ps1"'
+      # tacky-borders: config lives on the WSL dotfiles UNC root via an NTFS
+      # symlink (~/.config/tacky-borders → UNC). ReadDirectoryChangesW does
+      # not fire over 9P (microsoft/WSL#4581), so hot-reload via the in-app
+      # watcher is dead by design; reload.ps1 restarts via Start-ScheduledTask
+      # instead. Also covers v1.4.1 issue #72 (render_backend drops to None
+      # after sleep/wake and isn't recreated — full restart recreates it).
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\tacky-borders\reload.ps1"'
       # zebar has no hot-reload and accumulates ghost tray icons from AHK
       # relaunch cycles — full restart clears ghosts + picks up widget edits.
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.glzr\glazewm\reload-zebar.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-zebar.ps1"'
     bindings: ['ctrl+alt+lwin+c']
 
   # ---- Pause keybindings (Hyper+Q, escape hatch for games, etc.) ----

@@ -33,3 +33,15 @@ tags
 
 # Superpowers
 docs/superpowers/
+
+# tacky-borders rotating-state config (seeded from themes/violet-pink.yaml at
+# install, written by rotate.ps1 / tacky-theme). See install.linux.sh.
+tacky-borders/config.yaml
+# tacky-borders writes its runtime log into TACKY_BORDERS_CONFIG_HOME.
+tacky-borders/tacky-borders.log
+
+# Zebar runtime artifacts — Zebar reads its config directly from this dir via
+# `--config-dir` (see install.linux.sh / reload-zebar.ps1), and writes its
+# error log + marketplace cache alongside the pack.
+zebar/errors.log
+zebar/.marketplace/

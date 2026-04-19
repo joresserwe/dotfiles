@@ -2,7 +2,7 @@
 # Ctrl+Alt+LWin+C, which bypasses AHK entirely — handy when the hook is dead).
 #
 # Paths:
-#   AHK process absent         → Start-Process fresh from the Startup folder.
+#   AHK process absent         → Start-Process fresh from the UNC script path.
 #   AHK process present        → touch %TEMP%\winkey-reload.signal; winkey.ahk's
 #                                500ms poller deletes the file and calls Reload()
 #                                (avoids #SingleInstance Force's "Could not close
@@ -14,23 +14,14 @@
 # Start-Process is used for fresh launches because AHK spawned by a plain
 # non-interactive parent (e.g. Task Scheduler) couldn't install its keyboard
 # hook — going through Start-Process from a user-shell context worked.
+#
+# $ScriptPath is the WSL-dotfiles UNC path — the .ahk is not copied locally.
+# AHK reads it over UNC just fine and the dotfiles repo stays the single
+# source of truth (no "did I forget to re-sync?" failure mode on edits).
 
 $AhkExe     = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-$ScriptPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\winkey.ahk"
+$ScriptPath = "$env:DOTFILES_UNC\winget\winkey.ahk"
 $SignalFile = "$env:TEMP\winkey-reload.signal"
-
-# Re-sync winkey.ahk from the WSL dotfiles UNC root before triggering reload.
-# install.linux.sh copies (not symlinks) the script into the Startup folder
-# because Startup can't follow UNC paths; without this sync step, edits in
-# the WSL repo wouldn't reach the live $ScriptPath and the reload signal
-# would just re-run the stale copy. If WSL is offline / DOTFILES_UNC unset,
-# we skip silently.
-if ($env:DOTFILES_UNC) {
-  $src = "$env:DOTFILES_UNC\winget\winkey.ahk"
-  if (Test-Path $src) {
-    Copy-Item -Force $src $ScriptPath -ErrorAction SilentlyContinue
-  }
-}
 
 function Start-Winkey {
   Start-Process -WindowStyle Hidden -FilePath $AhkExe -ArgumentList "`"$ScriptPath`""

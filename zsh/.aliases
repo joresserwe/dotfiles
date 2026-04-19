@@ -224,24 +224,29 @@ ping_or_tcping() {
   fi
 }
 
-# tacky-reload / tacky-theme — push dotfiles tacky-borders config to the
-# Windows-side watcher directory. The in-app watcher can't see 9P fs events,
-# so iteration requires a cp. WSL-only.
+# tacky-reload / tacky-theme — switch / re-apply the active tacky-borders
+# theme. Config lives in the dotfiles repo itself (tacky-borders/config.yaml,
+# gitignored) since %USERPROFILE%\.config\tacky-borders is an NTFS symlink
+# to this dir. Watcher on the UNC-backed symlink is dead (9P doesn't deliver
+# ReadDirectoryChangesW events), so reload requires a process restart —
+# delegated to the 'tacky-borders' Scheduled Task so restart happens at
+# RunLevel=Highest. WSL-only.
 #
-# tacky-reload   : push config.yaml (default theme) to live location
+# tacky-reload   : re-apply the currently-active theme
 # tacky-theme    : list themes, marking the currently-applied one with *
-# tacky-theme X  : switch to theme X (copies themes/X.yaml to live config)
+# tacky-theme X  : switch to theme X
 if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
   _tacky_live_config() {
-    wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"/.config/tacky-borders/config.yaml
+    printf '%s/.dotfiles/tacky-borders/config.yaml' "$XDG_CONFIG_HOME"
   }
   _tacky_current_theme() {
     local dst; dst="$(_tacky_live_config)"
     [[ -f "$dst" ]] && grep -oE '^# Theme:[[:space:]]*[A-Za-z0-9_-]+' "$dst" | head -1 | awk '{print $3}'
   }
+  _tacky_restart() {
+    powershell.exe -NoProfile -Command "Start-ScheduledTask -TaskName 'tacky-borders' -ErrorAction SilentlyContinue" >/dev/null 2>&1
+  }
   tacky-reload() {
-    # Re-apply the currently-active theme. Useful after a sleep/wake render
-    # glitch or if the in-app watcher missed the last config change.
     local cur; cur="$(_tacky_current_theme)"
     if [[ -z "$cur" ]]; then
       printf 'tacky-reload: could not detect current theme; run `tacky-theme <name>`\n' >&2
@@ -250,11 +255,9 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
     tacky-theme "$cur"
   }
   tacky-theme() {
-    # Note: zsh prints `var=val` when `local var=val` is used with a value.
-    # Always split declaration from assignment to keep output clean.
-    local themes_dir dst_win cur src f name marker
+    local themes_dir dst cur src f name marker
     themes_dir="$XDG_CONFIG_HOME/.dotfiles/tacky-borders/themes"
-    dst_win="$(_tacky_live_config)"
+    dst="$(_tacky_live_config)"
     if [[ $# -eq 0 ]]; then
       cur="$(_tacky_current_theme)"
       printf 'tacky-borders themes:\n'
@@ -272,7 +275,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
       printf 'available: %s\n' "$(ls "$themes_dir" 2>/dev/null | sed 's/\.yaml$//' | paste -sd, -)" >&2
       return 1
     fi
-    cp "$src" "$dst_win" && printf 'tacky-borders: switched to %s\n' "$1"
+    cp "$src" "$dst" && _tacky_restart && printf 'tacky-borders: switched to %s\n' "$1"
   }
   # Automatic daily theme rotation driven by a Scheduled Task (AtLogOn +
   # Daily 00:05). `tacky-rotate` (no args) = now.

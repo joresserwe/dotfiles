@@ -1,7 +1,10 @@
 # Registers the `tacky-rotate` Scheduled Task: runs rotate.ps1 at every logon
-# and daily at 00:05. No elevation needed — rotate.ps1 only copies a yaml
-# file; tacky-borders itself (which DOES need elevation) picks up the change
-# via its watcher. Idempotent.
+# and daily at 00:05. No elevation needed on this task — rotate.ps1 only
+# writes the picked theme's YAML over config.yaml. rotate.ps1 itself then
+# calls Start-ScheduledTask 'tacky-borders' to restart tacky-borders (which
+# runs at Highest) so the new config takes effect — the in-app watcher is
+# dead by design because the config dir is symlinked to a WSL UNC root and
+# ReadDirectoryChangesW is not delivered over 9P. Idempotent.
 param(
   [Parameter(Mandatory = $true)] [string]$ScriptPath,
   [string]$TaskName = 'tacky-rotate'

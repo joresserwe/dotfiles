@@ -220,86 +220,117 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   # GLAZEWM_CONFIG_PATH is NOT set here — glazewm falls back to the default
   # live path, which is what the generator writes. GLAZEWM_TEMPLATE_PATH tells
   # the generator where to read the template from (UNC -> WSL dotfiles).
+  #
+  # Helper ps1 scripts (reload-ahk, reload-indicator, reload-zebar, generate-
+  # config, delayed-redraw) are NOT copied to $glzr_dir anymore — config.yaml
+  # references them directly via %DOTFILES_UNC%\glazewm\*.ps1. GlazeWM's
+  # shell-exec calls ShellExecuteExW, which handles UNC fine and expands any
+  # %VAR% via ExpandEnvironmentStringsW. The live $glzr_dir only holds the
+  # generated config.yaml.
   win_userprofile_raw="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
   if [[ -n "$win_userprofile_raw" ]]; then
     win_userprofile_wsl="$(wslpath "$win_userprofile_raw")"
     glzr_dir="$win_userprofile_wsl/.glzr/glazewm"
     mkdir -p "$glzr_dir"
-    cp "$DOTFILES_PATH/glazewm/delayed-redraw.ps1"   "$glzr_dir/delayed-redraw.ps1"
-    cp "$DOTFILES_PATH/glazewm/reload-indicator.ps1" "$glzr_dir/reload-indicator.ps1"
-    cp "$DOTFILES_PATH/glazewm/generate-config.ps1"  "$glzr_dir/generate-config.ps1"
-    cp "$DOTFILES_PATH/glazewm/reload-ahk.ps1"       "$glzr_dir/reload-ahk.ps1"
-    cp "$DOTFILES_PATH/glazewm/reload-zebar.ps1"     "$glzr_dir/reload-zebar.ps1"
-    cp "$DOTFILES_PATH/tacky-borders/reload.ps1"     "$glzr_dir/tacky-reload.ps1"
 
-    # Point the generator at the WSL-side template via UNC, then clear the old
-    # GLAZEWM_CONFIG_PATH (from the previous UNC-direct-read model) so glazewm
-    # reads the generator's output at its default path.
+    # Legacy cleanup: stale local copies of helper ps1 scripts from the
+    # pre-UNC model. Safe to delete unconditionally — they're all referenced
+    # only via %DOTFILES_UNC% in config.yaml now.
+    for stale in delayed-redraw.ps1 reload-indicator.ps1 generate-config.ps1 \
+                 reload-ahk.ps1 reload-zebar.ps1 tacky-reload.ps1; do
+      rm -f "$glzr_dir/$stale"
+    done
+
+    # UNC paths for env vars.
     glzr_unc_template="\\\\wsl.localhost\\${WSL_DISTRO_NAME}${DOTFILES_PATH//\//\\}\\glazewm\\config.yaml"
     cmd.exe /c setx GLAZEWM_TEMPLATE_PATH "$glzr_unc_template" >/dev/null 2>&1
     powershell.exe -NoProfile -Command "[Environment]::SetEnvironmentVariable('GLAZEWM_CONFIG_PATH', \$null, 'User')" >/dev/null 2>&1
 
-    # UNC root of the WSL dotfiles dir — read by reload-zebar.ps1 / reload-ahk.ps1
-    # to re-sync editable assets (zebar widgets, winkey.ahk) on each Hyper+C, so
-    # an edit-in-WSL → Hyper+C cycle just works without manual copy.
+    # DOTFILES_UNC — every helper ps1 + config.yaml shell-exec reference uses
+    # it; the zebar --config-dir / tacky-borders symlink target both derive
+    # from this root. Setting it as a User env var makes it resolvable from
+    # GlazeWM's process env (Explorer-launched child inherits at logon).
     dotfiles_unc="\\\\wsl.localhost\\${WSL_DISTRO_NAME}${DOTFILES_PATH//\//\\}"
     cmd.exe /c setx DOTFILES_UNC "$dotfiles_unc" >/dev/null 2>&1
 
-    # Bootstrap the live config once so glazewm has something to read on first
-    # start, even before the user presses Hyper+C.
+    # Bootstrap the live config once so glazewm has something to read on
+    # first start, even before the user presses Hyper+C.
     powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass \
-      -File "$(wslpath -w "$glzr_dir/generate-config.ps1")" >/dev/null 2>&1 || true
+      -File "$(wslpath -w "$DOTFILES_PATH/glazewm/generate-config.ps1")" >/dev/null 2>&1 || true
 
     log_done "GLAZEWM_TEMPLATE_PATH -> $glzr_unc_template"
-    log_done "GlazeWM helpers copied to $glzr_dir/; live config bootstrapped"
+    log_done "DOTFILES_UNC -> $dotfiles_unc"
+    log_done "GlazeWM: live config bootstrapped at $glzr_dir/config.yaml; helpers via UNC"
   else
     log_skip "GlazeWM config: could not resolve %USERPROFILE%"
   fi
 
-  # Zebar custom pack ("mac-bar") + global settings. Copied (not symlinked)
-  # because Zebar watches filesystem events that UNC paths don't deliver
-  # reliably. Pack files land under $USERPROFILE\.glzr\zebar\mac-bar\.
+  # Zebar — reads widget pack + settings directly from the dotfiles UNC root
+  # via `--config-dir` (CLI flag supported by v3.3.x; see zebar/cli.rs).
+  # Zebar has NO filesystem watcher (verified against v3.3.1 source — no
+  # notify crate dep), so UNC read is fully supported. The legacy local copy
+  # under $USERPROFILE\.glzr\zebar\ is cleaned up here.
   if [[ -n "${win_userprofile_wsl:-}" ]]; then
-    zebar_dir="$win_userprofile_wsl/.glzr/zebar"
-    mkdir -p "$zebar_dir/mac-bar"
-    cp "$DOTFILES_PATH/zebar/zpack.json" \
-       "$DOTFILES_PATH/zebar/bar.html" \
-       "$DOTFILES_PATH/zebar/styles.css" \
-       "$zebar_dir/mac-bar/"
-    cp "$DOTFILES_PATH/zebar/settings.json" "$zebar_dir/settings.json"
-    log_done "Zebar pack copied to $zebar_dir/mac-bar/"
+    rm -rf "$win_userprofile_wsl/.glzr/zebar"
+    log_done "Zebar: legacy local pack dir removed (config read from $dotfiles_unc\\zebar via --config-dir)"
   fi
 
-  # winkey.ahk — copied (not symlinked; Startup can't follow UNC paths) into
-  # the Windows Startup folder so AutoHotkey runs it on login. The script's
-  # 30s self-relaunch respawns the process once Windows has settled, which
-  # sidesteps the cold-boot race where the low-level keyboard hook silently
-  # fails to install. Task Scheduler was tried as an alternative but its
-  # launched process couldn't install the hook either, so we reverted.
-  # Signal-file touch live-reloads any running AHK so the update takes
-  # effect without a reboot; Task-Scheduler legacy (task + ~/.ahk/ path)
-  # is unregistered/removed idempotently.
+  # winkey.ahk — launched at login via a Startup-folder .lnk whose Target is
+  # AutoHotkey64.exe and whose Arguments is the WSL-dotfiles UNC path to the
+  # script. No local copy is kept: the .lnk is resolved locally by Explorer,
+  # then AutoHotkey64.exe reads the .ahk over UNC — and unlike Explorer's old
+  # .ahk file association (via the AutoHotkeyUX launcher), AutoHotkey64.exe
+  # handles UNC fine. This makes winget/winkey.ahk in the dotfiles repo the
+  # single source of truth. The script's 30s self-relaunch (inside winkey.ahk)
+  # is kept as a secondary safety net against the hook-install race on very
+  # cold boots. Task Scheduler was tried historically but its launched process
+  # couldn't install the hook; that cleanup remains here.
   win_appdata_raw="$(cmd.exe /c 'echo %APPDATA%' 2>/dev/null | tr -d '\r')"
   win_userprofile_raw="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
-  if [[ -n "$win_appdata_raw" ]]; then
+  ahk_exe_win='C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+  ahk_exe_wsl='/mnt/c/Program Files/AutoHotkey/v2/AutoHotkey64.exe'
+  if [[ -n "$win_appdata_raw" && -n "$win_userprofile_raw" ]]; then
     win_appdata_wsl="$(wslpath "$win_appdata_raw")"
+    win_userprofile_wsl="$(wslpath "$win_userprofile_raw")"
     startup_dir="$win_appdata_wsl/Microsoft/Windows/Start Menu/Programs/Startup"
     mkdir -p "$startup_dir"
-    cp "$DOTFILES_PATH/winget/winkey.ahk" "$startup_dir/winkey.ahk"
 
+    # UNC path to the script in the dotfiles repo. dotfiles_unc is set just
+    # above for GlazeWM helpers — reuse it verbatim so both agree on the root.
+    winkey_ahk_unc="${dotfiles_unc}\\winget\\winkey.ahk"
+
+    # Legacy cleanup: old Task Scheduler entry, ~/.ahk/ dir from the task
+    # model, the raw .ahk that earlier installs dropped directly in Startup,
+    # and the stale local copy at ~/.config/winkey from the interim copy model.
     powershell.exe -NoProfile -Command \
       "Unregister-ScheduledTask -TaskName winkey-ahk -Confirm:\$false -ErrorAction SilentlyContinue | Out-Null" \
       >/dev/null 2>&1
-    if [[ -n "$win_userprofile_raw" ]]; then
-      rm -rf "$(wslpath "$win_userprofile_raw")/.ahk"
+    rm -rf "$win_userprofile_wsl/.ahk"
+    rm -rf "$win_userprofile_wsl/.config/winkey"
+    rm -f "$startup_dir/winkey.ahk"
+
+    # Startup .lnk: AutoHotkey64.exe "<UNC winkey.ahk>". Reuses the generic
+    # install-startup.ps1 helper (-ExePath / -LinkPath / -Arguments).
+    if [[ -x "$ahk_exe_wsl" ]]; then
+      winkey_lnk="$startup_dir/winkey.lnk"
+      powershell.exe -NoProfile -ExecutionPolicy Bypass \
+        -File "$(wslpath -w "$DOTFILES_PATH/tacky-borders/install-startup.ps1")" \
+        -ExePath "$ahk_exe_win" \
+        -LinkPath "$(wslpath -w "$winkey_lnk")" \
+        -Arguments "\"$winkey_ahk_unc\"" >/dev/null 2>&1
+      log_done "winkey.lnk -> AutoHotkey64.exe $winkey_ahk_unc"
+    else
+      log_skip "winkey.lnk: AutoHotkey64.exe missing at $ahk_exe_win"
     fi
 
+    # Live-reload any already-running AHK so edits land without waiting for
+    # the next login (winkey.ahk's signal-file poller consumes the touch).
     win_temp_raw="$(cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
     [[ -n "$win_temp_raw" ]] && touch "$(wslpath "$win_temp_raw")/winkey-reload.signal"
 
-    log_done "winkey.ahk copied to Startup: $startup_dir/winkey.ahk (reload signal sent)"
+    log_done "winkey.ahk: UNC source of truth @ $winkey_ahk_unc (reload signal sent)"
   else
-    log_skip "winkey.ahk: could not resolve %APPDATA%"
+    log_skip "winkey: could not resolve %APPDATA% or %USERPROFILE%"
   fi
 
   # GlazeWM auto-start via Startup folder shortcut. Reuses the generic
@@ -317,15 +348,24 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     log_skip "GlazeWM startup: glazewm.exe missing or startup_dir unset"
   fi
 
-  # tacky-borders (Windows side): custom window borders with adjustable width,
-  # gradients and fade animations. Not published to winget, so we fetch the
-  # release zip directly (same pattern as win32yank above). Config is copied
-  # — not symlinked — because the in-app watcher relies on native fs events
-  # that 9P doesn't deliver from WSL. Launched via a Scheduled Task with
-  # RunLevel=Highest: UIPI blocks Medium -> High SetWindowPos, so a Startup-
-  # folder launch (Medium) can't border GlazeWM-managed elevated windows
-  # (glazewm itself runs elevated, and wezterm/etc. inherit High integrity
-  # through the launch chain). See tacky-borders/register-task.ps1.
+  # tacky-borders (Windows side): custom window borders with adjustable
+  # width, gradients and fade animations. Not published to winget, so we
+  # fetch the release zip directly (same pattern as win32yank above).
+  #
+  # Config: tacky-borders reads TACKY_BORDERS_CONFIG_HOME (supports UNC),
+  # which we point at the WSL dotfiles tacky-borders dir. No local copy, no
+  # symlink — the repo is the source of truth. The in-app file watcher uses
+  # Win32 ReadDirectoryChangesW which doesn't fire over WSL's 9P redirector
+  # (microsoft/WSL#4581), so hot-reload on config edit is dead by design;
+  # reload instead goes through Start-ScheduledTask, and
+  # MultipleInstances=StopExisting (set in register-task.ps1) lets the Task
+  # Scheduler service kill the running tacky-borders from LocalSystem
+  # context regardless of UIPI. See register-task.ps1 and reload.ps1.
+  #
+  # Launch: Scheduled Task 'tacky-borders' with RunLevel=Highest (UIPI
+  # blocks Medium->High SetWindowPos, so a Startup-folder launch couldn't
+  # border GlazeWM-managed elevated windows). Action = tacky-borders.exe
+  # directly (no wrapper -> no console flash).
   TACKY_VERSION="v1.4.1"
   if [[ -n "${win_userprofile_wsl:-}" ]]; then
     tacky_install_dir="$win_userprofile_wsl/tacky-borders"
@@ -343,19 +383,41 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_skip "tacky-borders already installed"
     fi
 
-    tacky_cfg_dir="$win_userprofile_wsl/.config/tacky-borders"
-    mkdir -p "$tacky_cfg_dir/themes"
-    # Always refresh the theme library so new/edited themes are available via
-    # the `tacky-theme` zsh function.
-    cp "$DOTFILES_PATH/tacky-borders/themes/"*.yaml "$tacky_cfg_dir/themes/"
-    log_done "tacky-borders themes synced to $tacky_cfg_dir/themes/"
-    # Live config: only bootstrap if missing, so a previously-switched theme
-    # survives install reruns. Users switch via `tacky-theme <name>`.
-    if [[ ! -f "$tacky_cfg_dir/config.yaml" ]]; then
-      cp "$DOTFILES_PATH/tacky-borders/themes/violet-pink.yaml" "$tacky_cfg_dir/config.yaml"
-      log_done "tacky-borders: bootstrapped default theme (violet-pink)"
+    # Bootstrap dotfiles config.yaml if missing. Gitignored, rotating state;
+    # seeded from violet-pink on first install.
+    dotfiles_cfg="$DOTFILES_PATH/tacky-borders/config.yaml"
+    if [[ ! -f "$dotfiles_cfg" ]]; then
+      cp "$DOTFILES_PATH/tacky-borders/themes/violet-pink.yaml" "$dotfiles_cfg"
+      log_done "tacky-borders: bootstrapped dotfiles config.yaml (violet-pink)"
     else
-      log_skip "tacky-borders: live config already present (use 'tacky-theme' to switch)"
+      log_skip "tacky-borders: dotfiles config.yaml already present"
+    fi
+
+    # Env var: TACKY_BORDERS_CONFIG_HOME -> UNC dotfiles. User-scope via setx
+    # so newly spawned task processes inherit it on next launch.
+    tacky_cfg_home_win="${dotfiles_unc}\\tacky-borders"
+    cmd.exe /c setx TACKY_BORDERS_CONFIG_HOME "$tacky_cfg_home_win" >/dev/null 2>&1
+    log_done "TACKY_BORDERS_CONFIG_HOME -> $tacky_cfg_home_win"
+
+    # Legacy cleanup: prior cp model left themes + config.yaml under
+    # %USERPROFILE%\.config\tacky-borders\; the intermediate symlink model
+    # left an NTFS reparse point there. Either way, nuke it — env var now
+    # points tacky-borders straight at the dotfiles dir.
+    tacky_legacy_cfg_wsl="$win_userprofile_wsl/.config/tacky-borders"
+    if [[ -e "$tacky_legacy_cfg_wsl" || -L "$tacky_legacy_cfg_wsl" ]]; then
+      tacky_legacy_cfg_win="$(wslpath -w "$tacky_legacy_cfg_wsl")"
+      powershell.exe -NoProfile -Command "
+        \$p = '$tacky_legacy_cfg_win'
+        if (Test-Path -LiteralPath \$p) {
+          \$it = Get-Item -LiteralPath \$p -Force
+          if (\$it.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            [IO.Directory]::Delete(\$p)
+          } else {
+            Remove-Item -LiteralPath \$p -Recurse -Force
+          }
+        }
+      " >/dev/null 2>&1
+      log_done "tacky-borders: removed legacy $tacky_legacy_cfg_win"
     fi
 
     # Drop any legacy Startup-folder shortcut from the pre-task launch model.
@@ -364,22 +426,27 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_done "tacky-borders: removed legacy Startup shortcut"
     fi
 
+    # Clean up legacy local rotate.ps1 copy — now referenced via UNC.
+    rm -rf "$win_userprofile_wsl/.glzr/tacky-borders"
+
+    # Register the main task. Action = wscript.exe <UNC launch.vbs>; the VBS
+    # does taskkill+wait+launch under Highest so reload is atomic and silent
+    # (no console flash, no "already running" dialog).
+    tacky_launch_vbs_unc="${dotfiles_unc}\\tacky-borders\\launch.vbs"
     powershell.exe -NoProfile -ExecutionPolicy Bypass \
       -File "$(wslpath -w "$DOTFILES_PATH/tacky-borders/register-task.ps1")" \
-      -ExePath "$(wslpath -w "$tacky_exe")" >/dev/null 2>&1
-    log_done "tacky-borders scheduled task registered (AtLogOn, Highest)"
+      -ExePath "$(wslpath -w "$tacky_exe")" \
+      -LaunchVbs "$tacky_launch_vbs_unc" >/dev/null 2>&1
+    log_done "tacky-borders scheduled task registered (AtLogOn, Highest) -> $tacky_launch_vbs_unc"
 
-    # Daily theme rotator: copies rotate.ps1 to a stable Windows-side path
-    # (%USERPROFILE%\.glzr\tacky-borders\rotate.ps1) so the Scheduled Task
-    # action can reference it with a native path. Then registers the task
-    # (AtLogOn + Daily 00:05). Runs immediately so today's pick lands.
-    tacky_scripts_dir="$win_userprofile_wsl/.glzr/tacky-borders"
-    mkdir -p "$tacky_scripts_dir"
-    cp "$DOTFILES_PATH/tacky-borders/rotate.ps1" "$tacky_scripts_dir/rotate.ps1"
+    # Daily theme rotator: AtLogOn + Daily 00:05 calls rotate.ps1 from the UNC
+    # dotfiles root directly (no local copy). rotate.ps1 reads/writes via
+    # TACKY_BORDERS_CONFIG_HOME, then Start-ScheduledTask's tacky-borders.
+    tacky_rotate_unc="${dotfiles_unc}\\tacky-borders\\rotate.ps1"
     powershell.exe -NoProfile -ExecutionPolicy Bypass \
       -File "$(wslpath -w "$DOTFILES_PATH/tacky-borders/register-rotate-task.ps1")" \
-      -ScriptPath "$(wslpath -w "$tacky_scripts_dir/rotate.ps1")" >/dev/null 2>&1
-    log_done "tacky-borders daily rotator registered (AtLogOn + Daily 00:05)"
+      -ScriptPath "$tacky_rotate_unc" >/dev/null 2>&1
+    log_done "tacky-borders daily rotator registered (UNC) -> $tacky_rotate_unc"
   else
     log_skip "tacky-borders: could not resolve %USERPROFILE%"
   fi
