@@ -183,9 +183,19 @@ CycleOnMonitor(dir) {
 ; control commands, not text, so losing 한글 composition is fine.
 ; The user's 한/영 key stays authoritative for normal typing.
 
+; SendMessage is wrapped in try/catch because a higher-integrity foreground
+; window (UAC prompt, elevated app the local process can't reach) makes UIPI
+; block the WM_IME_CONTROL send and AHK throws OSError(5) "access denied".
+; An uncaught throw from a timer-driven callback surfaces as a modal error
+; dialog — which GlazeWM then tiles over the focused tile and steals the
+; first wezterm redraw slot, so the newly launched wezterm never resizes
+; to its cell. Returning -1 lets callers skip this tick silently.
 IME_GetOpen(hWnd) {
     ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
-    return SendMessage(0x283, 0x5, 0, , ime)  ; WM_IME_CONTROL, IMC_GETOPENSTATUS
+    try
+        return SendMessage(0x283, 0x5, 0, , ime)  ; WM_IME_CONTROL, IMC_GETOPENSTATUS
+    catch
+        return -1
 }
 
 ; --- IME state monitor for Zebar --------------------------------------
@@ -200,8 +210,11 @@ IME_GetConversionMode(hWnd) {
     ; WM_IME_CONTROL + IMC_GETCONVERSIONMODE (0x001); reports IME_CMODE_NATIVE
     ; (0x0001) bit for Hangul vs Alphanumeric — reliable across Windows 11 TSF
     ; and legacy IMM IMEs, unlike IMC_GETOPENSTATUS which some TSF IMEs leave
-    ; pinned to 1.
-    return SendMessage(0x283, 0x1, 0, , ime)
+    ; pinned to 1. Same UIPI guard as IME_GetOpen above.
+    try
+        return SendMessage(0x283, 0x1, 0, , ime)
+    catch
+        return -1
 }
 
 MonitorImeState() {
@@ -213,6 +226,8 @@ MonitorImeState() {
     if !hwnd
         return
     mode := IME_GetConversionMode(hwnd)
+    if mode = -1  ; UIPI-blocked this tick; leave lastImeState as-is
+        return
     state := (mode & 0x1) ? "KO" : "EN"
     if state != lastImeState {
         lastImeState := state
@@ -224,7 +239,7 @@ SetTimer(MonitorImeState, 250)
 
 IME_SetOpen(hWnd, state) {
     ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
-    SendMessage(0x283, 0x6, state, , ime)     ; WM_IME_CONTROL, IMC_SETOPENSTATUS
+    try SendMessage(0x283, 0x6, state, , ime)     ; WM_IME_CONTROL, IMC_SETOPENSTATUS
 }
 
 #HotIf WinActive("ahk_exe wezterm-gui.exe")
@@ -232,7 +247,9 @@ IME_SetOpen(hWnd, state) {
 ~RCtrl::
 {
     hWnd := WinGetID("A")
-    if IME_GetOpen(hWnd)
+    ; IME_GetOpen returns -1 when UIPI blocks the probe; treat that as
+    ; "unknown, don't touch" rather than truthy-so-toggle.
+    if IME_GetOpen(hWnd) = 1
         IME_SetOpen(hWnd, 0)
 }
 #HotIf
