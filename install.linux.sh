@@ -323,12 +323,21 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_skip "winkey.lnk: AutoHotkey64.exe missing at $ahk_exe_win"
     fi
 
-    # Live-reload any already-running AHK so edits land without waiting for
-    # the next login (winkey.ahk's signal-file poller consumes the touch).
-    win_temp_raw="$(cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
-    [[ -n "$win_temp_raw" ]] && touch "$(wslpath "$win_temp_raw")/winkey-reload.signal"
+    # Live apply the new .lnk target: kill any AHK running from a stale path
+    # (signal-based Reload() would fail if A_ScriptFullPath no longer exists,
+    # which happens when install.linux.sh removes the legacy Startup\winkey.ahk
+    # above) and start a fresh instance from the UNC script. Stop-Process is
+    # best-effort — a High-integrity AHK spawned from an elevated shell (e.g.
+    # wezterm-inside-WSL that inherited High through the glazewm chain) can't
+    # be reaped from Medium, in which case the next natural reboot picks up
+    # the new .lnk.
+    powershell.exe -NoProfile -Command "
+      Get-Process AutoHotkey64 -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
+      Start-Sleep -Milliseconds 400
+      Start-Process -WindowStyle Hidden -FilePath '$ahk_exe_win' -ArgumentList '\"$winkey_ahk_unc\"'
+    " >/dev/null 2>&1
 
-    log_done "winkey.ahk: UNC source of truth @ $winkey_ahk_unc (reload signal sent)"
+    log_done "winkey.ahk: UNC source of truth @ $winkey_ahk_unc (restarted)"
   else
     log_skip "winkey: could not resolve %APPDATA% or %USERPROFILE%"
   fi
