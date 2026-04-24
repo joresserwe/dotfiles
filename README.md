@@ -142,6 +142,9 @@ The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powe
 
 These are not automated — set them up once on the Windows side:
 
-1. **Nerd Font** — install `MesloLGS NF` (or any Nerd Font) and select it in Windows Terminal / wezterm-windows so powerlevel10k icons render.
+1. **Fonts** — the wezterm config declares a fallback chain in `wezterm/wezterm.lua`. Install each into per-user Windows Fonts (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`):
+   - **0xProto Nerd Font** — primary (Latin + Nerd Font glyphs). Download from [nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) → extract → select all TTFs → right-click → *Install for current user*.
+   - **Sarasa Mono K** — CJK fallback for Korean. Download `SarasaMonoK-TTF-*.7z` from [be5invis/Sarasa-Gothic releases](https://github.com/be5invis/Sarasa-Gothic/releases) → extract → install the 10 weight TTFs the same way. License: SIL OFL-1.1.
+   - **codicon** — covers VS Code PUA glyphs emitted by Claude Code's TUI. Download `codicon.ttf` from [@vscode/codicons](https://unpkg.com/@vscode/codicons/dist/codicon.ttf) → install.
 2. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
 3. **Clipboard** — works out of the box: tmux uses `set-clipboard on` (OSC 52) and the `_dotfiles_copy` shell helper falls back to `clip.exe` if no Wayland/X clipboard tool is present.
