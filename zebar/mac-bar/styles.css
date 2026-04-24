@@ -155,6 +155,8 @@ i {
   letter-spacing: 0.2px;
   margin-left: 2px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sparkline {
