@@ -275,16 +275,27 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     log_done "Zebar: legacy local pack dir removed (config read from $dotfiles_unc\\zebar via --config-dir)"
   fi
 
-  # winkey.ahk — launched at login via a Startup-folder .lnk whose Target is
-  # AutoHotkey64.exe and whose Arguments is the WSL-dotfiles UNC path to the
-  # script. No local copy is kept: the .lnk is resolved locally by Explorer,
-  # then AutoHotkey64.exe reads the .ahk over UNC — and unlike Explorer's old
-  # .ahk file association (via the AutoHotkeyUX launcher), AutoHotkey64.exe
-  # handles UNC fine. This makes winget/winkey.ahk in the dotfiles repo the
-  # single source of truth. The script's 30s self-relaunch (inside winkey.ahk)
-  # is kept as a secondary safety net against the hook-install race on very
-  # cold boots. Task Scheduler was tried historically but its launched process
-  # couldn't install the hook; that cleanup remains here.
+  # winkey.ahk — launched at login ONLY via Scheduled Task (RunLevel=Highest),
+  # NOT via Startup-folder .lnk. The script still lives at a LOCAL copy at
+  # $USERPROFILE\.config\winkey\winkey.ahk (source-of-truth is the dotfiles
+  # repo; copied here so that boot doesn't depend on WSL VM UNC reachability).
+  #
+  # Why Task + Highest integrity, not Startup .lnk: glazewm runs at High
+  # integrity (memory: project_winos_uipi_elevated_windows). When AHK installs
+  # its WH_KEYBOARD_LL hook at Medium integrity (the default for Startup-folder
+  # launches and RunLevel=Limited tasks), UIPI prevents the hook from receiving
+  # keyboard events while a higher-integrity window (glazewm-managed tiles) is
+  # foreground. Symptom: AHK process alive, TICK logging, but hotkeys never
+  # fire. Confirmed 2026-04-24 by process integrity comparison — Task-spawned
+  # AHK at Medium = dead hook; same binary re-spawned at High = working hook.
+  # The earlier memory warning "Task Scheduler for AHK doesn't install hook"
+  # was for RunLevel=Limited tasks specifically; Highest works the same as
+  # tacky-borders' scheduled-task pattern.
+  #
+  # Dev-edit propagation: reload-ahk.ps1 (Hyper+C, or the AtLogon Task) copies
+  # the UNC source to the local path before spawn, so edits to
+  # winget/winkey.ahk in the dotfiles repo take effect without re-running
+  # install.linux.sh.
   win_appdata_raw="$(cmd.exe /c 'echo %APPDATA%' 2>/dev/null | tr -d '\r')"
   win_userprofile_raw="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
   ahk_exe_win='C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
@@ -295,66 +306,120 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     startup_dir="$win_appdata_wsl/Microsoft/Windows/Start Menu/Programs/Startup"
     mkdir -p "$startup_dir"
 
-    # UNC path to the script in the dotfiles repo. dotfiles_unc is set just
-    # above for GlazeWM helpers — reuse it verbatim so both agree on the root.
-    winkey_ahk_unc="${dotfiles_unc}\\winget\\winkey.ahk"
+    # Local mirror: copy dotfiles winkey.ahk to $USERPROFILE\.config\winkey\.
+    winkey_local_dir_wsl="$win_userprofile_wsl/.config/winkey"
+    winkey_local_wsl="$winkey_local_dir_wsl/winkey.ahk"
+    winkey_local_win="$(wslpath -w "$winkey_local_wsl")"
+    mkdir -p "$winkey_local_dir_wsl"
+    cp -f "$DOTFILES_PATH/winget/winkey.ahk" "$winkey_local_wsl"
 
-    # Legacy cleanup: old Task Scheduler entry, ~/.ahk/ dir from the task
-    # model, the raw .ahk that earlier installs dropped directly in Startup,
-    # and the stale local copy at ~/.config/winkey from the interim copy model.
+    # Legacy cleanup: old scheduled-task name, ~/.ahk/, raw Startup\winkey.ahk,
+    # AND the Startup\winkey.lnk from the pre-Task architecture (2026-04-24
+    # replaced with RunLevel=Highest Scheduled Task below to fix Medium→High
+    # UIPI hook-event blocking).
     powershell.exe -NoProfile -Command \
       "Unregister-ScheduledTask -TaskName winkey-ahk -Confirm:\$false -ErrorAction SilentlyContinue | Out-Null" \
       >/dev/null 2>&1
     rm -rf "$win_userprofile_wsl/.ahk"
-    rm -rf "$win_userprofile_wsl/.config/winkey"
     rm -f "$startup_dir/winkey.ahk"
+    rm -f "$startup_dir/winkey.lnk"
 
-    # Startup .lnk: AutoHotkey64.exe "<UNC winkey.ahk>". Reuses the generic
-    # install-startup.ps1 helper (-ExePath / -LinkPath / -Arguments).
-    if [[ -x "$ahk_exe_wsl" ]]; then
-      winkey_lnk="$startup_dir/winkey.lnk"
-      powershell.exe -NoProfile -ExecutionPolicy Bypass \
-        -File "$(wslpath -w "$DOTFILES_PATH/tacky-borders/install-startup.ps1")" \
-        -ExePath "$ahk_exe_win" \
-        -LinkPath "$(wslpath -w "$winkey_lnk")" \
-        -Arguments "\"$winkey_ahk_unc\"" >/dev/null 2>&1
-      log_done "winkey.lnk -> AutoHotkey64.exe $winkey_ahk_unc"
-    else
-      log_skip "winkey.lnk: AutoHotkey64.exe missing at $ahk_exe_win"
-    fi
-
-    # Live apply the new .lnk target: kill any AHK running from a stale path
-    # (signal-based Reload() would fail if A_ScriptFullPath no longer exists,
-    # which happens when install.linux.sh removes the legacy Startup\winkey.ahk
-    # above) and start a fresh instance from the UNC script. Stop-Process is
-    # best-effort — a High-integrity AHK spawned from an elevated shell (e.g.
-    # wezterm-inside-WSL that inherited High through the glazewm chain) can't
-    # be reaped from Medium, in which case the next natural reboot picks up
-    # the new .lnk.
+    # Live apply: kill any AHK (leftover Medium-integrity instance from the
+    # prior .lnk path) so the AtLogon task's Highest launch is the sole owner
+    # on the next login. Also kickstart one High-integrity instance right now
+    # so the current session isn't left without hotkeys between install and
+    # the next logon.
     powershell.exe -NoProfile -Command "
-      Get-Process AutoHotkey64 -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
-      Start-Sleep -Milliseconds 400
-      Start-Process -WindowStyle Hidden -FilePath '$ahk_exe_win' -ArgumentList '\"$winkey_ahk_unc\"'
+      & taskkill.exe /F /IM AutoHotkey64.exe /T 2>&1 | Out-Null
+      \$deadline = (Get-Date).AddSeconds(3)
+      while ((Get-Date) -lt \$deadline -and (Get-Process AutoHotkey64 -EA SilentlyContinue)) {
+        Start-Sleep -Milliseconds 100
+      }
+      Start-Process -WindowStyle Hidden -FilePath '$ahk_exe_win' -ArgumentList '\"$winkey_local_win\"'
     " >/dev/null 2>&1
 
-    log_done "winkey.ahk: UNC source of truth @ $winkey_ahk_unc (restarted)"
+    log_done "winkey.ahk: local copy @ $winkey_local_win (restarted; Startup .lnk removed — task launches now)"
+
+    # Cold-boot diagnostic Scheduled Task. Fires AtLogon (no delay), script
+    # self-samples system state at T+0/+30/+60/+120s into %TEMP%\cold-boot-
+    # state.log. Lets us see whether Startup-folder .lnks fired, whether UNC
+    # is reachable, process start times, registry state — paired with
+    # %TEMP%\winkey-debug.log and %TEMP%\reload-ahk.log it answers "what
+    # happened during the failing first 2 minutes post-login". Script path
+    # MUST be local (not UNC) — at logon WSL VM isn't up yet so UNC is dead.
+    snapshot_local_wsl="$winkey_local_dir_wsl/cold-boot-snapshot.ps1"
+    snapshot_local_win="$(wslpath -w "$snapshot_local_wsl")"
+    cp -f "$DOTFILES_PATH/glazewm/cold-boot-snapshot.ps1" "$snapshot_local_wsl"
+    powershell.exe -NoProfile -Command "
+      \$act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"$snapshot_local_win\"'
+      \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+      \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
+      Register-ScheduledTask -TaskName 'winkey-cold-boot-snapshot' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
+    " >/dev/null 2>&1
+    log_done "Scheduled Task 'winkey-cold-boot-snapshot' registered (AtLogon → $snapshot_local_win)"
+
+    # Primary AHK launcher at logon: Scheduled Task (AtLogon, no delay,
+    # RunLevel=Highest). This REPLACES the Startup-folder .lnk — see the
+    # winkey comment block above for why Highest is required (glazewm is High
+    # integrity; Medium-integrity AHK's WH_KEYBOARD_LL hook doesn't receive
+    # events due to UIPI, so hotkeys silently don't fire). The task runs
+    # reload-ahk.ps1 (local copy), which hard-kills any leftover AHK then
+    # Start-Process-spawns a fresh one at High integrity (inherits from the
+    # task's Highest-RunLevel PowerShell parent). Fires once per user logon.
+    # No delay — AtLogon fires after the user token is created, and the task
+    # itself (taskkill + Start-Process AHK) has no external dependencies.
+    # Worst case: Explorer's Shell_TrayWnd isn't up yet when AHK runs, so the
+    # initial HideShellTaskbars() no-ops — harmless, the TaskbarCreated
+    # OnMessage hook re-hides on Explorer's later WM_TASKBARCREATED broadcast.
+    reload_local_wsl="$winkey_local_dir_wsl/reload-ahk.ps1"
+    reload_local_win="$(wslpath -w "$reload_local_wsl")"
+    cp -f "$DOTFILES_PATH/glazewm/reload-ahk.ps1" "$reload_local_wsl"
+    powershell.exe -NoProfile -Command "
+      \$act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"$reload_local_win\"'
+      \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
+      \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
+      Register-ScheduledTask -TaskName 'winkey-cold-boot-autofix' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
+    " >/dev/null 2>&1
+    log_done "Scheduled Task 'winkey-cold-boot-autofix' registered (AtLogon, Highest → $reload_local_win)"
   else
     log_skip "winkey: could not resolve %APPDATA% or %USERPROFILE%"
   fi
 
-  # GlazeWM auto-start via Startup folder shortcut. Reuses the generic
-  # install-startup.ps1 from tacky-borders/ (takes -ExePath / -LinkPath).
+  # GlazeWM auto-start via Scheduled Task (AtLogon, RunLevel=Highest). Replaces
+  # the prior Startup-folder .lnk model. Rationale:
+  # - Startup folder .lnks are intentionally throttled by Explorer ("idle task"
+  #   scheduling) — on this machine GlazeWM.lnk used to fire ~80s post-boot,
+  #   while tacky-borders (already on a task) fired ~60s. Moving GlazeWM to a
+  #   task closes that gap.
+  # - glazewm.exe self-elevates via its manifest (runs at High integrity); a
+  #   Highest task matches that, so the spawned glazewm is consistent with the
+  #   running state and there's no UAC prompt at logon.
+  # - zebar is a child of glazewm (launched via startup_commands in
+  #   config.yaml), so zebar timing follows glazewm automatically — no
+  #   separate task needed.
   glazewm_exe_win='C:\Program Files\glzr.io\GlazeWM\glazewm.exe'
   glazewm_exe_wsl='/mnt/c/Program Files/glzr.io/GlazeWM/glazewm.exe'
   if [[ -x "$glazewm_exe_wsl" && -n "${startup_dir:-}" ]]; then
-    glazewm_lnk="$startup_dir/GlazeWM.lnk"
-    powershell.exe -NoProfile -ExecutionPolicy Bypass \
-      -File "$(wslpath -w "$DOTFILES_PATH/tacky-borders/install-startup.ps1")" \
-      -ExePath "$glazewm_exe_win" \
-      -LinkPath "$(wslpath -w "$glazewm_lnk")" >/dev/null 2>&1
-    log_done "GlazeWM startup shortcut: $glazewm_lnk"
+    # Legacy cleanup: delete the Startup-folder .lnk from the pre-task model.
+    rm -f "$startup_dir/GlazeWM.lnk"
+    # Action uses cmd.exe /c start wrapper, NOT glazewm.exe directly. Why:
+    # glazewm.exe's manifest requests requireAdministrator, which conflicts
+    # with Task Scheduler's own RunLevel=Highest elevation path — launching
+    # the exe directly returns HRESULT 0x800702E4 (ERROR_ELEVATION_REQUIRED).
+    # `cmd.exe /c start "" <exe>` defers to the shell's normal launch path
+    # which handles manifest-requested elevation cleanly under Highest.
+    powershell.exe -NoProfile -Command "
+      \$act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c start \"\" \"$glazewm_exe_win\"'
+      \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+      \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
+      Register-ScheduledTask -TaskName 'winkey-glazewm-autostart' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
+    " >/dev/null 2>&1
+    log_done "Scheduled Task 'winkey-glazewm-autostart' registered (AtLogon, Highest → $glazewm_exe_win)"
   else
-    log_skip "GlazeWM startup: glazewm.exe missing or startup_dir unset"
+    log_skip "GlazeWM task: glazewm.exe missing or startup_dir unset"
   fi
 
   # tacky-borders (Windows side): custom window borders with adjustable

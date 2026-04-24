@@ -10,13 +10,24 @@ if (-not (Test-Path $policiesSystem)) {
 Set-ItemProperty -Path $policiesSystem `
   -Name 'DisableLockWorkstation' -Value 1 -Type DWord -Force
 
-# Block Explorer-handled Win+<key> shortcuts. REG_EXPAND_SZ, one char per key.
+# Block Explorer-handled Win+<key> shortcuts. REG_SZ, one char per key.
 # D = Show Desktop, U = Accessibility. Windows processes these before AHK's
 # keyboard hook, so `#d::`/`#u::` alone don't block the native behavior.
 # AHK hotkeys still fire on top (hook sees the event first), so CycleOnMonitor
 # in winget/winkey.ahk keeps working.
+# Type MUST be REG_SZ (String): Explorer silently ignores REG_EXPAND_SZ here —
+# symptom was Win+U still opening Accessibility even with the value set.
 Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
-  -Name 'DisabledHotkeys' -Value 'DU' -Type ExpandString -Force
+  -Name 'DisabledHotkeys' -Value 'DU' -Type String -Force
+
+# LowLevelHooksTimeout — raise from the Windows default (300ms) to 10s so
+# Windows doesn't silently remove AHK's WH_KEYBOARD_LL hook if the callback
+# doesn't respond during a busy cold boot. Without this, hook-based hotkeys
+# (Hyper via VK19, wezterm Ctrl IME workaround, CycleOnMonitor) can be dead
+# from first login with no visible error. winkey.ahk's InstallKeybdHook
+# reinstall at 5s catches the acute race; this prevents future disables.
+Set-ItemProperty -Path 'HKCU:\Control Panel\Desktop' `
+  -Name 'LowLevelHooksTimeout' -Value 10000 -Type DWord -Force
 
 # Block Win+G (Xbox Game Bar). On Windows 11 24H2+ neither DisabledHotkeys
 # nor AppCaptureEnabled/GameDVR_Enabled stops the hotkey — only removing the

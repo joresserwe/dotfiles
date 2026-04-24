@@ -1,19 +1,51 @@
 #Requires AutoHotkey v2.0
-#SingleInstance Force
+; `Ignore` (not `Force`): `Force` makes a new instance try to close the old
+; one and pops "Could not close the previous instance of this script. Keep
+; waiting?" when the close hangs (integrity mismatch / mid-hotkey / UIPI).
+; `Ignore` makes the new instance silently exit if another is already running,
+; so no modal ever. reload-ahk.ps1 is the sole arbiter of "exactly one AHK":
+; it hard-kills all AHK + waits for exit + then starts fresh, so relying on
+; AHK's own SingleInstance to resolve conflicts is unnecessary.
+#SingleInstance Ignore
 
-; At login the low-level keyboard hook can race the shell / user services
-; initialization and land in a stale state — symptom is Hyper (and every
-; other hook-based binding here) silently not firing after a cold boot.
-; Self-relaunch 30s in so the hook reinstalls on a settled system. 3s was
-; the original value but proved too short on this machine; Task Scheduler
-; with a logon-delay was tried as an alternative but its launched process
-; couldn't install the hook, so we stuck with Startup + a longer respawn.
-; A_Args sentinel gates the guard: Startup auto-start runs without args and
-; triggers it; the relaunched instance (and Hyper+C's reload-ahk.ps1) pass
-; "reloaded" and skip it.
-if A_Args.Length = 0 {
-    SetTimer(() => Run(Format('"{1}" "{2}" reloaded', A_AhkPath, A_ScriptFullPath)), -30000)
+; --- Cold-boot diagnostic logging -------------------------------------------
+; Records script start + periodic heartbeat + last hotkey fire timestamp to
+; %TEMP%\winkey-debug.log. If TICK lines keep appearing but `lastHotkey` stays
+; stale (or "never") while the user is pressing mapped keys, the WH_KEYBOARD_LL
+; hook is dead even though the AHK process is healthy. AHK v2 has no
+; A_KeybdHookInstalled (it's v1-only), so tracking `lastHotkey` from within
+; each hotkey handler is the best proxy for hook liveness.
+global lastHotkey := "never"
+MarkHotkey(name) {
+    global lastHotkey
+    lastHotkey := name . "@" . FormatTime(, "HH:mm:ss")
 }
+DbgLog(tag) {
+    global lastHotkey
+    try FileAppend(FormatTime(, "yyyy-MM-dd HH:mm:ss") " " tag " lastHotkey=" lastHotkey "`n", A_Temp . "\winkey-debug.log")
+}
+DbgLog("START script=" . A_ScriptFullPath . " ahk=" . A_AhkVersion)
+SetTimer(DbgLog.Bind("TICK"), 10000)
+
+; Cold-boot hook race: at logon the low-level keyboard hook installed by
+; this script sometimes lands below Korean TSF / other services that are
+; still initialising, and then stops firing for specific VKs (VK19/Hanja,
+; Ctrl-inside-wezterm) even though the rest of the hotkeys work. Windows'
+; LowLevelHooksTimeout (HKCU\Control Panel\Desktop) can also silently
+; disable a hook that didn't respond fast enough during shell init.
+;
+; Fix: AHK's built-in InstallKeybdHook(Install:=true, Reinstall:=true)
+; uninstalls and reinstalls the hook, which (a) repositions it at the top
+; of the system hook chain and (b) clears any "system disabled this hook"
+; state. Docs: https://www.autohotkey.com/docs/v2/lib/InstallKeybdHook.htm
+; "If the system has stopped calling the hook because a program is not
+; responding, reinstalling the hook can help get it running again."
+;
+; 5s delay gives the shell / TSF / IME time to settle before we reinstall.
+; Historically we respawned the whole process on a 30s timer for this; the
+; respawn model hit integrity mismatches (Force couldn't reap a Higher-
+; integrity predecessor), and a built-in API turns out to be enough.
+SetTimer(() => InstallKeybdHook(true, true), -5000)
 
 ; Reload signal for Hyper+C. ahk-reload.vbs touches the signal file; this
 ; timer polls for it and calls Reload() in-process. Using a signal file
@@ -48,8 +80,12 @@ HideShellTaskbars() {
     }
 }
 HideShellTaskbars()
+; TaskbarCreated fires whenever Explorer (re)creates the shell — cold logon,
+; explorer.exe restart, session switch. Reinstall the keyboard hook on the
+; same signal so the same shell-settle race that motivates the 5s-post-init
+; reinstall above also gets handled for mid-session Explorer restarts.
 OnMessage(DllCall("RegisterWindowMessage", "Str", "TaskbarCreated", "UInt"),
-    (*) => HideShellTaskbars())
+    (*) => (HideShellTaskbars(), InstallKeybdHook(true, true)))
 
 ; Suppress Start Menu on lone Win press, while keeping Win+<key> combos alive.
 ; vkE8 (unassigned) injected between press and release breaks the sequence
@@ -62,7 +98,7 @@ OnMessage(DllCall("RegisterWindowMessage", "Str", "TaskbarCreated", "UInt"),
 ; that virtual code. Shift is kept OUT of hyper so `hyper+<k>` and
 ; `hyper+shift+<k>` are distinct bindings. vkE8 on press breaks the lone-Win
 ; sequence so a bare tap doesn't open the Start menu.
-*VK19::Send("{Blind}{LCtrl down}{LAlt down}{LWin down}{vkE8}")
+*VK19::(MarkHotkey("VK19"), Send("{Blind}{LCtrl down}{LAlt down}{LWin down}{vkE8}"))
 *VK19 Up::Send("{Blind}{LCtrl up}{LAlt up}{LWin up}")
 
 ; Per-shortcut blocks. Uncomment to disable. Prefixes: # Win  + Shift  ! Alt  ^ Ctrl
@@ -167,8 +203,8 @@ CycleOnMonitor(dir) {
     next := Mod(idx - 1 + dir + wins.Length, wins.Length) + 1
     WinActivate("ahk_id " wins[next])
 }
-#u::CycleOnMonitor(1)
-#d::CycleOnMonitor(-1)
+#u::(MarkHotkey("WinU"), CycleOnMonitor(1))
+#d::(MarkHotkey("WinD"), CycleOnMonitor(-1))
 ; Win+F was glazewm's wm-cycle-focus, but that needs a focused window as
 ; anchor — no-op after switching monitors / closing the last focused app.
 ; Routing it through CycleOnMonitor removes the anchor requirement and
