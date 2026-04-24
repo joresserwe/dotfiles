@@ -8,7 +8,7 @@
     {
       "name": "bar",
       "htmlPath": "./bar.html",
-      "zOrder": "top_most",
+      "zOrder": "normal",
       "shownInTaskbar": false,
       "focused": false,
       "resizable": false,
@@ -29,7 +29,7 @@
           "width": "100%",
           "height": "26px",
           "monitorSelection": { "type": "all" },
-          "dockToEdge": { "enabled": true, "edge": "top", "windowMargin": "0px" }
+          "dockToEdge": { "enabled": false, "edge": "top", "windowMargin": "0px" }
         }
       ]
     }

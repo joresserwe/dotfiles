@@ -25,7 +25,12 @@ gaps:
   scale_with_dpi: true
   inner_gap: '10px'
   outer_gap:
-    top: '8px'        # Zebar reserves its own 26px via dockToEdge
+    # Manually reserve zebar's 26px (+ 8px visual gap) because zebar's
+    # dockToEdge is disabled in zpack.json. With dockToEdge on, zebar
+    # registered as a Windows AppBar which the shell keeps visually on top
+    # even when a fullscreen window's rect covers the monitor — breaking
+    # fullscreen coverage regardless of zebar's zOrder setting.
+    top: '34px'
     right: '8px'
     bottom: '8px'
     left: '8px'
@@ -54,7 +59,12 @@ window_behavior:
       centered: true
       shown_on_top: false
     fullscreen:
-      maximized: true
+      # maximized: false — use manual SetWindowPos instead of Windows native
+      # maximize state. Native maximize + cross-DPI monitor move leaves the
+      # window stuck as blurry/white stretched buffer (WM_DPICHANGED race in
+      # Windows' internal maximize handling). Manual bounds path goes through
+      # the same SetWindowPos flow as tile moves, which handles DPI correctly.
+      maximized: false
       shown_on_top: false
 
 # Workspaces — 3 per monitor, bound dynamically by generate-config.ps1 which
