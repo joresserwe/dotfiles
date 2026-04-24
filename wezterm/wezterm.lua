@@ -91,8 +91,14 @@ local C = {
 -- standard Nerd Font codicon range (EA60-EC1E) — e.g. U+EC21 sparkle-filled
 -- emitted by Claude Code's TUI. Install codicon.ttf from
 -- https://unpkg.com/@vscode/codicons/dist/codicon.ttf
+-- Sarasa Mono K (be5invis/Sarasa-Gothic, SIL OFL-1.1) covers Hangul with
+-- cells that divide the 0xProto Latin cell at a clean 2:1 ratio, so Korean
+-- never drifts out of column alignment. Missing on macOS — font_with_fallback
+-- silently skips entries that aren't installed, so the same config works on
+-- both platforms (macOS falls through to its built-in CJK system fallback).
 config.font = wezterm.font_with_fallback({
 	"0xProto Nerd Font",
+	"Sarasa Mono K",
 	"codicon",
 })
 
@@ -102,29 +108,17 @@ config.font = wezterm.font_with_fallback({
 -- and similar PUA glyphs for display purposes.
 config.warn_about_missing_glyphs = false
 
--- OS + DPI based font size (single source of truth).
--- Low-DPI (≤96) usually means an external non-Retina monitor → bump up by 2.
-local function desired_font_size(dpi)
-	local base = is_windows and 11.0 or 14.0
-	return dpi <= 96 and (base + 2.0) or base
+-- Windows: pin DPI to 96 and use a single static font_size. Per-monitor
+-- font_size overrides via update-status were tried and removed — every fire
+-- on monitor crossing re-triggered window jitter under GlazeWM, and the
+-- resulting fractional font_size (e.g. 16.5pt) broke Malgun Gothic hinting
+-- so Korean glyphs rendered with uneven strokes. An integer font_size at a
+-- pinned DPI rasterizes cleanly for CJK fallbacks.
+config.font_size = 14.0
+if is_windows then
+	config.dpi = 96
 end
 
-config.font_size = desired_font_size(96) -- initial value; replaced by handler below once a window exists
-
-wezterm.on("update-status", function(window)
-	local overrides = window:get_config_overrides() or {}
-	local want = desired_font_size(window:get_dimensions().dpi)
-	if overrides.font_size ~= want then
-		overrides.font_size = want
-		window:set_config_overrides(overrides)
-	end
-end)
-
--- Prevent WezTerm from resizing its own window when font_size changes.
--- On Windows the default is true, which fights tiling WMs (GlazeWM): moving
--- a window from a low-DPI monitor to a high-DPI one triggers the DPI-based
--- font change above, and WezTerm then grows the window to preserve cell
--- count, breaking out of the tile and spanning both monitors.
 config.adjust_window_size_when_changing_font_size = false
 
 config.custom_block_glyphs = true
