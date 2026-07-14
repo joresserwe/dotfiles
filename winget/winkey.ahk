@@ -93,6 +93,14 @@ OnMessage(DllCall("RegisterWindowMessage", "Str", "TaskbarCreated", "UInt"),
 ~LWin::Send("{Blind}{vkE8}")
 ~RWin::Send("{Blind}{vkE8}")
 
+; --- F13 → LWin (Citrix VDI) -----------------------------------
+; Win+L is ALWAYS handled by the local machine per Citrix docs — no
+; TransparentKeyPassthrough value forwards it. Workaround: the physical
+; machine remaps Win→F13 (PowerToys Keyboard Manager / Scancode Map), so
+; the local OS never sees a Win key; Citrix forwards F13 and we
+; re-materialize it as LWin here. Inert when no F13 arrives.
+F13::LWin
+
 ; --- Hyperkey: VK19 → Ctrl+Alt+Win ----------------------------
 ; VK19 = VK_HANJA; on this Korean keyboard it's the physical key reporting
 ; that virtual code. Shift is kept OUT of hyper so `hyper+<k>` and
