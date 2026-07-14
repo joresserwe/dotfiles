@@ -100,6 +100,10 @@ log_done "Phase 1 complete"
 # ============================================================================
 log_step "Phase 2: brew bundle (Linux subset) + tool configs"
 
+# Homebrew >=6 refuses to install formulae from untrusted third-party taps
+# (needed for arl/arl/gitmux). `|| true`: older brew has no `trust` command.
+brew trust arl/arl 2>/dev/null || true
+
 brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
@@ -202,13 +206,20 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     src="${src:-winget}"
     # Match installed packages by scanning full list: `winget list --id <id>`
     # doesn't reliably match msstore-style IDs (e.g. 9PFXXSHC64H3).
-    if winget.exe list --accept-source-agreements 2>/dev/null | grep -q "$pkg"; then
+    # </dev/null on every winget.exe call: interop lets it drain our stdin,
+    # which is packages.txt — without it the loop dies after the first entry.
+    # tr -d '\0': winget emits UTF-16-ish output over interop; NULs break grep.
+    if winget.exe list --accept-source-agreements </dev/null 2>/dev/null | tr -d '\0' | grep -q "$pkg"; then
       log_skip "winget: $pkg"
     else
       log_step "winget: installing $pkg (source: $src)"
-      winget.exe install --id "$pkg" --source "$src" \
-        --accept-package-agreements --accept-source-agreements
-      log_done "winget: $pkg"
+      # Non-fatal: winget exits nonzero for "already installed, no upgrade".
+      if winget.exe install --id "$pkg" --source "$src" \
+        --accept-package-agreements --accept-source-agreements </dev/null; then
+        log_done "winget: $pkg"
+      else
+        log_skip "winget: $pkg (exit $? — already installed or no applicable version)"
+      fi
     fi
   done < "$DOTFILES_PATH/winget/packages.txt"
 
@@ -317,9 +328,12 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     # AND the Startup\winkey.lnk from the pre-Task architecture (2026-04-24
     # replaced with RunLevel=Highest Scheduled Task below to fix Medium→High
     # UIPI hook-event blocking).
+    # `|| true`: SilentlyContinue suppresses the error but powershell.exe
+    # still exits 1 when the task doesn't exist (fresh machine) — fatal
+    # under set -e without the guard.
     powershell.exe -NoProfile -Command \
       "Unregister-ScheduledTask -TaskName winkey-ahk -Confirm:\$false -ErrorAction SilentlyContinue | Out-Null" \
-      >/dev/null 2>&1
+      >/dev/null 2>&1 || true
     rm -rf "$win_userprofile_wsl/.ahk"
     rm -f "$startup_dir/winkey.ahk"
     rm -f "$startup_dir/winkey.lnk"
@@ -567,7 +581,9 @@ mise use -g node@lts
 export PATH="$XDG_DATA_HOME/mise/shims:$PATH"
 
 export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
-export PATH="$PNPM_HOME:$PATH"
+# $PNPM_HOME/bin too: pnpm >=10 places the global bin dir there and refuses
+# `install -g` when it's not in PATH.
+export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
 for pkg in yarn npm-check-updates mcp-hub; do
   if pnpm list -g --depth=0 2>/dev/null | grep -q "$pkg"; then
