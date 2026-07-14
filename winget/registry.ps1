@@ -11,14 +11,14 @@ Set-ItemProperty -Path $policiesSystem `
   -Name 'DisableLockWorkstation' -Value 1 -Type DWord -Force
 
 # Block Explorer-handled Win+<key> shortcuts. REG_SZ, one char per key.
-# D = Show Desktop, U = Accessibility. Windows processes these before AHK's
+# D = Show Desktop, U = Accessibility, H = Voice typing. Windows processes these before AHK's
 # keyboard hook, so `#d::`/`#u::` alone don't block the native behavior.
 # AHK hotkeys still fire on top (hook sees the event first), so CycleOnMonitor
 # in winget/winkey.ahk keeps working.
 # Type MUST be REG_SZ (String): Explorer silently ignores REG_EXPAND_SZ here —
 # symptom was Win+U still opening Accessibility even with the value set.
 Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
-  -Name 'DisabledHotkeys' -Value 'DU' -Type String -Force
+  -Name 'DisabledHotkeys' -Value 'DUH' -Type String -Force
 
 # LowLevelHooksTimeout — raise from the Windows default (300ms) to 10s so
 # Windows doesn't silently remove AHK's WH_KEYBOARD_LL hook if the callback
@@ -73,14 +73,20 @@ if ($settings[8] -ne 3) {
   Stop-Process -Name explorer -Force  # respawns with new setting
 }
 
-# CapsLock → Left Ctrl (mirrors Karabiner on macOS).
-# Scancode Map: header(8) + count(4) + mapping(4) + null(4) = 20 bytes.
-# Mapping entry is target-then-source: LCtrl (0x001D) ← CapsLock (0x003A).
+# CapsLock → Left Ctrl (mirrors Karabiner on macOS), and
+# LWin → F13: Windows never sees a Win key at all, so every native Win+<x>
+# (including winlogon's Win+L, which no policy or hook can intercept on a
+# Citrix client) is dead at the kernel. winkey.ahk re-materializes F13 as
+# LWin inside the session, where the policies above neuter the leftovers.
+# Scancode Map: header(8) + count(4) + mapping(4)*n + null(4).
+# Mapping entry is target-then-source: LCtrl (0x001D) ← CapsLock (0x003A),
+# F13 (0x0064) ← LWin (0xE05B).
 $bytes = [byte[]](
   0x00,0x00,0x00,0x00,
   0x00,0x00,0x00,0x00,
-  0x02,0x00,0x00,0x00,
+  0x03,0x00,0x00,0x00,
   0x1D,0x00,0x3A,0x00,
+  0x64,0x00,0x5B,0xE0,
   0x00,0x00,0x00,0x00
 )
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' `
