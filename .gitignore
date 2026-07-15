@@ -45,3 +45,6 @@ tacky-borders/tacky-borders.log
 # error log + marketplace cache alongside the pack.
 zebar/errors.log
 zebar/.marketplace/
+
+# nvim runtime sandbox (XDG dirs redirected under build/ for testing)
+build/
