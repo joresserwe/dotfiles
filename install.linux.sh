@@ -124,6 +124,23 @@ brew trust arl/arl 2>/dev/null || true
 brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
+
+# WSL: make this clone pushable. The shared git/config routes github.com
+# credentials to `gh auth git-credential`, which needs a per-machine login;
+# fall through to Windows' Git Credential Manager via a repo-local override
+# (helper reset + GCM). Symlinked into ~/.local/bin because a credential
+# helper path can't contain spaces ("Program Files"). Machine state — the
+# override lives in .git/config, never in the synced git/config.
+GCM_WIN='/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe'
+if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [ -x "$GCM_WIN" ]; then
+  ensure_dir "$HOME/.local/bin"
+  ln -sfn "$GCM_WIN" "$HOME/.local/bin/git-credential-manager.exe"
+  git -C "$DOTFILES_PATH" config --local --replace-all "credential.https://github.com.helper" ""
+  git -C "$DOTFILES_PATH" config --local --add "credential.https://github.com.helper" "$HOME/.local/bin/git-credential-manager.exe"
+  log_done "git: dotfiles clone credential fallback -> Windows GCM"
+else
+  log_skip "git credential bridge: not WSL or GCM missing"
+fi
 create_link "$DOTFILES_PATH/npm/npmrc"  "$XDG_CONFIG_HOME/npm/npmrc"
 
 create_link "$DOTFILES_PATH/tmux/tmux.conf"         "$XDG_CONFIG_HOME/tmux/tmux.conf"
