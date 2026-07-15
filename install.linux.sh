@@ -796,6 +796,7 @@ ensure_dir "$XDG_DATA_HOME/claude"
 
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
+create_link "$DOTFILES_PATH/claude/settings.home.json" "$HOME/.claude/settings.json"
 
 if [ -L "$XDG_DATA_HOME/claude/skills" ] || [ ! -e "$XDG_DATA_HOME/claude/skills" ]; then
   ln -sfn "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"

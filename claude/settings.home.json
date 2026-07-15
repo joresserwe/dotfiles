@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew info:*)",
+      "Bash(brew list:*)",
+      "Bash(brew outdated:*)",
+      "Bash(df:*)",
+      "Bash(du:*)",
+      "Bash(free:*)",
+      "Bash(gpg --list-keys)",
+      "Bash(ps:*)",
+      "Bash(uname:*)",
+      "Bash(uptime)",
+      "Bash(which:*)"
+    ]
+  }
+}

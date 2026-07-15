@@ -209,6 +209,7 @@ create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
 ln -sf "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"
+create_link "$DOTFILES_PATH/claude/settings.home.json" "$HOME/.claude/settings.json"
 
 # -----------------------------------------------------------------------------------------------
 
