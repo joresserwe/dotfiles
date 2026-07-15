@@ -149,6 +149,21 @@ else
   log_skip "win32yank: not running under WSL"
 fi
 
+# ~/Drives (WSL-only): symlink every Windows drive — local AND mapped network
+# drives — under one directory. WSL automount covers only fixed local drives;
+# link-drives.sh also drvfs-mounts anything else Windows reports (needs the
+# NOPASSWD sudo this user already has). After mapping a NEW network drive in
+# Windows, run ~/Drives/refresh.sh to pick it up — no reinstall needed.
+if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+  if bash "$DOTFILES_PATH/wsl/link-drives.sh"; then
+    log_done "drive links refreshed under ~/Drives"
+  else
+    log_skip "drive links: link-drives.sh failed (non-fatal)"
+  fi
+else
+  log_skip "drive links: not running under WSL"
+fi
+
 # WezTerm (Windows side): write a stub at %USERPROFILE%\.wezterm.lua that
 # dofile()s the config from the LOCAL dotfiles mirror (%USERPROFILE%\.dotfiles),
 # not \\wsl.localhost — at first launch after boot the WSL VM may be down and
