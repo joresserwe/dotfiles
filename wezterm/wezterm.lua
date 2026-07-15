@@ -108,16 +108,13 @@ config.font = wezterm.font_with_fallback({
 -- and similar PUA glyphs for display purposes.
 config.warn_about_missing_glyphs = false
 
--- Windows: pin DPI to 96 and use a single static font_size. Per-monitor
--- font_size overrides via update-status were tried and removed — every fire
--- on monitor crossing re-triggered window jitter under GlazeWM, and the
--- resulting fractional font_size (e.g. 16.5pt) broke Malgun Gothic hinting
--- so Korean glyphs rendered with uneven strokes. An integer font_size at a
--- pinned DPI rasterizes cleanly for CJK fallbacks.
-config.font_size = 14.0
-if is_windows then
-	config.dpi = 96
-end
+-- Single static font_size; per-monitor scaling is left to WezTerm's native
+-- DPI handling (glyphs rasterize at each monitor's real DPI). Do NOT pin
+-- config.dpi or override font_size per monitor: a dpi pin renders text at
+-- half size on the 192-DPI monitor, and update-status font_size overrides
+-- were tried and removed — every fire on monitor crossing re-triggered
+-- window jitter under GlazeWM.
+config.font_size = is_windows and 13.5 or 14.0
 
 config.adjust_window_size_when_changing_font_size = false
 
@@ -148,10 +145,10 @@ if config.tab_bar_at_bottom then
 	tab_bar_bg = "rgba(0, 0, 0, 0)"
 else
 	-- NOTE: must match the *final* window_background_opacity for the current OS.
-	-- The Windows override (0.7) is applied later in the file (in the OS-specific
+	-- The Windows override (0.65) is applied later in the file (in the OS-specific
 	-- block), so reading config.window_background_opacity here would still see the
 	-- mac default (0.85) and the tab bar would render darker than the terminal pane.
-	local effective_opacity = is_windows and 0.7 or 0.85
+	local effective_opacity = is_windows and 0.65 or 0.85
 	local r, g, b = wezterm.color.parse(C.base):srgba_u8()
 	tab_bar_bg = string.format("rgba(%d, %d, %d, %s)", r, g, b, effective_opacity)
 end
@@ -987,7 +984,7 @@ if is_windows then
 	-- Launch WSL (Ubuntu) + zsh as a login shell by default
 	config.default_domain = "WSL:Ubuntu"
 
-	config.window_background_opacity = 0.7
+	config.window_background_opacity = 0.65
 	config.win32_system_backdrop = "Acrylic"
 	config.macos_window_background_blur = nil
 end
