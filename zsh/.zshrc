@@ -18,6 +18,10 @@ plugins=(
 	sdk
 )
 
+# User-generated completions (install.linux.sh writes trash-cli's here).
+# Must be on fpath BEFORE oh-my-zsh runs compinit.
+[ -d "$XDG_DATA_HOME/zsh/site-functions" ] && fpath=("$XDG_DATA_HOME/zsh/site-functions" $fpath)
+
 [ -f "$ZSH/oh-my-zsh.sh" ] && . "$ZSH/oh-my-zsh.sh"
 [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && . "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 

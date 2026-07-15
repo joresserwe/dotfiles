@@ -648,6 +648,24 @@ else
   log_skip "winget: not running under WSL or winget.exe unavailable"
 fi
 
+# trash-cli zsh completions — the Ubuntu package ships none, but each command
+# can emit its own via shtab (python3-shtab, from apt/packages.txt). Written to
+# a user site-functions dir that .zshrc prepends to fpath before compinit.
+# The #compdef header check filters out both unsupported subcommands (trash-rm)
+# and the "Please install shtab firstly!" plea shtab-less builds print.
+ZSH_SITE_FUNCS="$XDG_DATA_HOME/zsh/site-functions"
+ensure_dir "$ZSH_SITE_FUNCS"
+for c in trash trash-put trash-empty trash-list trash-restore trash-rm; do
+  if command -v "$c" >/dev/null 2>&1 \
+     && "$c" --print-completion zsh > "$ZSH_SITE_FUNCS/_$c" 2>/dev/null \
+     && head -1 "$ZSH_SITE_FUNCS/_$c" | grep -q '^#compdef'; then
+    log_done "zsh completion: _$c"
+  else
+    rm -f "$ZSH_SITE_FUNCS/_$c"
+    log_skip "zsh completion: $c (generation unsupported)"
+  fi
+done
+
 if command -v ya >/dev/null 2>&1; then
   for pkg in \
     boydaihungst/mediainfo \

@@ -7,6 +7,12 @@ inotify-tools
 procps
 # rsync: install.linux.sh mirrors Windows-consumed subtrees to %USERPROFILE%\.dotfiles
 rsync
+# trash-cli: XDG trash for the `del` alias (macOS side uses macos-trash from
+# the Brewfile; /usr/bin/trash is OS-native there since Sonoma anyway)
+trash-cli
+# python3-shtab: lets trash-cli emit its own zsh completions
+# (`trash-put --print-completion zsh`) — generated in install.linux.sh
+python3-shtab
 unzip
 # wslu dropped: removed from Ubuntu 26.04 (resolute) archives, and nothing
 # in this repo uses wslview — clipboard/browser interop goes through clip.exe.

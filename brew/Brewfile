@@ -88,6 +88,9 @@ if OS.mac?
   brew "mas"
   # Watch files and take action when they change
   brew "watchman"
+  # `trash` CLI for the del alias — over the macOS-native /usr/bin/trash it
+  # fixes Finder "Put Back" and adds --interactive. Linux side: apt trash-cli.
+  brew "macos-trash"
   # A window border system for macOS
   brew "felixkratz/formulae/borders"
   # [DEPRECATED] yabai/skhd → replaced by aerospace
