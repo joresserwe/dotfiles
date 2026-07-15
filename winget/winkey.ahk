@@ -243,10 +243,17 @@ CycleOnMonitor(dir) {
 ; dialog — which GlazeWM then tiles over the focused tile and steals the
 ; first wezterm redraw slot, so the newly launched wezterm never resizes
 ; to its cell. Returning -1 lets callers skip this tick silently.
+; 50ms timeout on every WM_IME_CONTROL send (AHK default is 5000ms): a
+; foreground app with a busy message pump (Webex/CEF during meetings) makes
+; SendMessage block, and while this script's thread is stuck its
+; WH_KEYBOARD_LL callback can't run — Windows then stalls EVERY keystroke
+; system-wide for up to LowLevelHooksTimeout (10s here). Symptom: all
+; hotkeys feel seconds-slow whenever Webex holds focus. Timeout throws
+; TimeoutError, which the existing catch treats as "unknown, skip tick".
 IME_GetOpen(hWnd) {
     ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
     try
-        return SendMessage(0x283, 0x5, 0, , ime)  ; WM_IME_CONTROL, IMC_GETOPENSTATUS
+        return SendMessage(0x283, 0x5, 0, , ime, , , , 50)  ; WM_IME_CONTROL, IMC_GETOPENSTATUS
     catch
         return -1
 }
@@ -265,7 +272,7 @@ IME_GetConversionMode(hWnd) {
     ; and legacy IMM IMEs, unlike IMC_GETOPENSTATUS which some TSF IMEs leave
     ; pinned to 1. Same UIPI guard as IME_GetOpen above.
     try
-        return SendMessage(0x283, 0x1, 0, , ime)
+        return SendMessage(0x283, 0x1, 0, , ime, , , , 50)
     catch
         return -1
 }
@@ -292,7 +299,7 @@ SetTimer(MonitorImeState, 250)
 
 IME_SetOpen(hWnd, state) {
     ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
-    try SendMessage(0x283, 0x6, state, , ime)     ; WM_IME_CONTROL, IMC_SETOPENSTATUS
+    try SendMessage(0x283, 0x6, state, , ime, , , , 50)     ; WM_IME_CONTROL, IMC_SETOPENSTATUS
 }
 
 #HotIf WinActive("ahk_exe wezterm-gui.exe")
