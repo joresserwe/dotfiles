@@ -18,6 +18,10 @@ general:
     # bleeds onto the neighboring monitor). Subscribes to focus_changed and
     # dies with glazewm. See tacky-borders/state-border.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1"'
+    # DPI mis-size daemon: re-tiles wezterm windows whose frame drifted from
+    # glazewm's model after a cross-DPI move (glazewm#661). Subscribes to
+    # move/manage/monitor events and dies with glazewm. See fix-dpi-missize.ps1.
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1"'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
