@@ -74,19 +74,21 @@ if ($settings[8] -ne 3) {
 }
 
 # CapsLock → Left Ctrl (mirrors Karabiner on macOS), and
-# LWin → F13: Windows never sees a Win key at all, so every native Win+<x>
-# (including winlogon's Win+L, which no policy or hook can intercept on a
-# Citrix client) is dead at the kernel. winkey.ahk re-materializes F13 as
-# LWin inside the session, where the policies above neuter the leftovers.
+# LWin/RWin → F13: Windows never sees a Win key at all, so every native
+# Win+<x> (including winlogon's Win+L, which no policy or hook can intercept
+# on a Citrix client) is dead at the kernel. glazewm binds f13+<key>
+# DIRECTLY (config.yaml) — nothing re-materializes a Win key, so the
+# policies above are only a safety net for pre-reboot / unmapped states.
 # Scancode Map: header(8) + count(4) + mapping(4)*n + null(4).
 # Mapping entry is target-then-source: LCtrl (0x001D) ← CapsLock (0x003A),
-# F13 (0x0064) ← LWin (0xE05B).
+# F13 (0x0064) ← LWin (0xE05B), F13 (0x0064) ← RWin (0xE05C).
 $bytes = [byte[]](
   0x00,0x00,0x00,0x00,
   0x00,0x00,0x00,0x00,
-  0x03,0x00,0x00,0x00,
+  0x04,0x00,0x00,0x00,
   0x1D,0x00,0x3A,0x00,
   0x64,0x00,0x5B,0xE0,
+  0x64,0x00,0x5C,0xE0,
   0x00,0x00,0x00,0x00
 )
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' `

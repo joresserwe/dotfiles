@@ -87,35 +87,42 @@ HideShellTaskbars()
 OnMessage(DllCall("RegisterWindowMessage", "Str", "TaskbarCreated", "UInt"),
     (*) => (HideShellTaskbars(), InstallKeybdHook(true, true)))
 
-; Suppress Start Menu on lone Win press, while keeping Win+<key> combos alive.
+; Suppress Start Menu on lone Win press for keys the kernel remap does NOT
+; cover: RWin is never remapped, and LWin only reaches here on machines
+; without the Scancode Map (registry.ps1 not yet applied / pre-reboot).
 ; vkE8 (unassigned) injected between press and release breaks the sequence
-; Windows listens for. `~` passes the Win key through so glazewm still sees it.
+; Windows listens for. `~` passes the Win key through.
 ~LWin::Send("{Blind}{vkE8}")
 ~RWin::Send("{Blind}{vkE8}")
 
-; --- F13 → LWin (Citrix VDI) -----------------------------------
-; Win+L is ALWAYS handled by the local machine per Citrix docs — no
-; TransparentKeyPassthrough value forwards it. Workaround: the physical
-; machine remaps Win→F13 (PowerToys Keyboard Manager / Scancode Map), so
-; the local OS never sees a Win key; Citrix forwards F13 and we
-; re-materialize it as LWin here. Inert when no F13 arrives.
-F13::LWin
+; --- F13 IS the modifier (kernel Scancode Map) -------------------
+; registry.ps1 remaps the physical Win key to F13 at the kernel, and glazewm
+; binds f13+<key> DIRECTLY (config.yaml). No synthetic LWin is ever injected,
+; so Windows never sees a Win modifier at all: Start menu, Win+P/N/L and
+; every other native Win+<x> are structurally impossible — no per-key
+; suppression needed. (An earlier revision re-materialized F13 as LWin here,
+; which quietly resurrected all native Win behaviors; don't bring it back.)
+; Under Citrix VDI the same property holds: the client forwards F13 and the
+; local machine never sees Win — Win+L cannot lock the local session.
+;
+; AHK's own F13 combos below use `~F13 &` custom combinations: `~` keeps the
+; F13 events flowing to glazewm's keyboard hook (a bare `F13 &` prefix would
+; suppress them and kill every glazewm binding).
 
-; --- Hyperkey: VK19 → Ctrl+Alt+Win ----------------------------
+; --- Hyperkey: VK19 → Ctrl+Alt+F13 ----------------------------
 ; VK19 = VK_HANJA; on this Korean keyboard it's the physical key reporting
 ; that virtual code. Shift is kept OUT of hyper so `hyper+<k>` and
-; `hyper+shift+<k>` are distinct bindings. vkE8 on press breaks the lone-Win
-; sequence so a bare tap doesn't open the Start menu.
-*VK19::(MarkHotkey("VK19"), Send("{Blind}{LCtrl down}{LAlt down}{LWin down}{vkE8}"))
-*VK19 Up::Send("{Blind}{LCtrl up}{LAlt up}{LWin up}")
+; `hyper+shift+<k>` are distinct bindings. F13 instead of LWin keeps the
+; hyper chord Win-free (glazewm binds ctrl+alt+f13+<k>).
+*VK19::(MarkHotkey("VK19"), Send("{Blind}{LCtrl down}{LAlt down}{F13 down}"))
+*VK19 Up::Send("{Blind}{LCtrl up}{LAlt up}{F13 up}")
 
-; Per-shortcut blocks. Uncomment to disable. Prefixes: # Win  + Shift  ! Alt  ^ Ctrl
-; Skip keys bound by glazewm/config.yaml (#hjkl, #1-8, #n #p #z #m #f #space,
-; #[ #] #= #-, their +shift variants where applicable, +s) — they'd
-; override glazewm. Mode enter/exit/reload/pause use Hyper (Ctrl+Alt+Win+<k>).
+; Per-shortcut blocks — ONLY relevant on machines without the kernel remap
+; (there, physical Win is a real Win key and these can mute native leftovers).
+; On remapped machines no Win modifier ever exists, so nothing to block.
+; Uncomment to disable. Prefixes: # Win  + Shift  ! Alt  ^ Ctrl
 ; Win+L/D/U/G are not blockable here (Windows processes them before AHK's
-; hook); see winget/registry.ps1. AHK hotkeys still layer on top — e.g.
-; CycleOnMonitor below runs even with DisabledHotkeys=DU set.
+; hook); see winget/registry.ps1.
 
 ;#a::return      ; Quick Settings
 ;#b::return      ; System tray focus
@@ -211,13 +218,15 @@ CycleOnMonitor(dir) {
     next := Mod(idx - 1 + dir + wins.Length, wins.Length) + 1
     WinActivate("ahk_id " wins[next])
 }
-#u::(MarkHotkey("WinU"), CycleOnMonitor(1))
-#d::(MarkHotkey("WinD"), CycleOnMonitor(-1))
+; F13 combos (physical Win+U/D/F after the kernel remap). `~F13 &` keeps F13
+; flowing to glazewm's hook — see the F13 comment block above.
+~F13 & u::(MarkHotkey("WinU"), CycleOnMonitor(1))
+~F13 & d::(MarkHotkey("WinD"), CycleOnMonitor(-1))
 ; Win+F was glazewm's wm-cycle-focus, but that needs a focused window as
 ; anchor — no-op after switching monitors / closing the last focused app.
 ; Routing it through CycleOnMonitor removes the anchor requirement and
 ; also covers unmanaged windows like Win+U/D already do.
-#f::CycleOnMonitor(1)
+~F13 & f::CycleOnMonitor(1)
 
 ; --- wezterm IME workaround ---------------------------------------
 ; Windows wezterm's use_ime is always on and cannot be disabled, so
