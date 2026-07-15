@@ -96,10 +96,17 @@ if [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
 
   # Feed the wezterm status bar git segment: gitmux state as a pane user var,
   # refreshed on every prompt (~13ms). Empty outside a repo hides the segment.
+  # Not __wezterm_set_user_var: GNU base64 wraps at 76 cols, and the embedded
+  # newlines corrupt the OSC sequence for values this long.
   __wezterm_git_status_precmd() {
-    local json
+    local json b64
     json="$(command gitmux -dbg -timeout 500ms "$PWD" 2>/dev/null)" || json=""
-    __wezterm_set_user_var "git_status" "$json"
+    b64="$(printf %s "$json" | base64 | tr -d '\n')"
+    if [[ -z "${TMUX-}" ]]; then
+      printf "\033]1337;SetUserVar=%s=%s\007" "git_status" "$b64"
+    else
+      printf "\033Ptmux;\033\033]1337;SetUserVar=%s=%s\007\033\\" "git_status" "$b64"
+    fi
   }
   precmd_functions+=(__wezterm_git_status_precmd)
 fi
