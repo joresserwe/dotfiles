@@ -92,6 +92,24 @@ HideShellTaskbars()
 ; reinstall above also gets handled for mid-session Explorer restarts.
 OnMessage(DllCall("RegisterWindowMessage", "Str", "TaskbarCreated", "UInt"),
     (*) => (HideShellTaskbars(), InstallKeybdHook(true, true)))
+; TaskbarCreated only covers RE-CREATION. Explorer also re-SHOWs the existing
+; taskbar window without recreating it (attention flashes, focus changes,
+; Start/Win interactions, monitor hotplug) — after that the SW_HIDE is undone
+; and the auto-hide taskbar pops up on window moves until the next Explorer
+; restart. EVENT_OBJECT_SHOW (0x8002) via SetWinEventHook catches every such
+; re-show and re-hides within the same event dispatch, so no visible flash.
+TaskbarShowHook(hHook, event, hwnd, idObject, idChild, idThread, dwmsTime) {
+    if (idObject != 0)  ; OBJID_WINDOW only; ignore child accessibility objects
+        return
+    try {
+        cls := WinGetClass(hwnd)
+        if (cls = "Shell_TrayWnd" || cls = "Shell_SecondaryTrayWnd")
+            DllCall("ShowWindow", "Ptr", hwnd, "Int", 0)  ; SW_HIDE
+    }
+}
+DllCall("SetWinEventHook", "UInt", 0x8002, "UInt", 0x8002, "Ptr", 0,
+    "Ptr", CallbackCreate(TaskbarShowHook, "F"), "UInt", 0, "UInt", 0,
+    "UInt", 0)  ; WINEVENT_OUTOFCONTEXT
 
 ; Suppress Start Menu on lone Win press for keys the kernel remap does NOT
 ; cover: RWin is never remapped, and LWin only reaches here on machines
