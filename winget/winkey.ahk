@@ -8,6 +8,12 @@
 ; AHK's own SingleInstance to resolve conflicts is unnecessary.
 #SingleInstance Ignore
 
+; No tray icon: every hard-kill relaunch (reload-ahk.ps1, Hyper+C, logon
+; autofix) leaked a ghost icon into the shell's tray data — zebar's systray
+; accumulated one dead "H" icon per restart. The icon serves no purpose here
+; (reload is Hyper+C, diagnostics live in %TEMP%\winkey-debug.log).
+#NoTrayIcon
+
 ; --- Cold-boot diagnostic logging -------------------------------------------
 ; Records script start + periodic heartbeat + last hotkey fire timestamp to
 ; %TEMP%\winkey-debug.log. If TICK lines keep appearing but `lastHotkey` stays
