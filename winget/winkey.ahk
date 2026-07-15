@@ -297,6 +297,16 @@ FloatKey(dir, dx, dy) {
 ~F13 & l::FloatKey("right", 1, 0)
 #HotIf
 
+; --- Close window (Alt+Q, Cmd+Q muscle memory) -----------------------------
+; Lives here instead of a glazewm binding: glazewm's `close` acts on its
+; INTERNAL focus, so with an ignored window focused (PiP, games) it silently
+; closed the last MANAGED window in the background. WinClose targets the
+; real foreground window — polite WM_CLOSE, same net effect as Alt+F4.
+; League/Riot are excluded: Alt+Q/W/E/R level abilities in-game.
+#HotIf !WinActive("ahk_exe League of Legends.exe") && !WinActive("ahk_exe LeagueClientUx.exe") && !WinActive("ahk_exe RiotClientUx.exe")
+!q::(MarkHotkey("AltQ"), WinClose("A"))
+#HotIf
+
 ; --- Previous window back-and-forth (Win+Z) -------------------------------
 ; Resident implementation: prev/cur foreground hwnds come from the 250ms
 ; MonitorImeState sampler above, and WinActivate restores minimized windows

@@ -307,12 +307,12 @@ keybindings:
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\toggle-tile-float.ps1"']
     bindings: ['f13+space']
 
-  # ---- Close window (alt+q, Cmd+Q muscle memory from macOS) ----
-  # glazewm `close` sends a polite WM_CLOSE — identical net effect to Alt+F4,
-  # save-confirmation dialogs included. Trade-off accepted knowingly: this
-  # shadows Office's Tell-Me search and JetBrains' Context Info (both Alt+Q).
-  - commands: ['close']
-    bindings: ['alt+q']
+  # ---- Close window (alt+q) — owned by winkey.ahk, NOT bound here ----
+  # glazewm's close acts on its INTERNAL focus, so with an ignored window
+  # focused (PiP, games) it silently closed the last MANAGED window in the
+  # background — and it swallowed Alt+Q inside League, where that levels
+  # the Q ability. AHK's WinClose targets the real foreground window and
+  # #HotIf-excludes the League/Riot processes.
 
   # ---- Show desktop toggle (F11 — same key as macOS Show Desktop) ----
   # Shell-native MinimizeAll/UndoMinimizeALL — the Win+D that the kernel
