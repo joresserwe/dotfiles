@@ -106,7 +106,9 @@ if OS.mac?
   # brew "koekeishiya/formulae/yabai"
 
   # GPU-accelerated cross-platform terminal emulator
-  cask "wezterm"
+  # [DEPRECATED] wezterm → wezterm@nightly (stable stalled at 2024-02)
+  # cask "wezterm"
+  cask "wezterm@nightly"
   # AeroSpace is an i3-like tiling window manager for macOS
   cask "aerospace"
   # Enable Windows-like alt-tab
