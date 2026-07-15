@@ -4,6 +4,9 @@ curl
 file
 git
 inotify-tools
+# libicu-dev: ICU runtime for .NET-based tools (e.g. Mason's marksman LSP).
+# -dev because the runtime package name is release-versioned (libicu78 on 26.04)
+libicu-dev
 procps
 # rsync: install.linux.sh mirrors Windows-consumed subtrees to %USERPROFILE%\.dotfiles
 rsync
