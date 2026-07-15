@@ -323,5 +323,23 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
         ;;
     esac
   }
+
+  # Comet browser CDP for the comet MCP server (wsl/comet-mcp.sh). The
+  # debug port only applies at launch, so an already-running Comet without
+  # it must be restarted. WSL-only.
+  comet-debug() {
+    local exe='C:\Program Files\Perplexity\Comet\Application\comet.exe'
+    if /mnt/c/Windows/System32/curl.exe -s --max-time 2 http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+      echo 'comet-debug: CDP already listening on 9222'
+      return 0
+    fi
+    if /mnt/c/Windows/System32/tasklist.exe /FI "IMAGENAME eq comet.exe" 2>/dev/null | grep -qi 'comet.exe'; then
+      echo 'comet-debug: restarting Comet with remote debugging...'
+      /mnt/c/Windows/System32/taskkill.exe /IM comet.exe /F >/dev/null 2>&1
+      sleep 1
+    fi
+    powershell.exe -NoProfile -Command "Start-Process -FilePath '$exe' -ArgumentList '--remote-debugging-port=9222'" >/dev/null 2>&1 \
+      && echo 'comet-debug: Comet started with CDP on 9222'
+  }
 fi
 
