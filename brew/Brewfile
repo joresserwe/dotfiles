@@ -13,6 +13,8 @@ brew "universal-ctags"
 brew "curl"
 # Syntax-highlighting pager for git and diff output
 brew "git-delta"
+# Read and write EXIF metadata (yazi "Show EXIF" opener)
+brew "exiftool"
 # Modern, maintained replacement for ls
 brew "eza"
 # Simple, fast and user-friendly alternative to find
@@ -43,12 +45,18 @@ brew "lazygit"
 brew "luacheck"
 # Package manager for the Lua programming language
 brew "luarocks"
+# Unified display of technical and tag data for audio/video (yazi media preview)
+brew "media-info"
+# Media player (yazi "play" opener)
+brew "mpv"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
 # Polyglot runtime/version manager (replaces fnm + pyenv)
 brew "mise"
 # Renders an animated, color, ANSI-text loop of the Poptart Cat
 brew "nyancat"
+# Painless compression and decompression (yazi archive preview/compress)
+brew "ouch"
 # Fast, disk space efficient package manager
 brew "pnpm"
 # Python package installer and resolver
