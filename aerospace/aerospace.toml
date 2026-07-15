@@ -133,7 +133,9 @@ alt-shift-v = []
 alt-shift-w = []
 alt-shift-x = []
 alt-shift-y = []
-alt-shift-z = []
+# Restore the most recently minimized window (pairs with alt-shift-m below;
+# mirrors Windows f13+shift+z). UNTESTED on a real mac yet.
+alt-shift-z = 'exec-and-forget ~/.config/.dotfiles/aerospace/restore-min.sh'
 alt-tab = []
 alt-shift-tab = []
 alt-slash = []
@@ -169,6 +171,9 @@ alt-space = 'layout floating tiling'
 
 # Zoom fullscreen (alt-m)
 alt-m = 'fullscreen'
+# Minimize the focused window onto a restore stack (alt-shift-z pops it;
+# mirrors Windows f13+shift+m). UNTESTED on a real mac yet.
+alt-shift-m = 'exec-and-forget ~/.config/.dotfiles/aerospace/minimize.sh'
 
 # Toggle split (shift+alt+s) — join-with 사용 (normalization과 호환)
 alt-shift-s = 'layout tiles horizontal vertical'
