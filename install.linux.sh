@@ -729,7 +729,19 @@ log_done "Phase 4 complete (run 'nvim --headless \"+Lazy! sync\" +qa' to pre-ins
 # ============================================================================
 # Phase 5 — Claude Code
 # ============================================================================
-log_step "Phase 5: Claude Code symlinks"
+log_step "Phase 5: Claude Code"
+
+# Claude Code CLI — native installer, lands in ~/.local/bin/claude (same
+# convention as win32yank; .zshenv already puts ~/.local/bin on PATH) and
+# self-updates from then on. `command -v` alone isn't enough here: this
+# script runs under bash without .zshenv, so probe the install path too.
+if command -v claude >/dev/null 2>&1 || [ -x "$HOME/.local/bin/claude" ]; then
+  log_skip "claude CLI already installed"
+else
+  log_step "Installing Claude Code CLI (native installer)"
+  curl -fsSL https://claude.ai/install.sh | bash
+  log_done "claude CLI installed: $HOME/.local/bin/claude"
+fi
 
 ensure_dir "$XDG_DATA_HOME/claude"
 
