@@ -209,6 +209,15 @@ elif command -v gdu >/dev/null 2>&1; then
   alias disk="gdu"
 fi
 
+# Windows drives (WSL) — 2<letter> jumps to ~/Drives/<LETTER>, one alias per
+# link so new drives picked up by ~/Drives/refresh.sh get one automatically
+if [[ -d "$HOME/Drives" ]]; then
+  for _d in "$HOME/Drives"/[A-Z](N); do
+    alias "2${(L)_d:t}"="cd $_d"
+  done
+  unset _d
+fi
+
 # find port num
 alias portall="sudo lsof -nP | grep LISTEN"
 
