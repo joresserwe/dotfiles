@@ -2,4 +2,5 @@
 legacy_version_file = false
 
 [tools]
+java = "temurin-21"
 node = "lts"

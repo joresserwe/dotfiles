@@ -729,12 +729,13 @@ fi
 log_done "Phase 2 complete"
 
 # ============================================================================
-# Phase 3 — Runtime (mise + node + global pnpm packages)
+# Phase 3 — Runtime (mise + node/java + global pnpm packages)
 # ============================================================================
-log_step "Phase 3: mise + node + global packages"
+log_step "Phase 3: mise + node/java + global packages"
 
 eval "$(mise activate bash)"
 mise use -g node@lts
+mise use -g java@temurin-21
 # mise activate hooks fire on prompt; in non-interactive bash we must add shims to PATH manually
 export PATH="$XDG_DATA_HOME/mise/shims:$PATH"
 
