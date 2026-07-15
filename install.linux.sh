@@ -65,6 +65,20 @@ else
   log_skip "default shell already zsh"
 fi
 
+# /etc/skel leftovers (.bashrc, .profile, .bash_logout) — the default shell
+# is zsh, nothing reads these. Delete only PRISTINE skel copies: a diff against
+# /etc/skel guards against ever removing a file someone actually customized.
+for f in .bashrc .profile .bash_logout; do
+  if [ -f "$HOME/$f" ]; then
+    if diff -q "/etc/skel/$f" "$HOME/$f" >/dev/null 2>&1; then
+      rm "$HOME/$f"
+      log_done "removed skel leftover: ~/$f"
+    else
+      log_skip "~/$f differs from /etc/skel — keeping"
+    fi
+  fi
+done
+
 create_link "$DOTFILES_PATH/zsh/.zshenv" "$HOME/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshrc"  "$XDG_CONFIG_HOME/zsh/.zshrc"
 create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
