@@ -106,7 +106,7 @@ window_rules:
   - commands: ['ignore']
     match:
       - window_process: { equals: 'zebar' }
-      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture|PIP 모드' }
       - window_process: { regex: 'LeagueClientUx|RiotClientUx' }
       - window_process: { equals: 'League of Legends' }
 
