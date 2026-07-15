@@ -19,9 +19,13 @@ if (-not (Test-Path $ScriptPath)) {
 
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
 
+# wscript wrapper (winget/run-hidden.vbs, sibling tree in the mirror): a
+# powershell.exe task action flashes a console at logon even with
+# -WindowStyle Hidden; wscript is GUI-subsystem and never gets one.
+$runHidden = Join-Path (Split-Path -Parent (Split-Path -Parent $ScriptPath)) 'winget\run-hidden.vbs'
 $action    = New-ScheduledTaskAction `
-  -Execute 'powershell.exe' `
-  -Argument ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f $ScriptPath)
+  -Execute 'wscript.exe' `
+  -Argument ('"{0}" "{1}"' -f $runHidden, $ScriptPath)
 
 $t_logon   = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $t_daily   = New-ScheduledTaskTrigger -Daily -At '00:05'

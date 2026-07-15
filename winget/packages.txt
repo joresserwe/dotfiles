@@ -3,8 +3,12 @@
 # Source defaults to winget. Use `msstore` for Microsoft Store-only packages.
 # Find IDs with `winget search <name>`.
 
-# Tiling window manager
+# Tiling window manager (installer bundles Zebar)
 glzr-io.glazewm
+
+# Terminal — hosts the WSL zsh sessions; config comes from the dotfiles
+# mirror via the %USERPROFILE%\.wezterm.lua stub (install.linux.sh)
+wez.wezterm
 
 # Launcher / productivity tool — distributed via Microsoft Store only
 # (the winget-pkgs entry Raycast.Raycast is unmaintained as of 2025-11).

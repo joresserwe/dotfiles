@@ -126,6 +126,7 @@ The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powe
 - Single repo, single source of truth. OS differences are expressed as inline runtime branches (`case $OSTYPE` in shell, `if OS.mac?` in Brewfile) — no `darwin/`/`linux/` split folders.
 - `lib/common.sh` is a sourced-only library (mode 644) shared by both `install.sh` and `install.linux.sh`.
 - Phased structure (Phases 0–5) — fully idempotent, safe to re-run.
+- **Windows-local mirror** — Windows-side consumers (GlazeWM template/helpers, zebar, tacky-borders, winkey.ahk, wezterm.lua) read from `%USERPROFILE%\.dotfiles` (`DOTFILES_WIN`), never from `\\wsl.localhost` — at logon the WSL VM isn't up, so anything UNC-based dies on cold boot. The mirror is refreshed by `install.linux.sh` and by `winget/sync-windows.ps1` (first step of the Hyper+C reload chain); `DOTFILES_UNC` survives only as the sync source. `tacky-borders/config.yaml` in the mirror is runtime state (theme rotation) and excluded from sync.
 
 ### Phases
 
@@ -138,13 +139,28 @@ The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powe
 | **4** | AstroNvim clone |
 | **5** | Claude Code symlinks |
 
-### Windows-side setup (manual)
+### Windows-side setup
 
-These are not automated — set them up once on the Windows side:
+On a fresh PC, run `bootstrap.windows.ps1` once **before** WSL exists (any PowerShell — self-elevates via UAC):
 
-1. **Fonts** — the wezterm config declares a fallback chain in `wezterm/wezterm.lua`. Install each into per-user Windows Fonts (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`):
-   - **0xProto Nerd Font** — primary (Latin + Nerd Font glyphs). Download from [nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) → extract → select all TTFs → right-click → *Install for current user*.
-   - **Sarasa Mono K** — CJK fallback for Korean. Download `SarasaMonoK-TTF-*.7z` from [be5invis/Sarasa-Gothic releases](https://github.com/be5invis/Sarasa-Gothic/releases) → extract → install the 10 weight TTFs the same way. License: SIL OFL-1.1.
-   - **codicon** — covers VS Code PUA glyphs emitted by Claude Code's TUI. Download `codicon.ttf` from [@vscode/codicons](https://unpkg.com/@vscode/codicons/dist/codicon.ttf) → install.
-2. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
-3. **Clipboard** — works out of the box: tmux uses `set-clipboard on` (OSC 52) and the `_dotfiles_copy` shell helper falls back to `clip.exe` if no Wayland/X clipboard tool is present.
+```powershell
+irm https://raw.githubusercontent.com/joresserwe/dotfiles/master/bootstrap.windows.ps1 | iex
+```
+
+It covers exactly what `install.linux.sh` cannot, since that script runs inside WSL:
+
+1. **WSL platform** — enables the `Microsoft-Windows-Subsystem-Linux` and `VirtualMachinePlatform` features, installs the WSL Store package via winget, and queues the Ubuntu distro. A reboot is required afterwards.
+2. **Fonts** — installs the wezterm fallback chain (`wezterm/wezterm.lua`) into per-user Windows Fonts (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`), always fetching the latest release:
+   - **0xProto Nerd Font** — primary (Latin + Nerd Font glyphs), from [nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases).
+   - **Sarasa Mono K** — CJK fallback for Korean, from [be5invis/Sarasa-Gothic releases](https://github.com/be5invis/Sarasa-Gothic/releases). License: SIL OFL-1.1.
+   - **codicon** — covers VS Code PUA glyphs emitted by Claude Code's TUI, from [@vscode/codicons](https://unpkg.com/@vscode/codicons/dist/codicon.ttf).
+
+   Idempotent: already-installed families are skipped; pass `-RefreshFonts` to force an update.
+3. **Registry tweaks** — runs `winget/registry.ps1` elevated, so the HKLM Scancode Map (CapsLock → Ctrl, LWin → F13) actually lands — an unelevated pass silently cannot write it, and winkey.ahk + the glazewm Hyper chain depend on it.
+
+After the reboot, `wsl --install -d Ubuntu` creates the Linux user; then run `install.linux.sh` from a terminal launched **as Administrator** — the RunLevel=Highest scheduled tasks (glazewm autostart, winkey, tacky-borders) are registered through WSL interop, which inherits the terminal's token.
+
+Still manual:
+
+1. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
+2. **Clipboard** — works out of the box: tmux uses `set-clipboard on` (OSC 52) and the `_dotfiles_copy` shell helper falls back to `clip.exe` if no Wayland/X clipboard tool is present.

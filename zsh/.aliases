@@ -225,19 +225,21 @@ ping_or_tcping() {
 }
 
 # tacky-reload / tacky-theme — switch / re-apply the active tacky-borders
-# theme. Config lives in the dotfiles repo itself (tacky-borders/config.yaml,
-# gitignored) since %USERPROFILE%\.config\tacky-borders is an NTFS symlink
-# to this dir. Watcher on the UNC-backed symlink is dead (9P doesn't deliver
-# ReadDirectoryChangesW events), so reload requires a process restart —
-# delegated to the 'tacky-borders' Scheduled Task so restart happens at
-# RunLevel=Highest. WSL-only.
+# theme. The LIVE config is the Windows mirror copy
+# (%USERPROFILE%\.dotfiles\tacky-borders\config.yaml) — the same place
+# TACKY_BORDERS_CONFIG_HOME points and rotate.ps1 writes; the WSL clone's
+# copy is not consumed at runtime. Reload is delegated to the
+# 'tacky-borders' Scheduled Task so restart happens at RunLevel=Highest.
+# WSL-only.
 #
 # tacky-reload   : re-apply the currently-active theme
 # tacky-theme    : list themes, marking the currently-applied one with *
 # tacky-theme X  : switch to theme X
 if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
   _tacky_live_config() {
-    printf '%s/.dotfiles/tacky-borders/config.yaml' "$XDG_CONFIG_HOME"
+    local up; up="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
+    [[ -n "$up" ]] || return 1
+    printf '%s/.dotfiles/tacky-borders/config.yaml' "$(wslpath "$up")"
   }
   _tacky_current_theme() {
     local dst; dst="$(_tacky_live_config)"

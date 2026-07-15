@@ -36,6 +36,11 @@ win_userprofile="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
 stub_path="$(wslpath "$win_userprofile")/.wezterm.lua"
 [[ -f "$stub_path" ]] || { echo "wezterm-watch: stub not found at $stub_path" >&2; exit 1; }
 
+# The stub dofile()s the MIRROR copy (%USERPROFILE%\.dotfiles\wezterm\...) so
+# wezterm never depends on \\wsl.localhost; propagate edits there before
+# poking the stub.
+mirror_wezterm="$(wslpath "$win_userprofile")/.dotfiles/wezterm"
+
 # Single-instance lock so .zshrc auto-start is safe to call repeatedly.
 lock_file="${XDG_RUNTIME_DIR:-/tmp}/wezterm-watch.lock"
 exec 9>"$lock_file"
@@ -53,6 +58,9 @@ inotifywait -m -q -e close_write,move,create \
 | while read -r filename; do
     case "$filename" in
       *.lua)
+        # Copy the edit into the local mirror first, then trigger the reload.
+        mkdir -p "$mirror_wezterm" 2>/dev/null || true
+        cp -f "$watch_dir/$filename" "$mirror_wezterm/$filename" 2>/dev/null || true
         touch "$stub_path"
         ;;
     esac

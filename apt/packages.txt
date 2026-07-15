@@ -5,6 +5,9 @@ file
 git
 inotify-tools
 procps
+# rsync: install.linux.sh mirrors Windows-consumed subtrees to %USERPROFILE%\.dotfiles
+rsync
 unzip
-wslu
+# wslu dropped: removed from Ubuntu 26.04 (resolute) archives, and nothing
+# in this repo uses wslview — clipboard/browser interop goes through clip.exe.
 zsh

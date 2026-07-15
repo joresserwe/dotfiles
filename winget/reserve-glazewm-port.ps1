@@ -14,22 +14,29 @@
 $ErrorActionPreference = 'Continue'
 $port = 6123
 
-Write-Host "[1/4] stop Hyper-V NAT service (releases dynamic port ranges)..."
-# Also hns (Host Network Service) which seeds winnat's allocations.
-net stop winnat 2>&1 | Out-Host
-net stop hns 2>&1 | Out-Host
-
-Write-Host "[2/4] persistently reserve TCP $port for GlazeWM IPC..."
-# store=persistent survives reboot. Re-adding an already-reserved port is
-# idempotent (no error).
+Write-Host "[1/4] try a plain persistent reservation first..."
+# Succeeds whenever $port isn't currently inside an active dynamic range —
+# no service cycling needed, and the persistent store is respected on every
+# subsequent boot regardless.
 netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
 
-Write-Host "[3/4] start services back (re-allocates ranges respecting the new exclusion)..."
-net start hns 2>&1 | Out-Host
-net start winnat 2>&1 | Out-Host
+$reserved = (netsh int ipv4 show excludedportrange tcp store=persistent | Out-String) -match "\b$port\b"
+
+if (-not $reserved) {
+  Write-Host "[2/4] port currently claimed — cycling winnat to release dynamic ranges..."
+  # winnat only. Do NOT stop hns: it wedges in StopPending on some machines
+  # (observed 2026-07-15) and `net stop` additionally blocks on an
+  # interactive dependent-services Y/N prompt. winnat alone owns the dynamic
+  # TCP allocations; restarting it re-reads the persistent exclusion list.
+  # Run with WSL shut down (`wsl --shutdown`) so winnat releases cleanly.
+  Stop-Service winnat -Force -ErrorAction SilentlyContinue
+  netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
+  Write-Host "[3/4] start winnat back (re-allocates ranges respecting the new exclusion)..."
+  Start-Service winnat -ErrorAction SilentlyContinue
+}
 
 Write-Host "[4/4] verify..."
-$lines = netsh int ipv4 show excludedportrange tcp | Out-String
+$lines = netsh int ipv4 show excludedportrange tcp store=persistent | Out-String
 if ($lines -match "\b$port\b") {
   Write-Host "  OK: $port is now in the excluded list"
 } else {
