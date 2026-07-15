@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# xdg-open shim for WSL: wslu/wslview is gone from Ubuntu 26.04 archives, so
+# route to the Windows default handler instead. Files become UNC paths (most
+# Windows apps accept them); URLs pass through untouched.
+set -euo pipefail
+
+target="${1:?usage: xdg-open <file|url>}"
+if [[ "$target" == *://* ]]; then
+  win="$target"
+else
+  win="$(wslpath -w "$(realpath "$target")")"
+fi
+exec cmd.exe /c start "" "$win" 2>/dev/null

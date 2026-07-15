@@ -157,6 +157,16 @@ create_link "$DOTFILES_PATH/yazi/theme.toml"  "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
 create_link "$DOTFILES_PATH/yazi/init.lua"    "$XDG_CONFIG_HOME/yazi/init.lua"
 
+# xdg-open shim (WSL-only): wslu/wslview is gone from Ubuntu 26.04 archives,
+# so yazi's `open` opener routes through cmd.exe to the Windows default app.
+if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+  ensure_dir "$HOME/.local/bin"
+  ln -sfn "$DOTFILES_PATH/wsl/xdg-open" "$HOME/.local/bin/xdg-open"
+  log_done "xdg-open shim -> wsl/xdg-open"
+else
+  log_skip "xdg-open shim: not running under WSL"
+fi
+
 # win32yank (WSL-only): clipboard tool for WSL. Preferred over clip.exe
 # because it handles CRLF correctly and supports paste. Installed into
 # ~/.local/bin (already on PATH via .zshenv). Pinned version for reproducibility.
