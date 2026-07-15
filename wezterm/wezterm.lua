@@ -234,8 +234,22 @@ config.keys = {
 	-- Maximize pane (zoom)
 	{ key = "phys:m", mods = "LEADER", action = act.TogglePaneZoomState },
 
-	-- Tab
-	{ key = "phys:t", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
+	-- Tab. Shell-less panes (C-a+a AI splits, resurrect restores) never
+	-- report an OSC 7 cwd, so the mux keeps their Windows-side spawn cwd
+	-- (C:/Users/...) and a plain SpawnTab would land the new WSL tab in
+	-- %USERPROFILE%. Fall back to ~ unless the pane reports a unix path.
+	{
+		key = "phys:t",
+		mods = "LEADER",
+		action = wezterm.action_callback(function(win, pane)
+			local cwd_uri = pane:get_current_working_dir()
+			local dir = cwd_uri and cwd_uri.file_path or nil
+			if is_windows and (not dir or not dir:find("^/")) then
+				dir = "~"
+			end
+			win:perform_action(act.SpawnCommandInNewTab({ domain = "CurrentPaneDomain", cwd = dir }), pane)
+		end),
+	},
 	{ key = "phys:l", mods = "LEADER", action = act.ActivateTabRelative(1) },
 	{ key = "phys:h", mods = "LEADER", action = act.ActivateTabRelative(-1) },
 
@@ -983,6 +997,14 @@ end)
 if is_windows then
 	-- Launch WSL (Ubuntu) + zsh as a login shell by default
 	config.default_domain = "WSL:Ubuntu"
+
+	-- Without default_cwd, panes spawned with no known cwd inherit
+	-- wezterm.exe's Windows cwd (%USERPROFILE% → /mnt/c/Users/...).
+	local wsl_domains = wezterm.default_wsl_domains()
+	for _, dom in ipairs(wsl_domains) do
+		dom.default_cwd = "~"
+	end
+	config.wsl_domains = wsl_domains
 
 	config.window_background_opacity = 0.65
 	config.win32_system_backdrop = "Acrylic"
