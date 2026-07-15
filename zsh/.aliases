@@ -55,6 +55,12 @@ alias ping="ping_or_tcping"
 # lazygit
 alias lg="lazygit"
 
+# bottom — btm sees only WSL-side processes; btmw runs the Windows build
+# via interop to monitor Windows processes (Task Manager replacement)
+case "$OSTYPE" in
+  linux-gnu*) command -v btm.exe >/dev/null 2>&1 && alias btmw="btm.exe" ;;
+esac
+
 # trash-cli
 alias rm="echo Use 'del' or 'trash', or the full path i.e. '/bin/rm'"
 alias del="trash"

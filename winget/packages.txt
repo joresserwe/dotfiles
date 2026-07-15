@@ -18,3 +18,7 @@ wez.wezterm.nightly
 
 # Keyboard scripting — required by winget/winkey.ahk
 AutoHotkey.AutoHotkey
+
+# Process/system monitor — Windows-side btm, run from WSL as btm.exe (btmw alias)
+# to see Windows processes without opening Task Manager
+Clement.bottom
