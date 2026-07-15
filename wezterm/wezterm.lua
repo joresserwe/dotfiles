@@ -526,92 +526,44 @@ end
 ---------------------------------------------------------------------------
 -- Status bar (catppuccin 스타일)
 ---------------------------------------------------------------------------
-local git_cache = {} -- { [cwd] = { info = ..., time = ... } }
-
--- .git 디렉토리 찾기 (cwd에서 위로 탐색)
-local function find_git_dir(cwd)
-	local dir = cwd
-	while dir and dir ~= "" and dir ~= "/" do
-		local f = io.open(dir .. "/.git/HEAD", "r")
-		if f then
-			f:close()
-			return dir .. "/.git"
-		end
-		dir = dir:match("(.+)/[^/]*$")
-	end
-	return nil
-end
-
--- .git/HEAD에서 브랜치명 직접 읽기 (서브프로세스 없음, 즉시 반환)
-local function read_branch(git_dir)
-	if not git_dir then
+-- gitmux JSON pushed by the shell as a pane user var on every prompt
+-- (see __wezterm_git_status_precmd in zsh/.zshrc). Pane-scoped escape
+-- sequences cross the WSL/SSH boundary, so no subprocess or file access
+-- is needed here.
+local function get_git_info(pane)
+	local ok, vars = pcall(pane.get_user_vars, pane)
+	if not ok or not vars then
 		return nil
 	end
-	local f = io.open(git_dir .. "/HEAD", "r")
-	if not f then
+	local raw = vars.git_status
+	if not raw or raw == "" then
 		return nil
 	end
-	local head = f:read("*l")
-	f:close()
-	if not head then
+	local function num(key)
+		return tonumber(raw:match('"' .. key .. '":%s*(%d+)')) or 0
+	end
+	local function bool(key)
+		return raw:match('"' .. key .. '":%s*true') ~= nil
+	end
+	local function str(key)
+		return raw:match('"' .. key .. '":%s*"([^"]*)"')
+	end
+	local branch = str("LocalBranch")
+	if bool("IsDetached") then
+		branch = str("HEAD") or branch
+	end
+	if not branch or branch == "" then
 		return nil
 	end
-	return head:match("ref: refs/heads/(.+)") or head:sub(1, 7)
-end
-
-local function get_git_info(cwd)
-	if not cwd or cwd == "" then
-		return nil
-	end
-
-	-- 브랜치는 항상 파일에서 즉시 읽기
-	local git_dir = find_git_dir(cwd)
-	local branch = read_branch(git_dir)
-	if not branch then
-		return nil
-	end
-
-	-- 상세 정보(modified/staged 등)는 gitmux + per-cwd 10초 캐시
-	local now = os.time()
-	local entry = git_cache[cwd]
-	local cached = entry and entry.info
-	if not cached or (now - (entry and entry.time or 0)) >= 10 then
-		local ok, handle =
-			pcall(io.popen, brew_bin .. "gitmux -dbg -timeout 500ms '" .. cwd:gsub("'", "'\\''") .. "' 2>/dev/null")
-		if ok and handle then
-			local raw = handle:read("*a")
-			handle:close()
-			local function num(key)
-				return tonumber(raw:match('"' .. key .. '":%s*(%d+)')) or 0
-			end
-			local function bool(key)
-				return raw:match('"' .. key .. '":%s*true') ~= nil
-			end
-			local function str(key)
-				return raw:match('"' .. key .. '":%s*"([^"]*)"')
-			end
-			cached = {
-				modified = num("NumModified"),
-				staged = num("NumStaged"),
-				untracked = num("NumUntracked"),
-				ahead = num("AheadCount"),
-				behind = num("BehindCount"),
-				clean = bool("IsClean"),
-				remote = str("RemoteBranch"),
-			}
-			git_cache[cwd] = { info = cached, time = now }
-		end
-	end
-
 	return {
 		branch = branch,
-		modified = cached and cached.modified or 0,
-		staged = cached and cached.staged or 0,
-		untracked = cached and cached.untracked or 0,
-		ahead = cached and cached.ahead or 0,
-		behind = cached and cached.behind or 0,
-		clean = cached and cached.clean or true,
-		remote = cached and cached.remote or "",
+		modified = num("NumModified"),
+		staged = num("NumStaged"),
+		untracked = num("NumUntracked"),
+		ahead = num("AheadCount"),
+		behind = num("BehindCount"),
+		clean = bool("IsClean"),
+		remote = str("RemoteBranch") or "",
 	}
 end
 
@@ -683,9 +635,7 @@ wezterm.on("update-status", function(window, pane)
 	-- Right: directory | git | datetime
 	local dir_name = cwd:match("([^/\\]+)$") or cwd
 	local datetime = wezterm.strftime("%y-%m-%d %H:%M")
-	-- Windows: wezterm runs natively and cannot exec WSL-side gitmux, and
-	-- io.open on WSL paths from the Windows side is unreliable. Skip entirely.
-	local git = not is_windows and get_git_info(cwd) or nil
+	local git = get_git_info(pane)
 
 	local right = {}
 

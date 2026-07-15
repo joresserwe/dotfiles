@@ -41,7 +41,6 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:
 if command -v carapace &>/dev/null; then
   export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
   export CARAPACE_MATCH=CASE_INSENSITIVE
-  zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
   local _carapace_cache="$XDG_CACHE_HOME/carapace/init.zsh"
   if [[ ! -f "$_carapace_cache" || "$(command -v carapace)" -nt "$_carapace_cache" ]]; then
     mkdir -p "${_carapace_cache:h}"
@@ -89,8 +88,20 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [[ -x "$DOTFILES_PATH/wezterm/wezterm-watc
 fi
 
 # wezterm shell integration (OSC 7/133/1337: cwd tracking, prompt zones, user vars)
-if [[ -n "${WSL_DISTRO_NAME:-}" && -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]]; then
+# WSL: TERM_PROGRAM does not propagate from the Windows-side wezterm, so key off
+# WSL_DISTRO_NAME instead.
+if [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
+  && [[ -n "${WSL_DISTRO_NAME:-}" || "${TERM_PROGRAM:-}" == "WezTerm" ]]; then
   . "$DOTFILES_PATH/wezterm/wezterm.sh"
+
+  # Feed the wezterm status bar git segment: gitmux state as a pane user var,
+  # refreshed on every prompt (~13ms). Empty outside a repo hides the segment.
+  __wezterm_git_status_precmd() {
+    local json
+    json="$(command gitmux -dbg -timeout 500ms "$PWD" 2>/dev/null)" || json=""
+    __wezterm_set_user_var "git_status" "$json"
+  }
+  precmd_functions+=(__wezterm_git_status_precmd)
 fi
 
 #neofetch
