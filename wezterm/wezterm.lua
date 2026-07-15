@@ -114,7 +114,7 @@ config.warn_about_missing_glyphs = false
 -- half size on the 192-DPI monitor, and update-status font_size overrides
 -- were tried and removed — every fire on monitor crossing re-triggered
 -- window jitter under GlazeWM.
-config.font_size = is_windows and 13.5 or 14.0
+config.font_size = is_windows and 12.5 or 14.0
 
 config.adjust_window_size_when_changing_font_size = false
 
