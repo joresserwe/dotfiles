@@ -24,20 +24,10 @@ $cfgHome = if ($env:TACKY_BORDERS_CONFIG_HOME) { $env:TACKY_BORDERS_CONFIG_HOME 
            else { Join-Path $env:USERPROFILE '.dotfiles\tacky-borders' }
 $cfg = Join-Path $cfgHome 'config.yaml'
 
-# Focus history for f13+z ("previous window", glazewm/focus-prev.ps1): this
-# daemon already wakes on every focus_changed, so it doubles as the tracker.
-$script:histFile = Join-Path $env:TEMP 'glazewm-prev-window.txt'
-$script:lastFocusId = $null
-
 function Sync-BorderState {
   $res = & $glazewm query focused 2>$null | ConvertFrom-Json
   if (-not $res -or -not $res.success) { return }
   $f = $res.data.focused
-
-  if ($f.type -eq 'window' -and $f.id -ne $script:lastFocusId) {
-    if ($script:lastFocusId) { Set-Content $script:histFile $script:lastFocusId }
-    $script:lastFocusId = $f.id
-  }
 
   # Flag for winkey.ahk's floating-nav hotkeys: glazewm's focus --direction
   # is a no-op when the FOCUSED window is floating (verified live), so AHK

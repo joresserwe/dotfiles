@@ -297,6 +297,29 @@ FloatKey(dir, dx, dy) {
 ~F13 & l::FloatKey("right", 1, 0)
 #HotIf
 
+; --- Previous window back-and-forth (Win+Z) -------------------------------
+; Resident implementation: prev/cur foreground hwnds come from the 250ms
+; MonitorImeState sampler above, and WinActivate restores minimized windows
+; and pulls cross-workspace ones (glazewm follows external focus changes,
+; same as alt-tab). Custom combos fire on every modifier variant, so shift
+; is dispatched here too: f13+shift+z = restore most-recently-minimized via
+; restore-window.ps1 (low-frequency, spawn cost acceptable there).
+global curActiveHwnd := 0, prevActiveHwnd := 0
+~F13 & z:: {
+    global prevActiveHwnd
+    if GetKeyState("Shift", "P") {
+        MarkHotkey("RestoreMin")
+        mirror := EnvGet("DOTFILES_WIN")
+        if (mirror = "")
+            mirror := EnvGet("USERPROFILE") "\.dotfiles"
+        Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' mirror '\glazewm\restore-window.ps1"', , 'Hide')
+        return
+    }
+    MarkHotkey("PrevWin")
+    if (prevActiveHwnd && WinExist("ahk_id " prevActiveHwnd))
+        WinActivate("ahk_id " prevActiveHwnd)
+}
+
 ; --- wezterm IME workaround ---------------------------------------
 ; Windows wezterm's use_ime is always on and cannot be disabled, so
 ; the Korean IME swallows Ctrl+<letter> combos while in 한글 mode
@@ -354,6 +377,19 @@ MonitorImeState() {
     hwnd := WinExist("A")
     if !hwnd
         return
+    ; Previous-window history for ~F13 & z, tracked here because this timer
+    ; already samples the foreground window 4×/sec. Zero-cost bookkeeping —
+    ; the shell-exec/daemon version cost a ~0.5s powershell spawn per press.
+    global curActiveHwnd, prevActiveHwnd
+    if (hwnd != curActiveHwnd) {
+        try {
+            if (WinGetTitle(hwnd) != "") {
+                if curActiveHwnd
+                    prevActiveHwnd := curActiveHwnd
+                curActiveHwnd := hwnd
+            }
+        }
+    }
     mode := IME_GetConversionMode(hwnd)
     if mode = -1  ; UIPI-blocked this tick; leave lastImeState as-is
         return

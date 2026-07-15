@@ -217,28 +217,20 @@ keybindings:
     bindings: ['f13+l']
 
   # ---- Move window (win+shift+hjkl) ----
-  # `wm-redraw` after every move forces GlazeWM to re-apply tile sizes.
-  # Workaround for wezterm + multi-DPI bug (glzr-io/glazewm#661): on
-  # cross-monitor moves wezterm ignores GlazeWM's SetWindowPos and picks
-  # its own size from cell-grid math at the new DPI, ending up smaller
-  # than the tile or spanning two monitors.
-  # The delayed-redraw.ps1 fires a SECOND wm-redraw 1s later to catch
-  # wezterm's async DPI resize that happens AFTER the immediate redraw
-  # (upstream wezterm has no setting to suppress this — see
-  # wezterm#1983, #6374). The script scopes itself to $targets (wezterm-gui
-  # by default), so other apps aren't re-tiled unnecessarily. Launched via
-  # shell-exec --hide-window (GlazeWM v3.6.0+) spawns without a console — no
-  # cmd flash on every move. Native replacement for prior wscript/vbs wrappers.
-  # recenter-floating.ps1 (self-no-op unless a floating window ended up
-  # outside its monitor): directional moves can carry a floating window
-  # across a DPI boundary, leaving it straddling/mis-sized.
-  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\delayed-redraw.ps1"', &recenter 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\recenter-floating.ps1"']
+  # The wm-redraw + delayed-redraw.ps1 wezterm/multi-DPI workaround
+  # (glzr-io/glazewm#661) used to live here; removed 2026-07-15 — the double
+  # redraw made every move visibly flicker, which was worse than the
+  # occasional wezterm mis-size it papered over. Restore from git history if
+  # wezterm cross-DPI sizing regresses badly.
+  # recenter-floating.ps1 stays (self-no-op unless a floating window ended
+  # up outside its monitor after crossing a DPI boundary).
+  - commands: ['move --direction left',  &recenter 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\recenter-floating.ps1"']
     bindings: ['f13+shift+h']
-  - commands: ['move --direction down',  'wm-redraw', *delayed_redraw, *recenter]
+  - commands: ['move --direction down',  *recenter]
     bindings: ['f13+shift+j']
-  - commands: ['move --direction up',    'wm-redraw', *delayed_redraw, *recenter]
+  - commands: ['move --direction up',    *recenter]
     bindings: ['f13+shift+k']
-  - commands: ['move --direction right', 'wm-redraw', *delayed_redraw, *recenter]
+  - commands: ['move --direction right', *recenter]
     bindings: ['f13+shift+l']
 
   # ---- Workspace focus (win+1~9) ----
@@ -264,26 +256,25 @@ keybindings:
   # END_GENERATED_WS_FOCUS
 
   # ---- Move window to workspace (win+shift+1~9) with focus follow ----
-  # Cross-monitor workspace moves trigger the same wezterm DPI resize bug as
-  # direction moves, so they get the same delayed-redraw workaround.
+  # *recenter fixes floats that land off-monitor on cross-monitor sends.
   # BEGIN_GENERATED_WS_MOVE
-  - commands: ['move --workspace 1', 'focus --workspace 1', *delayed_redraw]
+  - commands: ['move --workspace 1', 'focus --workspace 1', *recenter]
     bindings: ['f13+shift+1']
-  - commands: ['move --workspace 2', 'focus --workspace 2', *delayed_redraw]
+  - commands: ['move --workspace 2', 'focus --workspace 2', *recenter]
     bindings: ['f13+shift+2']
-  - commands: ['move --workspace 3', 'focus --workspace 3', *delayed_redraw]
+  - commands: ['move --workspace 3', 'focus --workspace 3', *recenter]
     bindings: ['f13+shift+3']
-  - commands: ['move --workspace 4', 'focus --workspace 4', *delayed_redraw]
+  - commands: ['move --workspace 4', 'focus --workspace 4', *recenter]
     bindings: ['f13+shift+4']
-  - commands: ['move --workspace 5', 'focus --workspace 5', *delayed_redraw]
+  - commands: ['move --workspace 5', 'focus --workspace 5', *recenter]
     bindings: ['f13+shift+5']
-  - commands: ['move --workspace 6', 'focus --workspace 6', *delayed_redraw]
+  - commands: ['move --workspace 6', 'focus --workspace 6', *recenter]
     bindings: ['f13+shift+6']
-  - commands: ['move --workspace 7', 'focus --workspace 7', *delayed_redraw]
+  - commands: ['move --workspace 7', 'focus --workspace 7', *recenter]
     bindings: ['f13+shift+7']
-  - commands: ['move --workspace 8', 'focus --workspace 8', *delayed_redraw]
+  - commands: ['move --workspace 8', 'focus --workspace 8', *recenter]
     bindings: ['f13+shift+8']
-  - commands: ['move --workspace 9', 'focus --workspace 9', *delayed_redraw]
+  - commands: ['move --workspace 9', 'focus --workspace 9', *recenter]
     bindings: ['f13+shift+9']
   # END_GENERATED_WS_MOVE
 
@@ -301,12 +292,11 @@ keybindings:
 
   # ---- Recent workspace (win+z) — workspace-back-and-forth ----
   # ---- Previous window back-and-forth (win+z) ----
-  # Focuses the previously focused WINDOW (cross-workspace included) via
-  # focus-prev.ps1 + the state-border daemon's focus history. The mac
-  # alt-z is workspace-back-and-forth, but this is the superset of how
-  # that binding is actually used (one main window per workspace).
-  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\focus-prev.ps1"']
-    bindings: ['f13+z']
+  # Owned by winkey.ahk (~F13 & z): the resident AHK process tracks the
+  # foreground window itself and WinActivates the previous one with zero
+  # subprocess spawn — the shell-exec version here cost a ~0.5s powershell
+  # cold start per press. f13+shift+z (restore minimized) is dispatched
+  # inside the same AHK combo, so neither key is bound in glazewm.
 
   # ---- Toggle floating / tiling (win+space) ----
   # Deterministic tile<->float pair via toggle-tile-float.ps1 (floating ->
@@ -335,10 +325,11 @@ keybindings:
   # ---- Minimize (win+shift+m) / restore most-recent (win+shift+z) ----
   # Minimize pushes onto a stack; restore pops most-recent-first (repeatable)
   # and falls back to any minimized window on the focused workspace.
+  # f13+shift+z (restore) is NOT bound here — winkey.ahk's ~F13 & z combo
+  # consumes every modifier variant of F13+z and dispatches shift to
+  # restore-window.ps1 itself.
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\minimize-window.ps1"']
     bindings: ['f13+shift+m']
-  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\restore-window.ps1"']
-    bindings: ['f13+shift+z']
 
   # ---- Fullscreen (win+m) ----
   # toggle-fullscreen emits no WM event, so the binding itself triggers the
@@ -370,9 +361,9 @@ keybindings:
   # the adjacent monitor; the chained focus follows the window (verified:
   # move alone leaves focus behind). *recenter fixes floats that land
   # straddling a DPI boundary.
-  - commands: ['move --workspace-in-direction left', 'focus --workspace-in-direction left', *delayed_redraw, *recenter]
+  - commands: ['move --workspace-in-direction left', 'focus --workspace-in-direction left', *recenter]
     bindings: ['f13+shift+oem_open_brackets']
-  - commands: ['move --workspace-in-direction right', 'focus --workspace-in-direction right', *delayed_redraw, *recenter]
+  - commands: ['move --workspace-in-direction right', 'focus --workspace-in-direction right', *recenter]
     bindings: ['f13+shift+oem_close_brackets']
 
   # ---- Swap displayed workspaces with the adjacent monitor (win+ctrl+[ / ])

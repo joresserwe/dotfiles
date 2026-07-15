@@ -56,7 +56,7 @@ $focusBlock = for ($w = 1; $w -le $totalWs; $w++) {
     "    bindings: ['f13+$w']"
 }
 $moveBlock  = for ($w = 1; $w -le $totalWs; $w++) {
-    "  - commands: ['move --workspace $w', 'focus --workspace $w', *delayed_redraw, *recenter]"
+    "  - commands: ['move --workspace $w', 'focus --workspace $w', *recenter]"
     "    bindings: ['f13+shift+$w']"
 }
 
