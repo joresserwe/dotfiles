@@ -1,7 +1,4 @@
-# Catppuccin Mocha 테마 사용
-# flavor에서 제공하지 않는 부분만 여기서 오버라이드
-"$schema" = "https://yazi-rs.github.io/schemas/theme.json"
-
+# Use the Catppuccin Mocha flavor; only override what the flavor doesn't provide.
 [flavor]
 dark  = "catppuccin-mocha"
 light = "catppuccin-mocha"
