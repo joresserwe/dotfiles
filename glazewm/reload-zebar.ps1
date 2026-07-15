@@ -6,9 +6,10 @@
 # apps that crash/reload without sending NIM_DELETE — winkey.ahk's
 # #SingleInstance Force relaunch loop being the common trigger.
 #
-# Config is read directly from the WSL dotfiles UNC root via `--config-dir`
-# (Zebar CLI flag added in v3.3.x, accepts any PathBuf including UNC). No
-# local copy under ~\.glzr\zebar — the dotfiles repo is source of truth.
+# Config is read from the local dotfiles mirror (%DOTFILES_WIN%\zebar) via
+# `--config-dir` (Zebar CLI flag added in v3.3.x). The mirror is refreshed
+# from the WSL clone by winget/sync-windows.ps1 (Hyper+C chain), so logon
+# and reload never depend on \\wsl.localhost being up.
 #
 # INTEGRITY GOTCHA: glazewm runs at Medium integrity (Startup-folder launch
 # via Explorer), its shell-exec spawns powershell at Medium, and this script
@@ -28,7 +29,8 @@
 # case.
 
 $ZebarExe  = 'C:\Program Files\glzr.io\Zebar\zebar.exe'
-$ConfigDir = "$env:DOTFILES_UNC\zebar"
+$ConfigDir = if ($env:DOTFILES_WIN) { "$env:DOTFILES_WIN\zebar" }
+             else { Join-Path $env:USERPROFILE '.dotfiles\zebar' }
 
 $existing = Get-Process zebar -ErrorAction SilentlyContinue
 if ($existing) {

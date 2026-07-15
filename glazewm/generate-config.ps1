@@ -53,11 +53,11 @@ $wsBlock    = for ($w = 1; $w -le $totalWs; $w++) {
 }
 $focusBlock = for ($w = 1; $w -le $totalWs; $w++) {
     "  - commands: ['focus --workspace $w']"
-    "    bindings: ['lwin+$w']"
+    "    bindings: ['f13+$w']"
 }
 $moveBlock  = for ($w = 1; $w -le $totalWs; $w++) {
-    "  - commands: ['move --workspace $w', 'focus --workspace $w', *delayed_redraw]"
-    "    bindings: ['lwin+shift+$w']"
+    "  - commands: ['move --workspace $w', 'focus --workspace $w', *delayed_redraw, *recenter]"
+    "    bindings: ['f13+shift+$w']"
 }
 
 function Replace-Between($lines, $beginPattern, $endPattern, $newBlock) {

@@ -8,7 +8,11 @@
 # Script path must be LOCAL.
 
 $log = Join-Path $env:TEMP 'cold-boot-state.log'
-$uncProbe = '\\wsl.localhost\Ubuntu\home\cyan\.config\.dotfiles\winget\winkey.ahk'
+# Probe targets derive from the env vars install.linux.sh sets — no
+# hardcoded distro/user (an earlier revision froze a stale machine's path).
+$uncProbe    = if ($env:DOTFILES_UNC) { Join-Path $env:DOTFILES_UNC 'winget\winkey.ahk' }
+$mirrorProbe = if ($env:DOTFILES_WIN) { Join-Path $env:DOTFILES_WIN 'winget\winkey.ahk' }
+               else { Join-Path $env:USERPROFILE '.dotfiles\winget\winkey.ahk' }
 
 function Write-Snapshot {
   param([string]$Label)
@@ -26,14 +30,23 @@ function Write-Snapshot {
       "  $name NOT_RUNNING" | Add-Content $log
     }
   }
-  # UNC reachability
+  # Mirror reachability (what logon actually depends on now)
   try {
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $len = (Get-Item $uncProbe -EA Stop).Length
-    $sw.Stop()
-    "  UNC_OK bytes=$len elapsed=$($sw.ElapsedMilliseconds)ms" | Add-Content $log
+    $len = (Get-Item $mirrorProbe -EA Stop).Length
+    "  MIRROR_OK bytes=$len ($mirrorProbe)" | Add-Content $log
   } catch {
-    "  UNC_FAIL: $($_.Exception.Message)" | Add-Content $log
+    "  MIRROR_FAIL: $($_.Exception.Message)" | Add-Content $log
+  }
+  # UNC reachability (diagnostic only — expected DOWN at logon)
+  if ($uncProbe) {
+    try {
+      $sw = [System.Diagnostics.Stopwatch]::StartNew()
+      $len = (Get-Item $uncProbe -EA Stop).Length
+      $sw.Stop()
+      "  UNC_OK bytes=$len elapsed=$($sw.ElapsedMilliseconds)ms" | Add-Content $log
+    } catch {
+      "  UNC_FAIL: $($_.Exception.Message)" | Add-Content $log
+    }
   }
   # Registry sanity
   try {
@@ -46,7 +59,8 @@ function Write-Snapshot {
     $k2 = Get-Item 'HKCU:\Control Panel\Desktop' -EA Stop
     "  LowLevelHooksTimeout=$($k2.GetValue('LowLevelHooksTimeout'))" | Add-Content $log
   } catch {}
-  # Env var (GlazeWM shell-exec depends on this)
+  # Env vars (GlazeWM shell-exec depends on DOTFILES_WIN; UNC is sync-only)
+  "  DOTFILES_WIN='$env:DOTFILES_WIN'" | Add-Content $log
   "  DOTFILES_UNC='$env:DOTFILES_UNC'" | Add-Content $log
   "" | Add-Content $log
 }

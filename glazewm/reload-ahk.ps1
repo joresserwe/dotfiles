@@ -19,7 +19,10 @@
 # one spawns, to put AHK's hook install strictly after glazewm's reinstall.
 
 $AhkExe      = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
-$LocalScript = Join-Path $env:USERPROFILE '.config\winkey\winkey.ahk'
+# winkey.ahk comes from the local dotfiles mirror — always readable at logon
+# (no WSL/UNC dependency); refreshed by sync-windows.ps1 on Hyper+C.
+$LocalScript = if ($env:DOTFILES_WIN) { Join-Path $env:DOTFILES_WIN 'winget\winkey.ahk' }
+               else { Join-Path $env:USERPROFILE '.dotfiles\winget\winkey.ahk' }
 $__log       = Join-Path $env:TEMP 'reload-ahk.log'
 
 "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff') ENTER pid=$PID" | Add-Content -Path $__log -EA SilentlyContinue

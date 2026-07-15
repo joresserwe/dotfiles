@@ -1,14 +1,23 @@
 # GlazeWM v3 — Windows tiling WM config
 # Mirrors the AeroSpace (macOS) keybindings as closely as possible.
-# Uses lwin (Windows key) as the primary modifier — matches the physical
-# position of alt/option on Mac keyboards.
+# Uses f13 as the primary modifier: the kernel Scancode Map (registry.ps1)
+# turns the physical Win key into F13, and bindings consume F13 DIRECTLY —
+# no synthetic LWin is ever re-injected, so Windows never sees a Win
+# modifier and native Win+<x> behaviors (Start menu, Win+P/N, Win+L) are
+# structurally impossible. The physical key position still matches
+# alt/option on Mac keyboards. Hyper (한자 via winkey.ahk) = ctrl+alt+f13.
 # Reference: aerospace/aerospace.toml
 
 general:
   # --hide-window suppresses the cmd console that shell-exec would otherwise
   # flash at startup/shutdown (GlazeWM v3.6.0+).
   startup_commands:
-    - 'shell-exec --hide-window zebar startup --config-dir "%DOTFILES_UNC%\zebar"'
+    - 'shell-exec --hide-window zebar startup --config-dir "%DOTFILES_WIN%\zebar"'
+    # State-border daemon: flips tacky-borders' border_offset when focus lands
+    # on / leaves a fullscreen window (border inside at fullscreen so it never
+    # bleeds onto the neighboring monitor). Subscribes to focus_changed and
+    # dies with glazewm. See tacky-borders/state-border.ps1.
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1"'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
@@ -106,11 +115,20 @@ window_rules:
     match:
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'KakaoTalk' }
+      # Webex (new desktop app) — main window and meeting windows both live
+      # in CiscoCollabHost.exe; keep them out of the tile layout permanently.
+      - window_process: { equals: 'CiscoCollabHost' }
       - window_process: { regex: 'SystemSettings|mmc' }
       - window_process: { equals: 'explorer' }
         window_class: { equals: 'CabinetWClass' }
-      - window_title: { regex: 'Task Manager|작업 관리자' }
       - window_process: { regex: 'idea64|pycharm64' }
+      # Task Manager — float, locked out of tiling by toggle-tile-float.ps1's
+      # float-lock list. The earlier "floating breaks it" verdict was a
+      # misdiagnosis: the tested instance predated the rule and was still
+      # UNMANAGED (rules only apply when a window is first managed), so keys
+      # were hitting background windows/workspaces. Process match is
+      # locale-proof, unlike a 'Task Manager|작업 관리자' title regex.
+      - window_process: { equals: 'Taskmgr' }
       # AutoHotkey error/info dialogs (e.g. winkey.ahk runtime errors) and
       # tacky-borders' "already running" warning MessageBox. Without this,
       # GlazeWM tiles them into whatever cell is next, which warps the dialog
@@ -146,13 +164,13 @@ binding_modes:
         bindings: ['shift+l']
       # Focus navigation while in resize mode
       - commands: ['focus --direction left']
-        bindings: ['lwin+h']
+        bindings: ['f13+h']
       - commands: ['focus --direction down']
-        bindings: ['lwin+j']
+        bindings: ['f13+j']
       - commands: ['focus --direction up']
-        bindings: ['lwin+k']
+        bindings: ['f13+k']
       - commands: ['focus --direction right']
-        bindings: ['lwin+l']
+        bindings: ['f13+l']
       # Quick resize (=, -)
       - commands: ['resize --width +25px']
         bindings: ['oem_plus']
@@ -160,7 +178,7 @@ binding_modes:
         bindings: ['oem_minus']
       # Exit resize mode
       - commands: ['wm-disable-binding-mode --name resize']
-        bindings: ['escape', 'space', 'ctrl+alt+lwin+r']
+        bindings: ['escape', 'space', 'ctrl+alt+f13+r']
 
   # Move mode (AeroSpace: ctrl+alt+cmd+m)
   - name: 'move'
@@ -175,7 +193,7 @@ binding_modes:
         bindings: ['l', 'right']
       # Exit move mode
       - commands: ['wm-disable-binding-mode --name move']
-        bindings: ['escape', 'space', 'ctrl+alt+lwin+m']
+        bindings: ['escape', 'space', 'ctrl+alt+f13+m']
 
   # Transient reload indicator — surfaces as a pill in zebar (via bindingModes).
   # Enabled by Hyper+C reload; auto-disabled by reload-indicator.ps1 after ~2s.
@@ -190,13 +208,13 @@ binding_modes:
 keybindings:
   # ---- Focus window (win+hjkl) ----
   - commands: ['focus --direction left']
-    bindings: ['lwin+h']
+    bindings: ['f13+h']
   - commands: ['focus --direction down']
-    bindings: ['lwin+j']
+    bindings: ['f13+j']
   - commands: ['focus --direction up']
-    bindings: ['lwin+k']
+    bindings: ['f13+k']
   - commands: ['focus --direction right']
-    bindings: ['lwin+l']
+    bindings: ['f13+l']
 
   # ---- Move window (win+shift+hjkl) ----
   # `wm-redraw` after every move forces GlazeWM to re-apply tile sizes.
@@ -211,35 +229,38 @@ keybindings:
   # by default), so other apps aren't re-tiled unnecessarily. Launched via
   # shell-exec --hide-window (GlazeWM v3.6.0+) spawns without a console — no
   # cmd flash on every move. Native replacement for prior wscript/vbs wrappers.
-  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\delayed-redraw.ps1"']
-    bindings: ['lwin+shift+h']
-  - commands: ['move --direction down',  'wm-redraw', *delayed_redraw]
-    bindings: ['lwin+shift+j']
-  - commands: ['move --direction up',    'wm-redraw', *delayed_redraw]
-    bindings: ['lwin+shift+k']
-  - commands: ['move --direction right', 'wm-redraw', *delayed_redraw]
-    bindings: ['lwin+shift+l']
+  # recenter-floating.ps1 (self-no-op unless a floating window ended up
+  # outside its monitor): directional moves can carry a floating window
+  # across a DPI boundary, leaving it straddling/mis-sized.
+  - commands: ['move --direction left',  'wm-redraw', &delayed_redraw 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\delayed-redraw.ps1"', &recenter 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\recenter-floating.ps1"']
+    bindings: ['f13+shift+h']
+  - commands: ['move --direction down',  'wm-redraw', *delayed_redraw, *recenter]
+    bindings: ['f13+shift+j']
+  - commands: ['move --direction up',    'wm-redraw', *delayed_redraw, *recenter]
+    bindings: ['f13+shift+k']
+  - commands: ['move --direction right', 'wm-redraw', *delayed_redraw, *recenter]
+    bindings: ['f13+shift+l']
 
   # ---- Workspace focus (win+1~9) ----
   # BEGIN_GENERATED_WS_FOCUS
   - commands: ['focus --workspace 1']
-    bindings: ['lwin+1']
+    bindings: ['f13+1']
   - commands: ['focus --workspace 2']
-    bindings: ['lwin+2']
+    bindings: ['f13+2']
   - commands: ['focus --workspace 3']
-    bindings: ['lwin+3']
+    bindings: ['f13+3']
   - commands: ['focus --workspace 4']
-    bindings: ['lwin+4']
+    bindings: ['f13+4']
   - commands: ['focus --workspace 5']
-    bindings: ['lwin+5']
+    bindings: ['f13+5']
   - commands: ['focus --workspace 6']
-    bindings: ['lwin+6']
+    bindings: ['f13+6']
   - commands: ['focus --workspace 7']
-    bindings: ['lwin+7']
+    bindings: ['f13+7']
   - commands: ['focus --workspace 8']
-    bindings: ['lwin+8']
+    bindings: ['f13+8']
   - commands: ['focus --workspace 9']
-    bindings: ['lwin+9']
+    bindings: ['f13+9']
   # END_GENERATED_WS_FOCUS
 
   # ---- Move window to workspace (win+shift+1~9) with focus follow ----
@@ -247,71 +268,127 @@ keybindings:
   # direction moves, so they get the same delayed-redraw workaround.
   # BEGIN_GENERATED_WS_MOVE
   - commands: ['move --workspace 1', 'focus --workspace 1', *delayed_redraw]
-    bindings: ['lwin+shift+1']
+    bindings: ['f13+shift+1']
   - commands: ['move --workspace 2', 'focus --workspace 2', *delayed_redraw]
-    bindings: ['lwin+shift+2']
+    bindings: ['f13+shift+2']
   - commands: ['move --workspace 3', 'focus --workspace 3', *delayed_redraw]
-    bindings: ['lwin+shift+3']
+    bindings: ['f13+shift+3']
   - commands: ['move --workspace 4', 'focus --workspace 4', *delayed_redraw]
-    bindings: ['lwin+shift+4']
+    bindings: ['f13+shift+4']
   - commands: ['move --workspace 5', 'focus --workspace 5', *delayed_redraw]
-    bindings: ['lwin+shift+5']
+    bindings: ['f13+shift+5']
   - commands: ['move --workspace 6', 'focus --workspace 6', *delayed_redraw]
-    bindings: ['lwin+shift+6']
+    bindings: ['f13+shift+6']
   - commands: ['move --workspace 7', 'focus --workspace 7', *delayed_redraw]
-    bindings: ['lwin+shift+7']
+    bindings: ['f13+shift+7']
   - commands: ['move --workspace 8', 'focus --workspace 8', *delayed_redraw]
-    bindings: ['lwin+shift+8']
+    bindings: ['f13+shift+8']
   - commands: ['move --workspace 9', 'focus --workspace 9', *delayed_redraw]
-    bindings: ['lwin+shift+9']
+    bindings: ['f13+shift+9']
   # END_GENERATED_WS_MOVE
 
   # ---- Next/prev workspace on current monitor (win+n/p) ----
   - commands: ['focus --next-active-workspace-on-monitor']
-    bindings: ['lwin+n']
+    bindings: ['f13+n']
   - commands: ['focus --prev-active-workspace-on-monitor']
-    bindings: ['lwin+p']
+    bindings: ['f13+p']
 
   # ---- Move to next/prev workspace on current monitor (win+shift+n/p) ----
   - commands: ['move --next-active-workspace-on-monitor', 'focus --next-active-workspace-on-monitor']
-    bindings: ['lwin+shift+n']
+    bindings: ['f13+shift+n']
   - commands: ['move --prev-active-workspace-on-monitor', 'focus --prev-active-workspace-on-monitor']
-    bindings: ['lwin+shift+p']
+    bindings: ['f13+shift+p']
 
   # ---- Recent workspace (win+z) — workspace-back-and-forth ----
-  - commands: ['focus --recent-workspace']
-    bindings: ['lwin+z']
+  # ---- Previous window back-and-forth (win+z) ----
+  # Focuses the previously focused WINDOW (cross-workspace included) via
+  # focus-prev.ps1 + the state-border daemon's focus history. The mac
+  # alt-z is workspace-back-and-forth, but this is the superset of how
+  # that binding is actually used (one main window per workspace).
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\focus-prev.ps1"']
+    bindings: ['f13+z']
 
   # ---- Toggle floating / tiling (win+space) ----
-  - commands: ['toggle-floating --centered']
-    bindings: ['lwin+space']
+  # Deterministic tile<->float pair via toggle-tile-float.ps1 (floating ->
+  # tiling, anything else -> floating --centered). glazewm's own
+  # toggle-floating restores the PREVIOUS state instead, which traps
+  # fullscreen-history windows in a floating<->fullscreen loop that can
+  # never reach the tile layout. Fullscreen is f13+m's job exclusively.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\toggle-tile-float.ps1"']
+    bindings: ['f13+space']
+
+  # ---- Close window (alt+q, Cmd+Q muscle memory from macOS) ----
+  # glazewm `close` sends a polite WM_CLOSE — identical net effect to Alt+F4,
+  # save-confirmation dialogs included. Trade-off accepted knowingly: this
+  # shadows Office's Tell-Me search and JetBrains' Context Info (both Alt+Q).
+  - commands: ['close']
+    bindings: ['alt+q']
+
+  # ---- Show desktop toggle (F11 — same key as macOS Show Desktop) ----
+  # Shell-native MinimizeAll/UndoMinimizeALL — the Win+D that the kernel
+  # remap killed. Plain F11 shadows in-app F11 (browser fullscreen), same
+  # trade-off macOS makes. Not on f13+d: winkey.ahk's `~F13 & d` cycle
+  # combo owns every modifier variant of F13+d.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\show-desktop.ps1"']
+    bindings: ['f11']
+
+  # ---- Minimize (win+shift+m) / restore most-recent (win+shift+z) ----
+  # Minimize pushes onto a stack; restore pops most-recent-first (repeatable)
+  # and falls back to any minimized window on the focused workspace.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\minimize-window.ps1"']
+    bindings: ['f13+shift+m']
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\restore-window.ps1"']
+    bindings: ['f13+shift+z']
 
   # ---- Fullscreen (win+m) ----
-  - commands: ['toggle-fullscreen']
-    bindings: ['lwin+m']
+  # toggle-fullscreen emits no WM event, so the binding itself triggers the
+  # tacky border-offset sync (fullscreen -> inside border, tile -> classic).
+  - commands: ['toggle-fullscreen', 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1" -Once']
+    bindings: ['f13+m']
 
   # ---- Toggle tiling direction (win+shift+s) ----
-  - commands: ['toggle-tiling-direction']
-    bindings: ['lwin+shift+s']
+  # Transpose the focused 2-window split (horizontal <-> vertical) via
+  # transpose.ps1 — glazewm's toggle-tiling-direction only affects the NEXT
+  # insertion, never existing windows. 1 or 3+ siblings fall back to the
+  # insertion-direction toggle.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\transpose.ps1"']
+    bindings: ['f13+shift+s']
 
   # ---- Focus monitor (win+[ / win+]) ----
   - commands: ['focus --workspace-in-direction left']
-    bindings: ['lwin+oem_open_brackets']
+    bindings: ['f13+oem_open_brackets']
   - commands: ['focus --workspace-in-direction right']
-    bindings: ['lwin+oem_close_brackets']
+    bindings: ['f13+oem_close_brackets']
 
   # ---- Move workspace to monitor (win+shift+[ / win+shift+]) ----
   # Moves whole workspace across monitors — guaranteed DPI change if monitors differ.
-  - commands: ['move-workspace --direction left',  *delayed_redraw]
-    bindings: ['lwin+shift+oem_open_brackets']
-  - commands: ['move-workspace --direction right', *delayed_redraw]
-    bindings: ['lwin+shift+oem_close_brackets']
+  # ---- Send the focused WINDOW to the adjacent monitor (win+shift+[ / ]) --
+  # Mirrors yabai (skhdrc): `shift+alt-[/]` = window --display west/east +
+  # refocus. This was mis-ported as move-workspace, which relocated the WHOLE
+  # workspace and permanently scrambled the monitor layout (hyper+w repairs
+  # leftovers). move --workspace-in-direction targets the workspace shown on
+  # the adjacent monitor; the chained focus follows the window (verified:
+  # move alone leaves focus behind). *recenter fixes floats that land
+  # straddling a DPI boundary.
+  - commands: ['move --workspace-in-direction left', 'focus --workspace-in-direction left', *delayed_redraw, *recenter]
+    bindings: ['f13+shift+oem_open_brackets']
+  - commands: ['move --workspace-in-direction right', 'focus --workspace-in-direction right', *delayed_redraw, *recenter]
+    bindings: ['f13+shift+oem_close_brackets']
+
+  # ---- Swap displayed workspaces with the adjacent monitor (win+ctrl+[ / ])
+  # Contents of the two visible workspaces trade places; the workspace-to-
+  # monitor assignment stays canonical (123|456), so nothing gets re-homed.
+  # 3+ monitors: pairs with the monitor in the pressed direction.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\swap-displayed-workspaces.ps1" -Direction left']
+    bindings: ['ctrl+f13+oem_open_brackets']
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\swap-displayed-workspaces.ps1" -Direction right']
+    bindings: ['ctrl+f13+oem_close_brackets']
 
   # ---- Quick resize (win+= / win+-) ----
   - commands: ['resize --width +2%']
-    bindings: ['lwin+oem_plus']
+    bindings: ['f13+oem_plus']
   - commands: ['resize --width -2%']
-    bindings: ['lwin+oem_minus']
+    bindings: ['f13+oem_minus']
 
   # ---- Cycle focus (win+u / win+d / win+f) handled by winkey.ahk ----
   # wm-cycle-focus needed a focused window as anchor and no-op'd when nothing
@@ -323,9 +400,9 @@ keybindings:
 
   # ---- Enter binding modes (Hyper+R / Hyper+M, mirrors AeroSpace) ----
   - commands: ['wm-enable-binding-mode --name resize']
-    bindings: ['ctrl+alt+lwin+r']
+    bindings: ['ctrl+alt+f13+r']
   - commands: ['wm-enable-binding-mode --name move']
-    bindings: ['ctrl+alt+lwin+m']
+    bindings: ['ctrl+alt+f13+m']
 
   # ---- Reload config (Hyper+C) — reloads glazewm + AHK, flashes zebar pill ----
   # - AHK: relaunch is delegated to reload-ahk.ps1 because glazewm 3.10.1
@@ -334,25 +411,37 @@ keybindings:
   # - Indicator: `reloaded` binding_mode enabled, auto-disabled ~2s later
   #   by reload-indicator.ps1. Zebar renders active bindingModes as pills.
   - commands:
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-ahk.ps1"'
+      # sync-windows.ps1 refreshes the local mirror (%DOTFILES_WIN%) from the
+      # WSL clone first — the only UNC dereference in the chain. shell-exec is
+      # fire-and-forget so siblings below can race a large sync; the trees are
+      # small (<1s) in practice, and a second Hyper+C converges regardless.
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\winget\sync-windows.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\reload-ahk.ps1"'
       - 'wm-enable-binding-mode --name reloaded'
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-indicator.ps1"'
-      # generate-config.ps1 regenerates live config.yaml from the WSL-side
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\reload-indicator.ps1"'
+      # generate-config.ps1 regenerates live config.yaml from the mirror
       # template (monitor_count × 3 workspaces) and issues wm-reload-config
       # itself once the write is done — so no explicit wm-reload-config here.
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\generate-config.ps1"'
-      # tacky-borders: config lives on the WSL dotfiles UNC root via an NTFS
-      # symlink (~/.config/tacky-borders → UNC). ReadDirectoryChangesW does
-      # not fire over 9P (microsoft/WSL#4581), so hot-reload via the in-app
-      # watcher is dead by design; reload.ps1 restarts via Start-ScheduledTask
-      # instead. Also covers v1.4.1 issue #72 (render_backend drops to None
-      # after sleep/wake and isn't recreated — full restart recreates it).
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\tacky-borders\reload.ps1"'
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\generate-config.ps1"'
+      # tacky-borders: config/themes live in the local mirror
+      # (TACKY_BORDERS_CONFIG_HOME=%DOTFILES_WIN%\tacky-borders). The in-app
+      # watcher is unreliable across the reload chain, so reload.ps1 restarts
+      # via Start-ScheduledTask instead. Also covers v1.4.1 issue #72
+      # (render_backend drops to None after sleep/wake and isn't recreated —
+      # full restart recreates it).
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\reload.ps1"'
       # zebar has no hot-reload and accumulates ghost tray icons from AHK
       # relaunch cycles — full restart clears ghosts + picks up widget edits.
-      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_UNC%\glazewm\reload-zebar.ps1"'
-    bindings: ['ctrl+alt+lwin+c']
+      - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\reload-zebar.ps1"'
+    bindings: ['ctrl+alt+f13+c']
+
+  # ---- Rehome workspaces (Hyper+W) ----
+  # Puts every workspace back on its bound monitor (1-3 -> mon0, 4-6 -> mon1,
+  # ...). move-workspace re-homes permanently and glazewm has no reset, so an
+  # accidental f13+shift+[ / ] leaves layouts like [1] | [2,3,4,5,6] behind.
+  - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\rehome-workspaces.ps1"']
+    bindings: ['ctrl+alt+f13+w']
 
   # ---- Pause keybindings (Hyper+Q, escape hatch for games, etc.) ----
   - commands: ['wm-toggle-pause']
-    bindings: ['ctrl+alt+lwin+q']
+    bindings: ['ctrl+alt+f13+q']

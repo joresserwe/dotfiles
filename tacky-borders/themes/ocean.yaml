@@ -1,4 +1,4 @@
-# Theme: ocean
+﻿# Theme: ocean
 # Deep blue -> teal -> cyan. Cool palette, no purple/pink. Fade only.
 
 watch_config_changes: True
@@ -34,7 +34,7 @@ global:
     colors: ["#1e40af", "#0891b2", "#06b6d4"]
     direction: 135deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:

@@ -1,5 +1,5 @@
-# Theme: violet-pink
-# Vibrant violet -> hot pink diagonal gradient. Default theme — the one we
+﻿# Theme: violet-pink
+# Vibrant violet -> hot pink diagonal gradient. Default theme ??the one we
 # picked while debugging UIPI. Calm Fade animation, no rotation.
 
 watch_config_changes: True
@@ -36,7 +36,7 @@ global:
     direction: 135deg
 
   # Inactive windows: fully transparent (RRGGBBAA, alpha=0). border_width is
-  # global in tacky-borders — we can't thin the inactive border, but we can
+  # global in tacky-borders ??we can't thin the inactive border, but we can
   # make it invisible so only the focused window shows any chrome.
   inactive_color: "#00000000"
 

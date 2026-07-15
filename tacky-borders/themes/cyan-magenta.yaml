@@ -1,4 +1,4 @@
-# Theme: cyan-magenta
+﻿# Theme: cyan-magenta
 # Electric blue -> magenta with a slow Spiral rotation on the focused window.
 # Reads as cyberpunk / neon. Inactive stays quiet so only the focused window
 # has motion.
@@ -36,7 +36,7 @@ global:
     colors: ["#0ea5e9", "#d946ef"]
     direction: 135deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:

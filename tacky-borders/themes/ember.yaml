@@ -1,4 +1,4 @@
-# Theme: ember
+﻿# Theme: ember
 # Red -> amber -> crimson. Warm fire palette, no rotation.
 
 watch_config_changes: True
@@ -34,7 +34,7 @@ global:
     colors: ["#dc2626", "#f59e0b", "#ef4444"]
     direction: 135deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:

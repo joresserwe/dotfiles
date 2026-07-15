@@ -1,4 +1,4 @@
-# Theme: emerald
+﻿# Theme: emerald
 # Emerald -> teal -> green gradient. Different from matrix (single-color/square);
 # this is multi-stop gradient with Auto radius.
 
@@ -35,7 +35,7 @@ global:
     colors: ["#10b981", "#14b8a6", "#22c55e"]
     direction: 135deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:

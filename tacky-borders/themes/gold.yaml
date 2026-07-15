@@ -1,4 +1,4 @@
-# Theme: gold
+﻿# Theme: gold
 # Bright yellow -> gold -> bronze. Metallic, no red (keeps it distinct
 # from ember's red/amber warmth).
 
@@ -35,7 +35,7 @@ global:
     colors: ["#fde047", "#eab308", "#b45309"]
     direction: 135deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:

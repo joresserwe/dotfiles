@@ -1,6 +1,6 @@
-# Theme: sunset
+﻿# Theme: sunset
 # Warm orange -> pink -> purple 3-stop gradient sweeping top-to-bottom.
-# Cinematic, calm — Fade only, no rotation.
+# Cinematic, calm ??Fade only, no rotation.
 
 watch_config_changes: True
 rendering_backend: V2
@@ -35,7 +35,7 @@ global:
     colors: ["#f97316", "#ec4899", "#8b5cf6"]
     direction: 90deg
 
-  inactive_color: "#00000000"  # transparent — hide inactive border
+  inactive_color: "#00000000"  # transparent ??hide inactive border
 
   animations:
     active:
