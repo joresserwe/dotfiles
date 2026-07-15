@@ -228,6 +228,75 @@ CycleOnMonitor(dir) {
 ; also covers unmanaged windows like Win+U/D already do.
 ~F13 & f::CycleOnMonitor(1)
 
+; --- Directional focus while a FLOATING window has focus -----------------
+; glazewm's `focus --direction` is a no-op when the focused window is
+; floating (verified live 2026-07-15: focus stays put), so Win+H/L felt
+; dead inside Webex. The state-border daemon flags floating focus via
+; %TEMP%\glazewm-float-focus.flag; only while it exists do these hotkeys
+; activate — tiled focus keeps glazewm's native (zero-latency) handling.
+;
+; Custom combos fire on EVERY modifier variant, so shift is dispatched
+; here too: plain = geometric nearest-window focus, shift = glazewm
+; `move --direction` via CLI (floating move works natively there), plus
+; the recenter pass for cross-DPI landings.
+FloatNav(dx, dy) {
+    active := WinExist("A")
+    if !active
+        return
+    WinGetPos(&ax, &ay, &aw, &ah, active)
+    acx := ax + aw / 2, acy := ay + ah / 2
+    best := 0, bestDist := 0x7FFFFFFF
+    for hwnd in WinGetList() {
+        try {
+            if (hwnd = active)
+                continue
+            if !DllCall("IsWindowVisible", "Ptr", hwnd)
+                continue
+            if WinGetMinMax(hwnd) = -1
+                continue
+            if WinGetTitle(hwnd) = ""
+                continue
+            if DllCall("GetWindowLongW", "Ptr", hwnd, "Int", -20, "Int") & 0x80  ; WS_EX_TOOLWINDOW
+                continue
+            ; Skip DWM-cloaked windows (glazewm hides other workspaces by
+            ; cloaking; they'd otherwise be invisible-but-activatable here).
+            cloaked := 0
+            DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "UInt*", &cloaked, "UInt", 4)
+            if cloaked
+                continue
+            WinGetPos(&x, &y, &w, &h, hwnd)
+            cx := x + w / 2, cy := y + h / 2
+            if (dx != 0 && (cx - acx) * dx <= 20)  ; must lie in the direction
+                continue
+            if (dy != 0 && (cy - acy) * dy <= 20)
+                continue
+            dist := Abs(cx - acx) + Abs(cy - acy)
+            if (dist < bestDist)
+                bestDist := dist, best := hwnd
+        }
+    }
+    if best
+        WinActivate("ahk_id " best)
+}
+FloatKey(dir, dx, dy) {
+    MarkHotkey("Float-" dir)
+    if GetKeyState("Shift", "P") {
+        gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
+        RunWait(gw ' command move --direction ' dir, , 'Hide')
+        mirror := EnvGet('DOTFILES_WIN')
+        if mirror
+            Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' mirror '\glazewm\recenter-floating.ps1"', , 'Hide')
+        return
+    }
+    FloatNav(dx, dy)
+}
+#HotIf FileExist(A_Temp "\glazewm-float-focus.flag")
+~F13 & h::FloatKey("left", -1, 0)
+~F13 & j::FloatKey("down", 0, 1)
+~F13 & k::FloatKey("up", 0, -1)
+~F13 & l::FloatKey("right", 1, 0)
+#HotIf
+
 ; --- wezterm IME workaround ---------------------------------------
 ; Windows wezterm's use_ime is always on and cannot be disabled, so
 ; the Korean IME swallows Ctrl+<letter> combos while in 한글 mode

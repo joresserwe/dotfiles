@@ -39,6 +39,16 @@ function Sync-BorderState {
     $script:lastFocusId = $f.id
   }
 
+  # Flag for winkey.ahk's floating-nav hotkeys: glazewm's focus --direction
+  # is a no-op when the FOCUSED window is floating (verified live), so AHK
+  # takes over f13+hjkl only while this flag exists.
+  $flag = Join-Path $env:TEMP 'glazewm-float-focus.flag'
+  if ($f.type -eq 'window' -and $f.state.type -eq 'floating') {
+    if (-not (Test-Path $flag)) { New-Item -ItemType File -Path $flag -Force | Out-Null }
+  } elseif (Test-Path $flag) {
+    Remove-Item $flag -Force
+  }
+
   if (-not (Test-Path $cfg)) { return }
   $offset = if ($f.state.type -eq 'fullscreen') { -5 } else { -1 }
   $text = [IO.File]::ReadAllText($cfg)
