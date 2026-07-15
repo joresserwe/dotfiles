@@ -89,8 +89,8 @@ ln -sf ~/.config/.dotfiles/atuin/config.toml ~/.config/atuin/config.toml
 
 # claude code
 ln -sf ~/.config/.dotfiles/claude/settings.json ~/.local/share/claude/settings.json
+ln -sf ~/.config/.dotfiles/claude/CLAUDE.md ~/.local/share/claude/CLAUDE.md
 ln -sf ~/.config/.dotfiles/claude/skills ~/.local/share/claude/skills
-ln -sf ~/.local/share/claude ~/.claude
 
 # tmux (inactive)
 ln -sf ~/.config/.dotfiles/tmux/tmux.conf ~/.config/tmux/tmux.conf

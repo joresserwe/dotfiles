@@ -778,19 +778,13 @@ fi
 ensure_dir "$XDG_DATA_HOME/claude"
 
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
+create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
 
 if [ -L "$XDG_DATA_HOME/claude/skills" ] || [ ! -e "$XDG_DATA_HOME/claude/skills" ]; then
   ln -sfn "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"
   log_done "link: $XDG_DATA_HOME/claude/skills -> $DOTFILES_PATH/claude/skills"
 else
   log_skip "$XDG_DATA_HOME/claude/skills exists and is not a symlink — leaving alone"
-fi
-
-if [ -L "$HOME/.claude" ] || [ ! -e "$HOME/.claude" ]; then
-  ln -sfn "$XDG_DATA_HOME/claude" "$HOME/.claude"
-  log_done "link: $HOME/.claude -> $XDG_DATA_HOME/claude"
-else
-  log_skip "$HOME/.claude exists and is not a symlink — leaving alone"
 fi
 
 log_done "Phase 5 complete"

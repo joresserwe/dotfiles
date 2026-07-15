@@ -73,14 +73,6 @@
     "command": "bash ~/.config/.dotfiles/claude/statusline.sh",
     "padding": 0
   },
-  "extraKnownMarketplaces": {
-    "claude-plugins-official": {
-      "source": {
-        "source": "github",
-        "repo": "anthropics/claude-plugins-official"
-      }
-    }
-  },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
@@ -90,5 +82,16 @@
     "claude-md-management@claude-plugins-official": true,
     "chrome-devtools-mcp@claude-plugins-official": true,
     "postman@claude-plugins-official": true
-  }
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "tui": "fullscreen",
+  "theme": "dark",
+  "model": "claude-fable-5[1m]"
 }

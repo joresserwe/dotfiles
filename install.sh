@@ -207,8 +207,8 @@ create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezte
 create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart-split"
 # claude code
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
+create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
 ln -sf "$DOTFILES_PATH/claude/skills" "$XDG_DATA_HOME/claude/skills"
-ln -sf "$XDG_DATA_HOME/claude" ~/.claude # claude code가 XDG를 완전히 지원하지 않아 ~/.claude를 참조하는 문제 우회
 
 # -----------------------------------------------------------------------------------------------
 
