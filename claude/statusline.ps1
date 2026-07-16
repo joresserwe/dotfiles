@@ -66,12 +66,12 @@ function Get-RLColor($p) {
 $rl = @()
 if ($null -ne $d.rate_limits.five_hour.used_percentage) {
     $p = [math]::Round($d.rate_limits.five_hour.used_percentage)
-    $rl += "$E[38;5;245m5h$R $E[$(Get-RLColor $p)m$p%$R"
+    $rl += "$E[38;5;245m5h$R$E[$(Get-RLColor $p)m$p%$R"
 }
 if ($null -ne $d.rate_limits.seven_day.used_percentage) {
     $p = [math]::Round($d.rate_limits.seven_day.used_percentage)
-    $rl += "$E[38;5;245m7d$R $E[$(Get-RLColor $p)m$p%$R"
+    $rl += "$E[38;5;245m7d$R$E[$(Get-RLColor $p)m$p%$R"
 }
-if ($rl.Count) { $line1 += $SEP + ($rl -join " $E[38;5;238m·$R ") }
+if ($rl.Count) { $line1 += $SEP + ($rl -join "$E[38;5;238m·$R") }
 
 Write-Output $line1

@@ -68,11 +68,11 @@ rl_color() {
 }
 rl=()
 p5="$(j '.rate_limits.five_hour.used_percentage // empty | round')"
-[[ -n "$p5" ]] && rl+=("${E}[38;5;245m5h${R} ${E}[$(rl_color "$p5")m${p5}%${R}")
+[[ -n "$p5" ]] && rl+=("${E}[38;5;245m5h${R}${E}[$(rl_color "$p5")m${p5}%${R}")
 p7="$(j '.rate_limits.seven_day.used_percentage // empty | round')"
-[[ -n "$p7" ]] && rl+=("${E}[38;5;245m7d${R} ${E}[$(rl_color "$p7")m${p7}%${R}")
+[[ -n "$p7" ]] && rl+=("${E}[38;5;245m7d${R}${E}[$(rl_color "$p7")m${p7}%${R}")
 if (( ${#rl[@]} )); then
-  dot=" ${E}[38;5;238m·${R} "
+  dot="${E}[38;5;238m·${R}"
   joined="${rl[0]}"
   for ((i = 1; i < ${#rl[@]}; i++)); do joined+="${dot}${rl[i]}"; done
   line+="${SEP}${joined}"
