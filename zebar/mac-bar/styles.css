@@ -223,19 +223,49 @@ i {
 .ws.focused   { background: rgba(255, 255, 255, 0.12); color: var(--fg); }
 .ws:hover     { background: rgba(255, 255, 255, 0.08); }
 
-.focused-title {
-  max-width: 360px;
+.windows {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--fg);
-  letter-spacing: 0.1px;
   margin-left: 6px;
   padding-left: 10px;
   border-left: 1px solid var(--divider);
 }
+
+.win {
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: var(--fg-dim);
+  font-size: 10px;
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  transition: background 120ms, color 120ms;
+}
+
+.win .hint {
+  display: inline-block;
+  min-width: 11px;
+  margin-right: 4px;
+  padding: 1px 2px;
+  border-radius: 3px;
+  background: rgba(120, 170, 255, 0.22);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.win.focused   { background: rgba(255, 255, 255, 0.12); color: var(--fg); font-weight: 700; }
+.win.minimized { opacity: 0.45; }
+.win:hover     { background: rgba(255, 255, 255, 0.08); }
 
 .pill {
   height: 16px;

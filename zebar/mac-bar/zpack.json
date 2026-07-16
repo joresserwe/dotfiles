@@ -17,7 +17,8 @@
       "caching": { "defaultDuration": 604800, "rules": [] },
       "privileges": {
         "shellCommands": [
-          { "program": "cmd.exe", "argsRegex": ".*ime-state\\.txt.*" }
+          { "program": "cmd.exe", "argsRegex": ".*ime-state\\.txt.*" },
+          { "program": "cmd.exe", "argsRegex": ".*glazewm-jump-map\\.txt.*" }
         ]
       },
       "presets": [

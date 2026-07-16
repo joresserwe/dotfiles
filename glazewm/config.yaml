@@ -393,6 +393,12 @@ keybindings:
   # including unmanaged ones (Raycast etc.) that glazewm's
   # wm-cycle-focus can't reach. See winget/winkey.ahk.
 
+  # ---- Window jump (win+a/s/x/c/v/q/w/e/r) — owned by winkey.ahk ----
+  # zebar shows a hint letter per window (bar.html JUMP_HINTS) and writes the
+  # hwnds to %TEMP%\glazewm-jump-map.txt; AHK's ~F13 & <letter> combos jump
+  # via WinActivate. Not bound here: the shell-exec version cost a powershell
+  # cold start per press that queued up and fired seconds late.
+
   # ---- Enter binding modes (Hyper+R / Hyper+M, mirrors AeroSpace) ----
   - commands: ['wm-enable-binding-mode --name resize']
     bindings: ['ctrl+alt+f13+r']

@@ -103,6 +103,33 @@
         return 'rgb(180, 220, 150)';                     // green (default)
       }
 
+      // Must match the ~F13 & <letter> jump combos in winget/winkey.ahk.
+      // When a letter gets taken by a new f13 binding, remove it from BOTH
+      // places. The map file below feeds AHK the hwnds in this same order.
+      const JUMP_HINTS = 'asxcvqwer';
+      let lastJumpMap = null;
+
+      function writeJumpMap(glazewm) {
+        if (!glazewm?.displayedWorkspace?.hasFocus) return;
+        const handles = workspaceWindows(glazewm.displayedWorkspace)
+          .slice(0, JUMP_HINTS.length)
+          .map(w => w.handle);
+        const map = handles.join(' ') || '0';
+        if (map === lastJumpMap) return;
+        lastJumpMap = map;
+        zebar.shellExec('cmd.exe', ['/c', 'echo', ...map.split(' '), '>', '%TEMP%\\glazewm-jump-map.txt']);
+      }
+
+      function workspaceWindows(ws) {
+        const wins = [];
+        const walk = c => {
+          if (c.type === 'window') wins.push(c);
+          (c.children || []).forEach(walk);
+        };
+        (ws?.children || []).forEach(walk);
+        return wins;
+      }
+
       function cpuColor(pct) {
         if (pct >= 90) return 'rgb(255, 120, 120)';     // red
         if (pct >= 75) return 'rgb(255, 170, 100)';     // orange
@@ -206,6 +233,7 @@
         const [out, setOut] = useState(providers.outputMap);
         useEffect(() => providers.onOutput(() => setOut(providers.outputMap)), []);
         const ime = useImeState();
+        useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
 
         return (
           <div className="app">
@@ -238,13 +266,22 @@
                   {m.displayName ?? m.name}
                 </button>
               ))}
-              {out.glazewm?.focusedContainer?.type === 'window' && out.glazewm.focusedContainer.processName && (
-                <span
-                  className="focused-title"
-                  title={out.glazewm.focusedContainer.title || out.glazewm.focusedContainer.processName}
-                >
-                  {out.glazewm.focusedContainer.processName.replace(/\.exe$/i, '')}
-                </span>
+              {out.glazewm?.displayedWorkspace && workspaceWindows(out.glazewm.displayedWorkspace).length > 0 && (
+                <div className="windows">
+                  {workspaceWindows(out.glazewm.displayedWorkspace).map((win, i) => (
+                    <button
+                      key={win.id}
+                      className={`win ${win.hasFocus ? 'focused' : ''} ${win.state?.type === 'minimized' ? 'minimized' : ''}`}
+                      title={win.title || win.processName}
+                      onClick={() => out.glazewm.runCommand(`focus --container-id ${win.id}`)}
+                    >
+                      {out.glazewm.displayedWorkspace.hasFocus && i < JUMP_HINTS.length && (
+                        <span className="hint">{JUMP_HINTS[i]}</span>
+                      )}
+                      {win.processName.replace(/\.exe$/i, '')}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 

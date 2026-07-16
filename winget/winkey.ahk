@@ -354,6 +354,36 @@ global curActiveHwnd := 0, prevActiveHwnd := 0
         WinActivate("ahk_id " prevActiveHwnd)
 }
 
+; --- Window jump (Win+<hint letter>) ---------------------------------------
+; zebar's bar shows a hint letter next to each window on the focused
+; workspace and writes their hwnds in the same order to
+; %TEMP%\glazewm-jump-map.txt (bar.html JUMP_HINTS — keep the letter set in
+; sync with the combos below). Letters run asdf → zxcv → qwer minus combos
+; already taken above (d/f/z). Resident handling instead of glazewm
+; shell-exec: the per-press powershell cold start queued up and fired
+; seconds late. WinActivate restores minimized targets on its own.
+JumpToWindow(idx) {
+    MarkHotkey("Jump" idx)
+    try map := FileRead(A_Temp "\glazewm-jump-map.txt")
+    catch
+        return
+    toks := StrSplit(Trim(map, " `r`n"), " ")
+    if (idx > toks.Length)
+        return
+    hwnd := toks[idx] + 0
+    if (hwnd && WinExist("ahk_id " hwnd))
+        WinActivate("ahk_id " hwnd)
+}
+~F13 & a::JumpToWindow(1)
+~F13 & s::JumpToWindow(2)
+~F13 & x::JumpToWindow(3)
+~F13 & c::JumpToWindow(4)
+~F13 & v::JumpToWindow(5)
+~F13 & q::JumpToWindow(6)
+~F13 & w::JumpToWindow(7)
+~F13 & e::JumpToWindow(8)
+~F13 & r::JumpToWindow(9)
+
 ; --- wezterm IME workaround ---------------------------------------
 ; Windows wezterm's use_ime is always on and cannot be disabled, so
 ; the Korean IME swallows Ctrl+<letter> combos while in 한글 mode
