@@ -760,28 +760,32 @@ done
 log_done "Phase 3 complete"
 
 # ============================================================================
-# Phase 4 — Editor (astronvim_config)
+# Phase 4 — Editor (nvim-config)
 # ============================================================================
-log_step "Phase 4: astronvim"
+log_step "Phase 4: nvim config"
 
 NVIM_DIR="$XDG_CONFIG_HOME/nvim"
-ASTRONVIM_REPO="https://github.com/joresserwe/astronvim_config"
+NVIM_REPO="https://github.com/joresserwe/nvim-config"
+NVIM_REPO_OLD="https://github.com/joresserwe/astronvim_config"
 
 if [ -d "$NVIM_DIR/.git" ]; then
   REMOTE="$(git -C "$NVIM_DIR" config --get remote.origin.url 2>/dev/null || echo)"
-  if [ "$REMOTE" = "$ASTRONVIM_REPO" ] || [ "$REMOTE" = "${ASTRONVIM_REPO}.git" ]; then
-    log_skip "astronvim already cloned"
+  if [ "$REMOTE" = "$NVIM_REPO" ] || [ "$REMOTE" = "${NVIM_REPO}.git" ]; then
+    log_skip "nvim config already cloned"
+  elif [ "$REMOTE" = "$NVIM_REPO_OLD" ] || [ "$REMOTE" = "${NVIM_REPO_OLD}.git" ]; then
+    git -C "$NVIM_DIR" remote set-url origin "$NVIM_REPO"
+    log_done "nvim remote updated to renamed repo"
   else
     log_step "Backing up existing nvim dir to nvim_backup_$(date +%s)"
     mv "$NVIM_DIR" "${NVIM_DIR}_backup_$(date +%s)"
-    git clone "$ASTRONVIM_REPO" "$NVIM_DIR"
+    git clone "$NVIM_REPO" "$NVIM_DIR"
   fi
 elif [ -d "$NVIM_DIR" ]; then
   log_step "Backing up existing non-git nvim dir to nvim_backup_$(date +%s)"
   mv "$NVIM_DIR" "${NVIM_DIR}_backup_$(date +%s)"
-  git clone "$ASTRONVIM_REPO" "$NVIM_DIR"
+  git clone "$NVIM_REPO" "$NVIM_DIR"
 else
-  git clone "$ASTRONVIM_REPO" "$NVIM_DIR"
+  git clone "$NVIM_REPO" "$NVIM_DIR"
 fi
 
 log_done "Phase 4 complete (run 'nvim --headless \"+Lazy! sync\" +qa' to pre-install plugins)"

@@ -68,7 +68,7 @@ ln -sf ~/.config/.dotfiles/zsh/.zshenv ~/.zshenv
 ln -sf ~/.config/.dotfiles/zsh/.zshrc ~/.config/zsh/.zshrc
 ln -sf ~/.config/.dotfiles/zsh/.aliases ~/.config/zsh/.aliases
 
-# neovim -- cloned separately via install.sh (astronvim_config)
+# neovim -- cloned separately via install.sh (nvim-config)
 
 # ideavim
 ln -sf ~/.config/.dotfiles/ideavim/mac/.ideavimrc ~/.config/ideavim/ideavimrc

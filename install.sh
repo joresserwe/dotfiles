@@ -112,11 +112,11 @@ fi
 
 # -----------------------------------------------------------------------------------------------
 
-echo "astronvim 설치..."
+echo "Installing nvim config..."
 if [ -d "$XDG_CONFIG_HOME/nvim" ]; then
 	mv "$XDG_CONFIG_HOME/nvim" "$XDG_CONFIG_HOME/nvim_backup"
 fi
-git clone https://github.com/joresserwe/astronvim_config "$XDG_CONFIG_HOME/nvim"
+git clone https://github.com/joresserwe/nvim-config "$XDG_CONFIG_HOME/nvim"
 
 # -----------------------------------------------------------------------------------------------
 
