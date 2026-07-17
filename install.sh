@@ -21,6 +21,8 @@ directories=(
 	"$XDG_CONFIG_HOME/npm"
 	"$XDG_CONFIG_HOME/vim"
 	"$XDG_STATE_HOME/vim"
+	"$XDG_STATE_HOME/node"
+	"$XDG_STATE_HOME/python"
 	"$XDG_DATA_HOME"
 	"$XDG_STATE_HOME"
 	"$XDG_RUNTIME_DIR"

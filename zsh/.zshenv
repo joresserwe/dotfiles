@@ -55,6 +55,21 @@ export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$GOPATH/pkg/mod"
 export PATH="$PATH:$GOPATH/bin"
 
+# gradle — ignores XDG, writes to ~/.gradle unless GRADLE_USER_HOME is set
+export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
+
+# kubectl — ignores XDG, defaults to ~/.kube for config and cache
+export KUBECONFIG="$XDG_CONFIG_HOME/kube/config"
+export KUBECACHEDIR="$XDG_CACHE_HOME/kube"
+
+# node REPL history — defaults to ~/.node_repl_history; the parent dir must
+# already exist or node silently disables history persistence
+export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
+
+# python REPL history — honored by CPython >=3.13 (older versions ignore the
+# var and fall back to ~/.python_history)
+export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
+
 
 # wget
 export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"

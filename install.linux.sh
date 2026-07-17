@@ -35,7 +35,9 @@ ensure_dir \
   "$XDG_STATE_HOME/atuin/logs" \
   "$XDG_CONFIG_HOME/npm" \
   "$XDG_CONFIG_HOME/vim" \
-  "$XDG_STATE_HOME/vim"
+  "$XDG_STATE_HOME/vim" \
+  "$XDG_STATE_HOME/node" \
+  "$XDG_STATE_HOME/python"
 
 log_step "apt: install base packages from apt/packages.txt"
 sudo apt-get update -y
