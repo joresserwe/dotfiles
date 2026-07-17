@@ -19,6 +19,7 @@ detect_os() {
 log_step() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 log_skip() { printf '    \033[2;37m-- %s\033[0m\n' "$*"; }
 log_done() { printf '    \033[1;32mok\033[0m %s\n' "$*"; }
+log_manual() { printf '    \033[1;33m!!\033[0m %s\n' "$*"; }
 
 # ensure_dir path... → mkdir -p with idempotent log
 ensure_dir() {

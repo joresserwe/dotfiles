@@ -233,3 +233,7 @@ open -a Scroll\ Reverser
 open -a Hidden\ Bar
 open -a RunCat
 open -a CleanMyMac
+
+echo ""
+echo "[manual] Surfingkeys — once per browser: in the extension settings, set 'Load settings from' to:"
+echo "  https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"

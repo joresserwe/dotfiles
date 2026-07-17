@@ -25,6 +25,7 @@
 | **Keyboard** | `karabiner` &mdash; Right Option &rarr; Hyper, Caps Lock &rarr; Ctrl |
 | **Dev** | `git` `lazygit` `fnm` `pnpm` `pyenv` `claude code` |
 | **Utility** | `raycast` `wallpaperkiller` |
+| **Browser** | `surfingkeys` &mdash; keyboard-driven web surfing, config loaded from raw URL |
 
 <details>
 <summary><b>Inactive</b> &mdash; configs preserved, not in active use</summary>
@@ -109,6 +110,13 @@ ln -sf ~/.config/.dotfiles/yazi/keymap.toml ~/.config/yazi/keymap.toml
 
 - **Aerospace** requires no SIP modification, unlike yabai which needs [partial SIP disable](https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)).
 - **Karabiner** config is _copied_ (not symlinked) because the app overwrites symlinks on save.
+- **Surfingkeys** is a browser extension, so its config lives in the repo but isn't symlinked. In the extension's settings page, set **"Load settings from"** to the raw config URL — one field to paste per new browser, then `git push` propagates to every machine:
+
+  ```
+  https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js
+  ```
+
+  Offline alternative: point it at a local `file://` absolute path instead (Windows browser reads the mirror, e.g. `file:///C:/Users/<you>/.dotfiles/surfingkeys/config.js`).
 
 ## WSL2 / Ubuntu
 

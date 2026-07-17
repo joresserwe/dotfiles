@@ -24,7 +24,7 @@ if (-not $src -or -not (Test-Path -LiteralPath $src)) {
   exit 0  # WSL down or var unset — keep serving the existing mirror
 }
 
-foreach ($d in 'glazewm', 'zebar', 'winget', 'wezterm', 'claude') {
+foreach ($d in 'glazewm', 'zebar', 'winget', 'wezterm', 'claude', 'surfingkeys') {
   robocopy "$src\$d" "$dst\$d" /MIR /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 }
 robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null

@@ -849,3 +849,7 @@ log_done "Phase 5 complete"
 
 # ============================================================================
 log_step "All phases complete. Open a new shell (or 'exec zsh') to start using it."
+
+log_step "Manual step — Surfingkeys (per browser)"
+log_manual "In the extension settings, set 'Load settings from' to:"
+log_manual "  https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"
