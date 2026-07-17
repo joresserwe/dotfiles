@@ -121,8 +121,14 @@ config.adjust_window_size_when_changing_font_size = false
 config.custom_block_glyphs = true
 config.window_decorations = "RESIZE"
 config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
-config.window_background_opacity = 0.85
-config.macos_window_background_blur = 10
+
+local window_opacity = is_windows and 0.75 or 0.85
+config.window_background_opacity = window_opacity
+if is_windows then
+	config.win32_system_backdrop = "Acrylic"
+else
+	config.macos_window_background_blur = 10
+end
 
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = false
@@ -144,13 +150,8 @@ local tab_bar_bg
 if config.tab_bar_at_bottom then
 	tab_bar_bg = "rgba(0, 0, 0, 0)"
 else
-	-- NOTE: must match the *final* window_background_opacity for the current OS.
-	-- The Windows override (0.65) is applied later in the file (in the OS-specific
-	-- block), so reading config.window_background_opacity here would still see the
-	-- mac default (0.85) and the tab bar would render darker than the terminal pane.
-	local effective_opacity = is_windows and 0.65 or 0.85
 	local r, g, b = wezterm.color.parse(C.base):srgba_u8()
-	tab_bar_bg = string.format("rgba(%d, %d, %d, %s)", r, g, b, effective_opacity)
+	tab_bar_bg = string.format("rgba(%d, %d, %d, %s)", r, g, b, window_opacity)
 end
 config.colors = {
 	tab_bar = {
@@ -1005,10 +1006,6 @@ if is_windows then
 		dom.default_cwd = "~"
 	end
 	config.wsl_domains = wsl_domains
-
-	config.window_background_opacity = 0.65
-	config.win32_system_backdrop = "Acrylic"
-	config.macos_window_background_blur = nil
 end
 
 return config
