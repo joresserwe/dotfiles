@@ -424,13 +424,15 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     log_done "Zebar: legacy local pack dir removed (config read from $dotfiles_win\\zebar via --config-dir)"
   fi
 
-  # ShareX's personal folder is %USERPROFILE%\Downloads (HKCU PersonalPath
+  # ShareX's personal folder is %LOCALAPPDATA%\ShareX (HKCU PersonalPath
   # override in winget/registry.ps1). The settings files are runtime state
   # ShareX rewrites on every exit — seeded once here; afterwards
   # winget/sync-windows.ps1 pulls the live files back into sharex/ on every
   # Hyper+C, so the repo snapshot tracks them without manual steps.
-  if [[ -n "${win_userprofile_wsl:-}" && ! -f "$win_userprofile_wsl/Downloads/ApplicationConfig.json" ]]; then
-    cp "$DOTFILES_PATH"/sharex/*.json "$win_userprofile_wsl/Downloads/" 2>/dev/null \
+  sharex_personal_wsl="$win_userprofile_wsl/AppData/Local/ShareX"
+  if [[ -n "${win_userprofile_wsl:-}" && ! -f "$sharex_personal_wsl/ApplicationConfig.json" ]]; then
+    mkdir -p "$sharex_personal_wsl"
+    cp "$DOTFILES_PATH"/sharex/*.json "$sharex_personal_wsl/" 2>/dev/null \
       && log_done "ShareX: settings seeded from sharex/" \
       || log_skip "ShareX: no snapshot in sharex/ to seed"
   fi
