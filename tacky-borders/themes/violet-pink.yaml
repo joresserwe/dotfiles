@@ -24,6 +24,9 @@ window_rules:
   - match: Process
     name: "Riot Client"
     enabled: False
+  - match: Process
+    name: "ShareX"
+    enabled: False
 
 global:
   border_width: 5

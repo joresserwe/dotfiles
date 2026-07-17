@@ -93,3 +93,14 @@ $bytes = [byte[]](
 )
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' `
   -Name 'Scancode Map' -Value $bytes -Type Binary -Force
+
+# ShareX personal folder. The default (Documents\ShareX) lands inside the
+# OneDrive-redirected Documents folder, which Controlled Folder Access
+# protects — the History.db SQLite open gets blocked and ShareX dies at
+# startup (SQLite Error 14). SystemOptions reads this HKCU override.
+$sharex = 'HKCU:\SOFTWARE\ShareX'
+if (-not (Test-Path $sharex)) {
+  New-Item -Path $sharex -Force | Out-Null
+}
+Set-ItemProperty -Path $sharex `
+  -Name 'PersonalPath' -Value "$env:USERPROFILE\Downloads" -Type String -Force

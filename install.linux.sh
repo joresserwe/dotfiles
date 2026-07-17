@@ -303,6 +303,11 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     fi
   done < "$DOTFILES_PATH/winget/packages.txt"
 
+  log_step "ShareX: Start Menu capture shortcuts"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass \
+    -File "$(wslpath -w "$DOTFILES_PATH/winget/sharex-shortcuts.ps1")" >/dev/null 2>&1 || true
+  log_done "ShareX: Start Menu capture shortcuts"
+
   # --- Windows-local dotfiles mirror ----------------------------------------
   # Every Windows-side consumer reads from %USERPROFILE%\.dotfiles (exposed
   # as the DOTFILES_WIN user env var) instead of the \\wsl.localhost UNC. At
@@ -415,6 +420,17 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   if [[ -n "${win_userprofile_wsl:-}" ]]; then
     rm -rf "$win_userprofile_wsl/.glzr/zebar"
     log_done "Zebar: legacy local pack dir removed (config read from $dotfiles_win\\zebar via --config-dir)"
+  fi
+
+  # ShareX's personal folder is %USERPROFILE%\Downloads (HKCU PersonalPath
+  # override in winget/registry.ps1). The settings files are runtime state
+  # ShareX rewrites on every exit — seeded once here; afterwards
+  # winget/sync-windows.ps1 pulls the live files back into sharex/ on every
+  # Hyper+C, so the repo snapshot tracks them without manual steps.
+  if [[ -n "${win_userprofile_wsl:-}" && ! -f "$win_userprofile_wsl/Downloads/ApplicationConfig.json" ]]; then
+    cp "$DOTFILES_PATH"/sharex/*.json "$win_userprofile_wsl/Downloads/" 2>/dev/null \
+      && log_done "ShareX: settings seeded from sharex/" \
+      || log_skip "ShareX: no snapshot in sharex/ to seed"
   fi
 
   # winkey.ahk — launched at login ONLY via Scheduled Task (RunLevel=Highest),

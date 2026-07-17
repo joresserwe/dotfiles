@@ -35,4 +35,13 @@ if (-not (Test-Path $tackyCfg)) {
   Copy-Item (Join-Path $dst 'tacky-borders\themes\violet-pink.yaml') $tackyCfg -ErrorAction SilentlyContinue
 }
 
+# ShareX settings flow the OPPOSITE direction to everything above: the live
+# files in %USERPROFILE%\Downloads (HKCU PersonalPath, winget/registry.ps1)
+# are rewritten by ShareX itself, so the repo's sharex/ snapshot is pulled
+# from them — changes surface as git diff in the WSL clone, committed by hand.
+# UploadersConfig.json is excluded: it can hold upload tokens; repo is public.
+foreach ($f in 'ApplicationConfig.json', 'HotkeysConfig.json') {
+  Copy-Item (Join-Path $env:USERPROFILE "Downloads\$f") (Join-Path $src "sharex\$f") -ErrorAction SilentlyContinue
+}
+
 exit 0  # robocopy exit codes 1-7 are success variants; don't propagate them

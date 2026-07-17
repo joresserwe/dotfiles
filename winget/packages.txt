@@ -22,3 +22,6 @@ AutoHotkey.AutoHotkey
 # Process/system monitor — Windows-side btm, run from WSL as btm.exe (btmw alias)
 # to see Windows processes without opening Task Manager
 Clement.bottom
+
+# Screenshot capture tool
+ShareX.ShareX

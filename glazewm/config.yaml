@@ -22,6 +22,7 @@ general:
     # glazewm's model after a cross-DPI move (glazewm#661). Subscribes to
     # move/manage/monitor events and dies with glazewm. See fix-dpi-missize.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1"'
+    - 'shell-exec --hide-window "C:\Program Files\ShareX\ShareX.exe" -silent'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
@@ -113,6 +114,7 @@ window_rules:
       - window_title: { regex: '[Pp]icture.in.[Pp]icture|PIP 모드' }
       - window_process: { regex: 'LeagueClientUx|RiotClientUx|Riot Client' }
       - window_process: { equals: 'League of Legends' }
+      - window_process: { equals: 'ShareX' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
