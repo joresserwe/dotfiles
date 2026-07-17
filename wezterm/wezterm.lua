@@ -254,6 +254,9 @@ config.keys = {
 	},
 	{ key = "phys:l", mods = "LEADER", action = act.ActivateTabRelative(1) },
 	{ key = "phys:h", mods = "LEADER", action = act.ActivateTabRelative(-1) },
+	-- Hangul IME delivers composed jamo instead of h/l, so bind those too
+	{ key = "ㅣ", mods = "LEADER", action = act.ActivateTabRelative(1) },
+	{ key = "ㅗ", mods = "LEADER", action = act.ActivateTabRelative(-1) },
 
 	-- Copy mode
 	{
@@ -857,6 +860,11 @@ config.key_tables = {
 		{ key = "phys:j", action = act.ActivatePaneDirection("Down") },
 		{ key = "phys:k", action = act.ActivatePaneDirection("Up") },
 		{ key = "phys:l", action = act.ActivatePaneDirection("Right") },
+		-- Hangul IME delivers composed jamo instead of h/j/k/l, so bind those too
+		{ key = "ㅗ", action = act.ActivatePaneDirection("Left") },
+		{ key = "ㅓ", action = act.ActivatePaneDirection("Down") },
+		{ key = "ㅏ", action = act.ActivatePaneDirection("Up") },
+		{ key = "ㅣ", action = act.ActivatePaneDirection("Right") },
 		{ key = "Escape", action = "PopKeyTable" },
 	},
 
