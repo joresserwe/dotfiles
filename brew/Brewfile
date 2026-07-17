@@ -65,6 +65,8 @@ brew "ouch"
 brew "pnpm"
 # Python package installer and resolver
 brew "uv"
+# SVG rendering tool (yazi's builtin svg previewer)
+brew "resvg"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
 # Ping with a real-time graph

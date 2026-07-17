@@ -187,6 +187,7 @@ create_link "$DOTFILES_PATH/yazi/yazi.toml" "$XDG_CONFIG_HOME/yazi/yazi.toml"
 create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
 create_link "$DOTFILES_PATH/yazi/init.lua" "$XDG_CONFIG_HOME/yazi/init.lua"
+create_link "$DOTFILES_PATH/yazi/plugins/svg-code.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/svg-code.yazi/main.lua"
 ya pkg add boydaihungst/mediainfo
 ya pkg add ndtoan96/ouch
 ya pkg add yazi-rs/plugins:jump-to-char
