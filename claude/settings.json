@@ -68,6 +68,7 @@
       "mcp__plugin_context7_context7__query-docs"
     ]
   },
+  "model": "claude-fable-5[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.config/.dotfiles/claude/statusline.sh",
@@ -92,5 +93,6 @@
   },
   "tui": "fullscreen",
   "theme": "dark",
-  "model": "claude-fable-5[1m]"
+  "switchModelsOnFlag": false,
+  "skipDangerousModePermissionPrompt": true
 }
