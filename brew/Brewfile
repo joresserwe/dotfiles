@@ -35,10 +35,14 @@ brew "gnu-sed"
 brew "go"
 # User-friendly cURL replacement (command-line HTTP client)
 brew "httpie"
+# Tools and libraries to manipulate images in many formats
+brew "imagemagick"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Kubernetes command-line interface
 brew "kubernetes-cli"
+# SVG rendering library (imagemagick's svg delegate: rsvg-convert)
+brew "librsvg"
 # Simple terminal UI for git commands
 brew "lazygit"
 # Tool for linting and static analysis of Lua code

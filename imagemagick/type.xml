@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!-- Font map for Homebrew ImageMagick (built without a system font config).
+     Maps generic/common font names to Ubuntu's DejaVu fonts so SVG <text>
+     rendering works. Linux-only paths — do not link on macOS. -->
+<typemap>
+  <type format="ttf" name="sans-serif" fullname="DejaVu Sans" family="DejaVu Sans" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"/>
+  <type format="ttf" name="serif" fullname="DejaVu Serif" family="DejaVu Serif" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"/>
+  <type format="ttf" name="monospace" fullname="DejaVu Sans Mono" family="DejaVu Sans Mono" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"/>
+  <type format="ttf" name="Arial" fullname="DejaVu Sans" family="DejaVu Sans" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"/>
+  <type format="ttf" name="Helvetica" fullname="DejaVu Sans" family="DejaVu Sans" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"/>
+  <type format="ttf" name="Times" fullname="DejaVu Serif" family="DejaVu Serif" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"/>
+  <type format="ttf" name="Courier" fullname="DejaVu Sans Mono" family="DejaVu Sans Mono" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"/>
+  <type format="ttf" name="DejaVu-Sans" fullname="DejaVu Sans" family="DejaVu Sans" glyphs="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"/>
+</typemap>
