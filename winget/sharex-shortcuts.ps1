@@ -8,12 +8,17 @@ if (-not (Test-Path $sharex)) { exit 0 }
 $dir = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\ShareX Commands'
 New-Item -ItemType Directory -Force $dir | Out-Null
 
+# Clear first so the folder mirrors the table below exactly — a dropped
+# command's stale .lnk would otherwise linger in the launcher index.
+Get-ChildItem $dir -Filter *.lnk -ErrorAction SilentlyContinue | Remove-Item -Force
+
 $ws = New-Object -ComObject WScript.Shell
 $commands = @{
-  'Capture Region'     = '-RectangleRegion'
-  'Capture Fullscreen' = '-PrintScreen'
-  'Capture Window'     = '-ActiveWindow'
-  'Screen Recorder'    = '-ScreenRecorder'
+  'Capture Region'       = '-RectangleRegion'
+  'Capture Fullscreen'   = '-PrintScreen'
+  'Capture Window'       = '-ActiveWindow'
+  'Screen Recorder'      = '-ScreenRecorder'
+  'Screen Recorder (GIF)' = '-ScreenRecorderGIF'
 }
 foreach ($name in $commands.Keys) {
   $lnk = $ws.CreateShortcut((Join-Path $dir "$name.lnk"))
