@@ -21,6 +21,9 @@ window_rules:
   - match: Process
     name: "RiotClientUx"
     enabled: False
+  - match: Process
+    name: "Riot Client"
+    enabled: False
 
 global:
   border_width: 5

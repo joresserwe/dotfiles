@@ -111,7 +111,7 @@ window_rules:
     match:
       - window_process: { equals: 'zebar' }
       - window_title: { regex: '[Pp]icture.in.[Pp]icture|PIP 모드' }
-      - window_process: { regex: 'LeagueClientUx|RiotClientUx' }
+      - window_process: { regex: 'LeagueClientUx|RiotClientUx|Riot Client' }
       - window_process: { equals: 'League of Legends' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
