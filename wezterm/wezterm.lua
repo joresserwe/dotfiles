@@ -145,6 +145,7 @@ config.inactive_pane_hsb = {
 config.scrollback_lines = 200000
 config.automatically_reload_config = true
 config.status_update_interval = 200
+config.enable_kitty_graphics = true
 
 local tab_bar_bg
 if config.tab_bar_at_bottom then
