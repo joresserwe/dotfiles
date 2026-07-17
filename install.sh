@@ -197,6 +197,7 @@ ya pkg add yazi-rs/plugins:git
 ya pkg add yazi-rs/plugins:smart-filter
 ya pkg add yazi-rs/plugins:chmod
 ya pkg add yazi-rs/plugins:toggle-pane
+ya pkg add yazi-rs/plugins:smart-enter
 ya pkg add Reledia/glow
 ya pkg add yazi-rs/flavors:catppuccin-mocha
 # atuin
