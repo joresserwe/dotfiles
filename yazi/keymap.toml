@@ -20,7 +20,7 @@ prepend_keymap = [
 
 	# 외부 도구 연동
 	{ on = "<C-g>",              run = "shell 'lazygit' --block",            desc = "Open lazygit" },
-	{ on = "<C-n>",              run = "shell 'wezterm cli spawn --cwd $PWD' --orphan", desc = "New terminal here" },
+	{ on = "<C-n>",              run = "shell 'wezterm cli spawn --cwd $PWD 2>/dev/null || tmux new-window -c \"$PWD\"' --orphan", desc = "New terminal here" },
 ]
 
 keymap = [

@@ -6,8 +6,6 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 # Dotfiles
 export DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
-# Cache file written by install.linux.sh GPU detection; absent -> wezterm
-export DOTFILES_TERMINAL="${DOTFILES_TERMINAL:-$(cat "$XDG_STATE_HOME/dotfiles/terminal" 2>/dev/null || echo wezterm)}"
 
 # zsh
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"

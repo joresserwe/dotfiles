@@ -147,7 +147,6 @@ fh() {
   local wez
   case "$OSTYPE" in
     darwin*)  command -v wezterm >/dev/null 2>&1 && wez=wezterm ;;
-    linux-gnu*) command -v wezterm.exe >/dev/null 2>&1 && wez=wezterm.exe ;;
   esac
 
   if [ -n "$wez" ] && [ "$TERM_PROGRAM" = "WezTerm" ]; then
