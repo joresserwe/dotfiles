@@ -40,8 +40,19 @@ if (-not (Test-Path $tackyCfg)) {
 # are rewritten by ShareX itself, so the repo's sharex/ snapshot is pulled
 # from them — changes surface as git diff in the WSL clone, committed by hand.
 # UploadersConfig.json is excluded: it can hold upload tokens; repo is public.
+#
+# Capture ONLY real edits: skip when live matches the pristine copy
+# install.linux.sh left in the mirror (sharex.applied). Without this guard a
+# machine whose live config predates a `git pull` clobbers the freshly pulled
+# snapshot with stale state on the next Hyper+C. No applied copy (pre-upgrade
+# machine) → fall through and capture, matching the old behavior.
 foreach ($f in 'ApplicationConfig.json', 'HotkeysConfig.json') {
-  Copy-Item (Join-Path $env:LOCALAPPDATA "ShareX\$f") (Join-Path $src "sharex\$f") -ErrorAction SilentlyContinue
+  $live    = Join-Path $env:LOCALAPPDATA "ShareX\$f"
+  $applied = Join-Path $dst "sharex.applied\$f"
+  if (-not (Test-Path -LiteralPath $live)) { continue }
+  if ((Test-Path -LiteralPath $applied) -and
+      (Get-FileHash -LiteralPath $applied).Hash -eq (Get-FileHash -LiteralPath $live).Hash) { continue }
+  Copy-Item -LiteralPath $live (Join-Path $src "sharex\$f") -ErrorAction SilentlyContinue
 }
 
 exit 0  # robocopy exit codes 1-7 are success variants; don't propagate them
