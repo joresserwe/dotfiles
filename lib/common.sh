@@ -33,6 +33,17 @@ ensure_dir() {
   done
 }
 
+# update_repo dir → ff-only pull an existing clone. Non-fatal: an installer
+# re-run must survive offline machines, dirty trees, and diverged histories.
+update_repo() {
+  local dir="$1"
+  if git -C "$dir" pull --ff-only --quiet 2>/dev/null; then
+    log_done "updated: $dir"
+  else
+    log_skip "update skipped (offline/dirty/diverged): $dir"
+  fi
+}
+
 # create_link target link_path → mkdir -p parent, then ln -sf
 create_link() {
   local target_file="$1"
