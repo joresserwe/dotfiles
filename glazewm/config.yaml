@@ -119,6 +119,7 @@ window_rules:
       - window_process: { regex: 'LeagueClientUx|RiotClientUx|Riot Client' }
       - window_process: { equals: 'League of Legends' }
       - window_process: { equals: 'ShareX' }
+      - window_process: { equals: 'AccordD64' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
