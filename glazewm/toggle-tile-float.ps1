@@ -14,7 +14,7 @@ $glazewm = 'C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe'
 # Float-locked processes: for apps float-ruled in config.yaml that f13+space
 # must never flip into the tile layout (they still respond to move /
 # workspace / monitor commands, unlike `ignore`).
-$floatLocked = @('Taskmgr')
+$floatLocked = @()
 
 $res = & $glazewm query focused 2>$null | ConvertFrom-Json
 if (-not $res -or -not $res.success) { exit 0 }

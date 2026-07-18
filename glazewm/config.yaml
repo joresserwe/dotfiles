@@ -136,13 +136,6 @@ window_rules:
       - window_process: { equals: 'explorer' }
         window_class: { equals: 'CabinetWClass' }
       - window_process: { regex: 'idea64|pycharm64' }
-      # Task Manager — float, locked out of tiling by toggle-tile-float.ps1's
-      # float-lock list. The earlier "floating breaks it" verdict was a
-      # misdiagnosis: the tested instance predated the rule and was still
-      # UNMANAGED (rules only apply when a window is first managed), so keys
-      # were hitting background windows/workspaces. Process match is
-      # locale-proof, unlike a 'Task Manager|작업 관리자' title regex.
-      - window_process: { equals: 'Taskmgr' }
       # AutoHotkey error/info dialogs (e.g. winkey.ahk runtime errors) and
       # tacky-borders' "already running" warning MessageBox. Without this,
       # GlazeWM tiles them into whatever cell is next, which warps the dialog
