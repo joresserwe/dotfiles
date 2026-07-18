@@ -1,9 +1,9 @@
 #!/bin/sh
-# The target directory arrives via %TEMP%\flow-yazi-target.txt, not argv:
+# The target directory arrives via %TEMP%\open-yazi-target.txt, not argv:
 # wt strips quotes from pass-through command-line tokens and wsl.exe -e
 # word-splits them, so a Windows path with spaces cannot survive either hop.
 win_temp="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
-tmpfile="$(wslpath -u "$win_temp")/flow-yazi-target.txt"
+tmpfile="$(wslpath -u "$win_temp")/open-yazi-target.txt"
 [ -f "$tmpfile" ] || exit 1
 dir="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
 cd "$dir" || exit 1

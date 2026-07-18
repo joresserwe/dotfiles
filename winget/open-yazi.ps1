@@ -1,4 +1,4 @@
-# The target path travels via %TEMP%\flow-yazi-target.txt, never argv:
+# The target path travels via %TEMP%\open-yazi-target.txt, never argv:
 # wt strips quotes from pass-through tokens and wsl.exe -e word-splits
 # them, so a Windows path with spaces cannot survive either hop
 # (observed: --cd C:\Program Files -> Wsl/ERROR_FILE_NOT_FOUND).
@@ -10,7 +10,7 @@ if (Test-Path -LiteralPath $Target -PathType Leaf) {
 }
 if (-not (Test-Path -LiteralPath $dir)) { exit 1 }
 
-[IO.File]::WriteAllText((Join-Path $env:TEMP 'flow-yazi-target.txt'), $dir,
+[IO.File]::WriteAllText((Join-Path $env:TEMP 'open-yazi-target.txt'), $dir,
     (New-Object System.Text.UTF8Encoding($false)))
 
 $wt = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\wt.exe'
