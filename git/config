@@ -14,9 +14,9 @@
 	line-numbers = true
 	side-by-side = true
 	width = -4
-	wrap-left-symbol = "↩"
-	wrap-right-symbol = "↪"
-	wrap-right-prefix-symbol = "…"
+	wrap-left-symbol = " "
+	wrap-right-symbol = " "
+	wrap-right-prefix-symbol = " "
 	wrap-max-lines = unlimited
 	line-numbers-left-format = " {nm:^4}⋮"
 	line-numbers-right-format = "{np:^4}│ "
