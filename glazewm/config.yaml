@@ -18,10 +18,6 @@ general:
     # bleeds onto the neighboring monitor). Subscribes to focus_changed and
     # dies with glazewm. See tacky-borders/state-border.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1"'
-    # DPI mis-size daemon: re-tiles wezterm windows whose frame drifted from
-    # glazewm's model after a cross-DPI move (glazewm#661). Subscribes to
-    # move/manage/monitor events and dies with glazewm. See fix-dpi-missize.ps1.
-    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1"'
     # The space-containing path must be bare, not quoted: glazewm's shell-exec
     # quote parser looks for a 3rd `"` (match_indices.nth(2)), so a quoted
     # 2-quote path errors with "command doesn't have an ending `"`". A bare path
@@ -29,10 +25,7 @@ general:
     - 'shell-exec --hide-window C:\Program Files\ShareX\ShareX.exe -silent'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
-  # A reload re-tiles every window but emits no WM event, so the mis-size
-  # daemon never observes it.
-  config_reload_commands:
-    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1" -Once'
+  config_reload_commands: []
   focus_follows_cursor: false
   toggle_workspace_on_refocus: true
   cursor_jump:
@@ -225,11 +218,6 @@ keybindings:
     bindings: ['f13+l']
 
   # ---- Move window (win+shift+hjkl) ----
-  # The wm-redraw + delayed-redraw.ps1 wezterm/multi-DPI workaround
-  # (glzr-io/glazewm#661) used to live here; removed 2026-07-15 — the double
-  # redraw made every move visibly flicker, which was worse than the
-  # occasional wezterm mis-size it papered over. Restore from git history if
-  # wezterm cross-DPI sizing regresses badly.
   # recenter-floating.ps1 stays (self-no-op unless a floating window ended
   # up outside its monitor after crossing a DPI boundary).
   - commands: ['move --direction left',  &recenter 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\recenter-floating.ps1"']
