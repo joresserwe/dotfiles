@@ -28,10 +28,13 @@ Run the comment checklist from CLAUDE.md on each one — first match decides:
 2. Explains why the edit was made or why it is correct -> DELETE, commit message.
 3. Echo — content recoverable from the code it sits on -> DELETE.
    (Sibling comments/file density never justify keeping it.)
-4. Non-obvious fact about the CURRENT code (workaround reason, upstream bug,
-   observed failure, required ordering, unit/format) -> keep.
+4. Observed failure, upstream bug/issue ref, required ordering, or non-obvious
+   unit/format -> keep. On lines you MINT unasked, nothing else qualifies:
+   identifier mappings ("X is the ... client"), why-this-key-over-that, tool
+   background -> DELETE, commit message.
 5. Nothing matched -> DELETE. Default is delete.
-If a kept comment is Rule 4, no action needed. Otherwise remove it now."""
+These are lines YOU wrote, not existing ones you kept: if you are weighing
+whether one earns its place, it doesn't. Remove every non-rule-4 line now."""
 
 
 def main():
