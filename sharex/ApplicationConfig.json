@@ -216,7 +216,7 @@
             "AlignmentHorizontal": "Center",
             "AlignmentVertical": "Center",
             "Gradient": false,
-            "Color2": "240, 240, 240",
+            "Color2": "ButtonFace",
             "GradientMode": "Vertical",
             "EnterKeyNewLine": false
           },
@@ -232,7 +232,7 @@
             "AlignmentHorizontal": "Center",
             "AlignmentVertical": "Center",
             "Gradient": false,
-            "Color2": "240, 240, 240",
+            "Color2": "ButtonFace",
             "GradientMode": "Vertical",
             "EnterKeyNewLine": false
           },
@@ -1030,7 +1030,7 @@
   ],
   "SelectedTheme": 0,
   "UseCustomScreenshotsPath": true,
-  "CustomScreenshotsPath": "C:\\Users\\kartr\\AppData\\Local\\Temp\\ShareX",
+  "CustomScreenshotsPath": "%TEMP%\\ShareX",
   "SaveImageSubFolderPattern": "%y-%mo",
   "SaveImageSubFolderPatternWindow": "",
   "ShowMenu": true,
