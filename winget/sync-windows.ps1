@@ -61,4 +61,6 @@ foreach ($f in 'ApplicationConfig.json', 'HotkeysConfig.json') {
   Copy-Item -LiteralPath $live (Join-Path $src "sharex\$f") -ErrorAction SilentlyContinue
 }
 
+& (Join-Path $dst 'winget\flow-capture.ps1') -RepoPath $src -MirrorPath $dst
+
 exit 0  # robocopy exit codes 1-7 are success variants; don't propagate them

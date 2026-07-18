@@ -127,6 +127,7 @@ window_rules:
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
     match:
+      - window_process: { equals: 'Flow.Launcher' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'KakaoTalk' }
       # Webex (new desktop app) — main window and meeting windows both live

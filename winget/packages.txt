@@ -18,6 +18,8 @@ Mintty.WSLtty
 # (the winget-pkgs entry Raycast.Raycast is unmaintained as of 2025-11).
 9PFXXSHC64H3 msstore
 
+Flow-Launcher.Flow-Launcher
+
 # Keyboard scripting — required by winget/winkey.ahk
 AutoHotkey.AutoHotkey
 
