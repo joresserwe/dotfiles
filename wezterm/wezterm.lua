@@ -36,12 +36,6 @@ local brew_bin = is_darwin and "/opt/homebrew/bin/" or (not is_windows and "/hom
 local wsl_brew_bin = is_windows and "/home/linuxbrew/.linuxbrew/bin/" or brew_bin
 local clip_cmd = is_windows and "win32yank.exe -i --crlf" or "pbcopy"
 
--- On Windows, the entry config (%USERPROFILE%\.wezterm.lua) is a stub that
--- dofile()s this file over the \\wsl.localhost UNC path. The 9P protocol
--- powering \\wsl.localhost does not propagate inotify events, so edits to
--- this file never trigger WezTerm's auto-reload on Windows. The workaround
--- lives in wezterm/wezterm-watch.sh, which runs inside WSL and touches the
--- Windows-side stub whenever this file changes.
 if workspace_switcher and brew_bin ~= "" then
 	workspace_switcher.zoxide_path = brew_bin .. "zoxide"
 end

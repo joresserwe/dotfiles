@@ -1,0 +1,47 @@
+{
+    "profile": {
+        "guid": "{7c4e5a10-93a4-4d3b-b1a9-571e33c2a6d1}",
+        "name": "Terminal",
+        "commandline": "C:\\windows\\system32\\wsl.exe -d Ubuntu --cd ~ -e .local/bin/tmux-main",
+        "colorScheme": "Catppuccin Mocha",
+        "font": {
+            "face": "0xProto Nerd Font, Sarasa Mono K, codicon",
+            "size": 12.5
+        },
+        "padding": "8",
+        "scrollbarState": "hidden",
+        "suppressApplicationTitle": true,
+        "tabTitle": "Terminal",
+        "opacity": 92,
+        "icon": null
+    },
+    "actions": [
+        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "f13" },
+        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "shift+f13" },
+        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+f13" },
+        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+shift+f13" }
+    ],
+    "scheme": {
+        "name": "Catppuccin Mocha",
+        "background": "#1E1E2E",
+        "foreground": "#CDD6F4",
+        "cursorColor": "#F5E0DC",
+        "selectionBackground": "#585B70",
+        "black": "#45475A",
+        "red": "#F38BA8",
+        "green": "#A6E3A1",
+        "yellow": "#F9E2AF",
+        "blue": "#89B4FA",
+        "purple": "#F5C2E7",
+        "cyan": "#94E2D5",
+        "white": "#BAC2DE",
+        "brightBlack": "#585B70",
+        "brightRed": "#F38BA8",
+        "brightGreen": "#A6E3A1",
+        "brightYellow": "#F9E2AF",
+        "brightBlue": "#89B4FA",
+        "brightPurple": "#F5C2E7",
+        "brightCyan": "#94E2D5",
+        "brightWhite": "#A6ADC8"
+    }
+}

@@ -6,14 +6,6 @@
 # Tiling window manager (installer bundles Zebar)
 glzr-io.glazewm
 
-# Terminal — hosts the WSL zsh sessions; config comes from the dotfiles
-# mirror via the %USERPROFILE%\.wezterm.lua stub (install.linux.sh)
-# [DEPRECATED] wez.wezterm → nightly (stable stalled at 2024-02; old ConPTY
-# leaks terminal query responses as keystrokes into TUI apps like yazi)
-wez.wezterm.nightly
-
-Mintty.WSLtty
-
 # Launcher / productivity tool — distributed via Microsoft Store only
 # (the winget-pkgs entry Raycast.Raycast is unmaintained as of 2025-11).
 9PFXXSHC64H3 msstore

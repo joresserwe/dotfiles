@@ -1,7 +1,7 @@
 # bootstrap.windows.ps1 — one-shot Windows-side bootstrap for a fresh PC.
 # Runs BEFORE WSL exists, so it covers exactly what install.linux.sh cannot:
 #   1. WSL platform (optional features + Store package + Ubuntu distro queue)
-#   2. Fonts for the wezterm fallback chain (per-user, always latest release)
+#   2. Fonts for the terminal font fallback chain (per-user, always latest release)
 #   3. winget/registry.ps1 under elevation (HKLM Scancode Map needs admin)
 # Everything else stays in install.linux.sh — run that inside Ubuntu after the
 # reboot, from a terminal launched as Administrator (the RunLevel=Highest

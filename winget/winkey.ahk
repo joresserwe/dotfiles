@@ -35,8 +35,8 @@ SetTimer(DbgLog.Bind("TICK"), 10000)
 
 ; Cold-boot hook race: at logon the low-level keyboard hook installed by
 ; this script sometimes lands below Korean TSF / other services that are
-; still initialising, and then stops firing for specific VKs (VK19/Hanja,
-; Ctrl-inside-wezterm) even though the rest of the hotkeys work. Windows'
+; still initialising, and then stops firing for specific VKs (VK19/Hanja)
+; even though the rest of the hotkeys work. Windows'
 ; LowLevelHooksTimeout (HKCU\Control Panel\Desktop) can also silently
 ; disable a hook that didn't respond fast enough during shell init.
 ;
@@ -384,36 +384,6 @@ JumpToWindow(idx) {
 ~F13 & e::JumpToWindow(8)
 ~F13 & r::JumpToWindow(9)
 
-; --- wezterm IME workaround ---------------------------------------
-; Windows wezterm's use_ime is always on and cannot be disabled, so
-; the Korean IME swallows Ctrl+<letter> combos while in 한글 mode
-; (e.g. Ctrl+ㅣ/ㅗ for pane nav). Force IME off on any Ctrl press
-; inside wezterm. One-way (한글 → 영문): Ctrl-modified combos are
-; control commands, not text, so losing 한글 composition is fine.
-; The user's 한/영 key stays authoritative for normal typing.
-
-; SendMessage is wrapped in try/catch because a higher-integrity foreground
-; window (UAC prompt, elevated app the local process can't reach) makes UIPI
-; block the WM_IME_CONTROL send and AHK throws OSError(5) "access denied".
-; An uncaught throw from a timer-driven callback surfaces as a modal error
-; dialog — which GlazeWM then tiles over the focused tile and steals the
-; first wezterm redraw slot, so the newly launched wezterm never resizes
-; to its cell. Returning -1 lets callers skip this tick silently.
-; 50ms timeout on every WM_IME_CONTROL send (AHK default is 5000ms): a
-; foreground app with a busy message pump (Webex/CEF during meetings) makes
-; SendMessage block, and while this script's thread is stuck its
-; WH_KEYBOARD_LL callback can't run — Windows then stalls EVERY keystroke
-; system-wide for up to LowLevelHooksTimeout (10s here). Symptom: all
-; hotkeys feel seconds-slow whenever Webex holds focus. Timeout throws
-; TimeoutError, which the existing catch treats as "unknown, skip tick".
-IME_GetOpen(hWnd) {
-    ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
-    try
-        return SendMessage(0x283, 0x5, 0, , ime, , , , 50)  ; WM_IME_CONTROL, IMC_GETOPENSTATUS
-    catch
-        return -1
-}
-
 ; --- IME state monitor for Zebar --------------------------------------
 ; Writes "KO" or "EN" to %TEMP%\ime-state.txt whenever the foreground
 ; window's IME open-status changes. Zebar polls the file to render the
@@ -426,7 +396,18 @@ IME_GetConversionMode(hWnd) {
     ; WM_IME_CONTROL + IMC_GETCONVERSIONMODE (0x001); reports IME_CMODE_NATIVE
     ; (0x0001) bit for Hangul vs Alphanumeric — reliable across Windows 11 TSF
     ; and legacy IMM IMEs, unlike IMC_GETOPENSTATUS which some TSF IMEs leave
-    ; pinned to 1. Same UIPI guard as IME_GetOpen above.
+    ; pinned to 1.
+    ; try/catch guard: a higher-integrity foreground window (UAC prompt,
+    ; elevated app this process can't reach) makes UIPI block the
+    ; WM_IME_CONTROL send and AHK throws OSError(5) "access denied"; an
+    ; uncaught throw from a timer-driven callback surfaces as a modal error
+    ; dialog. Returning -1 lets callers skip the tick silently.
+    ; 50ms timeout (AHK default is 5000ms): a foreground app with a busy
+    ; message pump (Webex/CEF during meetings) makes SendMessage block, and
+    ; while this script's thread is stuck its WH_KEYBOARD_LL callback can't
+    ; run — Windows then stalls EVERY keystroke system-wide for up to
+    ; LowLevelHooksTimeout (10s here). Symptom: all hotkeys feel seconds-slow
+    ; whenever Webex holds focus. TimeoutError lands in the same catch.
     try
         return SendMessage(0x283, 0x1, 0, , ime, , , , 50)
     catch
@@ -465,20 +446,3 @@ MonitorImeState() {
     }
 }
 SetTimer(MonitorImeState, 250)
-
-IME_SetOpen(hWnd, state) {
-    ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
-    try SendMessage(0x283, 0x6, state, , ime, , , , 50)     ; WM_IME_CONTROL, IMC_SETOPENSTATUS
-}
-
-#HotIf WinActive("ahk_exe wezterm-gui.exe")
-~LCtrl::
-~RCtrl::
-{
-    hWnd := WinGetID("A")
-    ; IME_GetOpen returns -1 when UIPI blocks the probe; treat that as
-    ; "unknown, don't touch" rather than truthy-so-toggle.
-    if IME_GetOpen(hWnd) = 1
-        IME_SetOpen(hWnd, 0)
-}
-#HotIf

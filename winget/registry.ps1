@@ -23,7 +23,7 @@ Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
 # LowLevelHooksTimeout — raise from the Windows default (300ms) to 10s so
 # Windows doesn't silently remove AHK's WH_KEYBOARD_LL hook if the callback
 # doesn't respond during a busy cold boot. Without this, hook-based hotkeys
-# (Hyper via VK19, wezterm Ctrl IME workaround, CycleOnMonitor) can be dead
+# (Hyper via VK19, CycleOnMonitor) can be dead
 # from first login with no visible error. winkey.ahk's InstallKeybdHook
 # reinstall at 5s catches the acute race; this prevents future disables.
 Set-ItemProperty -Path 'HKCU:\Control Panel\Desktop' `

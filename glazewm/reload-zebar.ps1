@@ -14,7 +14,7 @@
 # INTEGRITY GOTCHA: glazewm runs at Medium integrity (Startup-folder launch
 # via Explorer), its shell-exec spawns powershell at Medium, and this script
 # can therefore only kill a Medium-integrity zebar. If zebar was ever started
-# from a High-integrity shell (e.g. wezterm-inside-WSL whose integrity was
+# from a High-integrity shell (e.g. a WSL terminal whose integrity was
 # inherited through the GlazeWM-managed launch chain), Stop-Process fails
 # with "Access denied", Start-Process below spawns a Medium replacement that
 # hits the single-instance mutex and exits immediately, and the High stale

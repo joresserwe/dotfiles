@@ -1,0 +1,5 @@
+#!/bin/sh
+# wsl.exe -e does not honor quoted arguments — passing
+# zsh -lic "tmux new -A -s main" from a Windows Terminal profile word-splits
+# and runs a bare `tmux`, landing in a new unnamed session.
+exec /usr/bin/zsh -lic 'tmux new -A -s main'

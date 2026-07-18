@@ -73,10 +73,7 @@ brew "ripgrep"
 brew "gping"
 # TCP connect to the given IP/port combo
 brew "tcping"
-# brew scrubs non-HOMEBREW_* env vars before evaluating this file, so the
-# terminal selection is read from install.linux.sh's cache file instead
-dotfiles_terminal = File.read(File.expand_path("~/.local/state/dotfiles/terminal")).strip rescue "wezterm"
-if OS.linux? && dotfiles_terminal == "wsl_tty"
+if OS.linux?
   # Terminal multiplexer
   brew "tmux"
   # Plugin manager for tmux
