@@ -34,9 +34,14 @@ tags
 # Superpowers
 docs/superpowers/
 
+# Claude Code project-local settings (machine-local permission grants)
+.claude/settings.local.json
+
 # tacky-borders rotating-state config (seeded from themes/violet-pink.yaml at
 # install, written by rotate.ps1 / tacky-theme). See install.linux.sh.
 tacky-borders/config.yaml
+# rotate.ps1 write-then-move intermediate; survives if the move is interrupted.
+tacky-borders/config.yaml.tmp
 # tacky-borders writes its runtime log into TACKY_BORDERS_CONFIG_HOME.
 tacky-borders/tacky-borders.log
 
