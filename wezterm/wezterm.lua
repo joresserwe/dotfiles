@@ -125,7 +125,12 @@ config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
 local window_opacity = is_windows and 0.75 or 0.85
 config.window_background_opacity = window_opacity
 if is_windows then
-	config.win32_system_backdrop = "Acrylic"
+	-- In RDP sessions (SESSIONNAME=RDP-Tcp#N) the Acrylic backdrop renders
+	-- as a solid surface that masks the window alpha entirely — the window
+	-- turns fully opaque. Plain DWM alpha compositing still works there.
+	if not (os.getenv("SESSIONNAME") or ""):find("^RDP%-") then
+		config.win32_system_backdrop = "Acrylic"
+	end
 else
 	config.macos_window_background_blur = 10
 end
@@ -1013,6 +1018,11 @@ end)
 -- OS-specific
 ---------------------------------------------------------------------------
 if is_windows then
+	-- Without EGL wezterm falls back to WGL, and in an RDP session WGL
+	-- exposes only OpenGL 1.1 — glium aborts window creation ("The OpenGL
+	-- implementation is too old"), hence EGL (ANGLE/D3D11) is forced here.
+	config.prefer_egl = true
+
 	-- Launch WSL (Ubuntu) + zsh as a login shell by default
 	config.default_domain = "WSL:Ubuntu"
 
