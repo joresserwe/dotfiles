@@ -81,8 +81,12 @@ export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 # nvim
 export PATH="/opt/nvim/bin:$PATH"
 
-# pipx
-export PATH="$PATH:$HOME/.local/bin"
+# pipx / native tool installs (claude, win32yank, xdg-open shim, ...)
+# PREPEND, don't append: on WSL the inherited PATH already contains the
+# Windows interop dirs (/mnt/c/...), and appending lets a Windows-side
+# claude/node shadow the WSL-native ones — slow 9P round-trips for every
+# file op. ~/.local/bin must win inside WSL.
+export PATH="$HOME/.local/bin:$PATH"
 
 # claude code
 export CLAUDE_CONFIG_DIR="$XDG_DATA_HOME/claude"
