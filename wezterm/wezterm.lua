@@ -1,8 +1,29 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
-local workspace_switcher = wezterm.plugin.require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
-local resurrect = wezterm.plugin.require("https://github.com/YedPool/resurrect.wezterm")
+-- plugin.require raises during config eval when a plugin repo fails libgit2's
+-- ownership check (e.g. repo cloned by an elevated instance); an unhandled
+-- raise aborts the entire config and the GUI exits before any window opens.
+local failed_plugins = {}
+local function safe_plugin_require(url)
+	local ok, plugin = pcall(wezterm.plugin.require, url)
+	if ok then
+		return plugin
+	end
+	wezterm.log_error("plugin load failed: " .. url .. ": " .. tostring(plugin))
+	table.insert(failed_plugins, url)
+	return nil
+end
+local workspace_switcher = safe_plugin_require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
+local resurrect = safe_plugin_require("https://github.com/YedPool/resurrect.wezterm")
+
+local plugin_warning_shown = false
+wezterm.on("window-config-reloaded", function(window)
+	if #failed_plugins > 0 and not plugin_warning_shown then
+		plugin_warning_shown = true
+		window:toast_notification("wezterm", "Plugin load failed:\n" .. table.concat(failed_plugins, "\n"), nil, 8000)
+	end
+end)
 
 local is_windows = wezterm.target_triple:find("windows") ~= nil
 local is_darwin = wezterm.target_triple:find("darwin") ~= nil
@@ -21,7 +42,7 @@ local clip_cmd = is_windows and "win32yank.exe -i --crlf" or "pbcopy"
 -- this file never trigger WezTerm's auto-reload on Windows. The workaround
 -- lives in wezterm/wezterm-watch.sh, which runs inside WSL and touches the
 -- Windows-side stub whenever this file changes.
-if brew_bin ~= "" then
+if workspace_switcher and brew_bin ~= "" then
 	workspace_switcher.zoxide_path = brew_bin .. "zoxide"
 end
 
@@ -387,7 +408,12 @@ config.keys = {
 	{ key = "phys:r", mods = "LEADER", action = act.ReloadConfiguration },
 
 	-- Workspace (zoxide 연동 fuzzy 검색)
-	{ key = "phys:p", mods = "LEADER", action = workspace_switcher.switch_workspace() },
+	{
+		key = "phys:p",
+		mods = "LEADER",
+		action = workspace_switcher and workspace_switcher.switch_workspace()
+			or act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" }),
+	},
 	{ key = "]", mods = "LEADER", action = act.SwitchWorkspaceRelative(1) },
 	{ key = "[", mods = "LEADER", action = act.SwitchWorkspaceRelative(-1) },
 
@@ -886,6 +912,9 @@ config.key_tables = {
 		{
 			key = "s",
 			action = wezterm.action_callback(function()
+				if not resurrect then
+					return
+				end
 				resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
 				wezterm.log_info("Workspace state saved")
 			end),
@@ -992,27 +1021,29 @@ config.key_tables = {
 -- Session persistence (resurrect.wezterm)
 ---------------------------------------------------------------------------
 -- 15분마다 워크스페이스 자동 저장
-resurrect.state_manager.periodic_save({
-	interval_seconds = 900,
-	save_workspaces = true,
-	save_windows = true,
-	save_tabs = true,
-})
-
--- 워크스페이스 전환 시 자동 저장/복원 (smart_workspace_switcher 연동)
-wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function()
-	resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
-end)
-
-wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(window, path, label)
-	local state = resurrect.state_manager.load_state(label, "workspace")
-	resurrect.workspace_state.restore_workspace(state, {
-		window = window,
-		relative = true,
-		restore_text = true,
-		on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+if resurrect then
+	resurrect.state_manager.periodic_save({
+		interval_seconds = 900,
+		save_workspaces = true,
+		save_windows = true,
+		save_tabs = true,
 	})
-end)
+
+	-- 워크스페이스 전환 시 자동 저장/복원 (smart_workspace_switcher 연동)
+	wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function()
+		resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
+	end)
+
+	wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(window, path, label)
+		local state = resurrect.state_manager.load_state(label, "workspace")
+		resurrect.workspace_state.restore_workspace(state, {
+			window = window,
+			relative = true,
+			restore_text = true,
+			on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+		})
+	end)
+end
 
 ---------------------------------------------------------------------------
 -- OS-specific
