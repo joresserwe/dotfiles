@@ -2,7 +2,7 @@ local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
 local workspace_switcher = wezterm.plugin.require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
-local resurrect = wezterm.plugin.require("https://github.com/MLFlexer/resurrect.wezterm")
+local resurrect = wezterm.plugin.require("https://github.com/YedPool/resurrect.wezterm")
 
 local is_windows = wezterm.target_triple:find("windows") ~= nil
 local is_darwin = wezterm.target_triple:find("darwin") ~= nil
