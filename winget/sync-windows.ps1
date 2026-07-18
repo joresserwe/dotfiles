@@ -1,7 +1,8 @@
 # Refreshes the Windows-local dotfiles mirror from the WSL clone.
 #
 # Windows-side consumers (glazewm template + helper scripts, zebar pack,
-# tacky-borders themes/launch.vbs/rotate.ps1, winkey.ahk, wezterm.lua) all
+# tacky-borders themes/launch.vbs/rotate.ps1, winkey.ahk, wezterm.lua,
+# wsltty config) all
 # read from the LOCAL mirror at %DOTFILES_WIN% (default %USERPROFILE%\.dotfiles).
 # The WSL clone stays the single source of truth; this script is the only
 # runtime consumer of the \\wsl.localhost UNC (%DOTFILES_UNC%), and it only
@@ -24,7 +25,7 @@ if (-not $src -or -not (Test-Path -LiteralPath $src)) {
   exit 0  # WSL down or var unset — keep serving the existing mirror
 }
 
-foreach ($d in 'glazewm', 'zebar', 'winget', 'wezterm', 'claude', 'surfingkeys') {
+foreach ($d in 'glazewm', 'zebar', 'winget', 'wezterm', 'wsltty', 'claude', 'surfingkeys') {
   robocopy "$src\$d" "$dst\$d" /MIR /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 }
 robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
@@ -33,6 +34,11 @@ robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:
 $tackyCfg = Join-Path $dst 'tacky-borders\config.yaml'
 if (-not (Test-Path $tackyCfg)) {
   Copy-Item (Join-Path $dst 'tacky-borders\themes\violet-pink.yaml') $tackyCfg -ErrorAction SilentlyContinue
+}
+
+if (Test-Path (Join-Path $env:LOCALAPPDATA 'wsltty')) {
+  New-Item -ItemType Directory -Force (Join-Path $env:APPDATA 'wsltty') | Out-Null
+  Copy-Item (Join-Path $dst 'wsltty\config') (Join-Path $env:APPDATA 'wsltty\config') -Force -ErrorAction SilentlyContinue
 }
 
 # ShareX settings flow the OPPOSITE direction to everything above: the live

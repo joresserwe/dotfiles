@@ -83,14 +83,16 @@ eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 # Touches the Windows-side stub when wezterm.lua changes, since \\wsl.localhost
 # does not propagate inotify events to Windows. Idempotent — second invocation
 # exits via flock inside the script.
-if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [[ -x "$DOTFILES_PATH/wezterm/wezterm-watch.sh" ]]; then
+if [[ "${DOTFILES_TERMINAL:-wezterm}" != "wsltty" ]] && [[ -n "${WSL_DISTRO_NAME:-}" ]] \
+  && [[ -x "$DOTFILES_PATH/wezterm/wezterm-watch.sh" ]]; then
   (nohup "$DOTFILES_PATH/wezterm/wezterm-watch.sh" >/dev/null 2>&1 &) 2>/dev/null
 fi
 
 # wezterm shell integration (OSC 7/133/1337: cwd tracking, prompt zones, user vars)
 # WSL: TERM_PROGRAM does not propagate from the Windows-side wezterm, so key off
 # WSL_DISTRO_NAME instead.
-if [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
+if [[ "${DOTFILES_TERMINAL:-wezterm}" != "wsltty" ]] \
+  && [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
   && [[ -n "${WSL_DISTRO_NAME:-}" || "${TERM_PROGRAM:-}" == "WezTerm" ]]; then
   . "$DOTFILES_PATH/wezterm/wezterm.sh"
 

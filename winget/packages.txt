@@ -12,6 +12,8 @@ glzr-io.glazewm
 # leaks terminal query responses as keystrokes into TUI apps like yazi)
 wez.wezterm.nightly
 
+Mintty.WSLtty
+
 # Launcher / productivity tool — distributed via Microsoft Store only
 # (the winget-pkgs entry Raycast.Raycast is unmaintained as of 2025-11).
 9PFXXSHC64H3 msstore
