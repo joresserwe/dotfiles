@@ -29,7 +29,10 @@ general:
     - 'shell-exec --hide-window C:\Program Files\ShareX\ShareX.exe -silent'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
-  config_reload_commands: []
+  # A reload re-tiles every window but emits no WM event, so the mis-size
+  # daemon never observes it.
+  config_reload_commands:
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1" -Once'
   focus_follows_cursor: false
   toggle_workspace_on_refocus: true
   cursor_jump:

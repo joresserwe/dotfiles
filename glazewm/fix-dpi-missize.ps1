@@ -6,12 +6,19 @@
 # bounds throughout (verified live), so model-vs-frame mismatch is the
 # detector and a single wm-redraw is the repair — both directions heal.
 #
-# Daemon: subscribes to move/manage/monitor events and polls every 100ms
-# for 1.5s after each (wezterm's DPI resize can land up to ~1s late, so a
-# clean early check doesn't prove the window will stay put). Checks are
-# no-ops when frames match, so bursts never re-tile a healthy layout.
-# Launched from glazewm's startup_commands; exits when glazewm does (the
-# sub pipe closes).
+# Daemon (default): polls for 30s after launch (at logon, windows managed
+# during glazewm's own startup emit no events a later subscriber can see,
+# and wezterm's DPI resize lands seconds late under cold-start load), then
+# polls for 4s after each move-class event (the errant resize can trail
+# the event by seconds). Checks are no-ops when frames match, so bursts
+# never re-tile a healthy layout. Launched from glazewm's
+# startup_commands; exits when glazewm does (the sub pipe closes).
+#
+# -Once (wired to config_reload_commands): a config reload re-tiles every
+# window yet emits no WM event at all — verified live on 3.10.1, `sub -e
+# all` stays silent across wm-reload-config even when the file content
+# changed — so the daemon cannot see reloads.
+param([switch]$Once)
 
 $ErrorActionPreference = 'SilentlyContinue'
 $gw = 'C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe'
@@ -51,14 +58,23 @@ function Test-Missize {
   return $false
 }
 
-function Repair-Burst {
-  $sw = [Diagnostics.Stopwatch]::StartNew()
-  while ($sw.ElapsedMilliseconds -lt 1500) {
-    Start-Sleep -Milliseconds 100
-    if (Test-Missize) {
-      & $gw command wm-redraw | Out-Null
-    }
+function Repair-Once {
+  if (Test-Missize) {
+    & $gw command wm-redraw | Out-Null
   }
+}
+
+function Repair-Burst($durationMs, $intervalMs) {
+  $sw = [Diagnostics.Stopwatch]::StartNew()
+  while ($sw.ElapsedMilliseconds -lt $durationMs) {
+    Start-Sleep -Milliseconds $intervalMs
+    Repair-Once
+  }
+}
+
+if ($Once) {
+  Repair-Burst 8000 250
+  exit 0
 }
 
 # Single instance per session.
@@ -66,6 +82,12 @@ $created = $false
 $mutex = New-Object System.Threading.Mutex($true, 'Local\glazewm-fix-dpi-missize', [ref]$created)
 if (-not $created) { exit 0 }
 
-Repair-Burst
-& $gw sub --events focused_container_moved window_managed monitor_updated workspace_activated 2>$null |
-  ForEach-Object { Repair-Burst }
+Repair-Burst 30000 500
+& $gw sub --events focused_container_moved window_managed monitor_updated workspace_activated focus_changed 2>$null |
+  ForEach-Object {
+    if ($_ -match '"eventType":"focus_changed"') {
+      Repair-Once
+    } else {
+      Repair-Burst 4000 200
+    }
+  }
