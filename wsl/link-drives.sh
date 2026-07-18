@@ -47,6 +47,13 @@ for letter in $letters; do
       echo "link-drives: skip ${letter^^}: (drvfs mount failed — drive empty or unreachable?)" >&2
       continue
     fi
+    # Manual drvfs mounts vanish on WSL restart, hence the fstab line.
+    if ! grep -q "^${letter^^}: " /etc/fstab 2>/dev/null; then
+      printf '%s: %s drvfs defaults,noatime,uid=%s,gid=%s,nofail 0 0\n' \
+        "${letter^^}" "$mnt" "$(id -u)" "$(id -g)" \
+        | sudo -n tee -a /etc/fstab >/dev/null 2>&1 \
+        || echo "link-drives: could not persist ${letter^^}: in /etc/fstab" >&2
+    fi
   fi
   ln -sfn "$mnt" "$DRIVES_DIR/${letter^^}"
   linked+=("${letter^^}")
