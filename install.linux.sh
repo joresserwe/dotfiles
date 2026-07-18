@@ -262,12 +262,27 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     echo "  distro from it, and re-run install.linux.sh." >&2
     exit 1
   fi
+  # Raycast burns ~1 CPU core constantly on GPU-less RDP hosts (observed
+  # 2026-07-18 on the VM, beta 0.69, not config-fixable)
+  WIN_HAS_GPU=1
+  win_gpus="$(/mnt/c/Windows/System32/wbem/wmic.exe path Win32_VideoController get Name 2>/dev/null | tr -d '\0\r' || true)"
+  if [[ -n "$win_gpus" ]] \
+     && ! grep -qivE '^[[:space:]]*$|^Name|Microsoft|Citrix|Remote|Indirect|Virtual|RDP|Basic' <<<"$win_gpus"; then
+    WIN_HAS_GPU=0
+  fi
+  log_done "GPU detection: WIN_HAS_GPU=$WIN_HAS_GPU"
+
   log_step "winget: install packages from winget/packages.txt"
   while IFS= read -r line; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
     # Parse "<id> [source]". Source defaults to winget.
     read -r pkg src <<<"$line"
     src="${src:-winget}"
+    if [[ "$pkg" == "9PFXXSHC64H3" && "$WIN_HAS_GPU" == "0" ]] \
+       || [[ "$pkg" == "Flow-Launcher.Flow-Launcher" && "$WIN_HAS_GPU" == "1" ]]; then
+      log_skip "winget: $pkg (WIN_HAS_GPU=$WIN_HAS_GPU)"
+      continue
+    fi
     # Match installed packages by scanning full list: `winget list --id <id>`
     # doesn't reliably match msstore-style IDs (e.g. 9PFXXSHC64H3).
     # </dev/null on every winget.exe call: interop lets it drain our stdin,
