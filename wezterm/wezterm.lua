@@ -192,6 +192,14 @@ config.keys = {
 	{ key = "DownArrow", mods = "CTRL|SHIFT|ALT", action = act.DisableDefaultAssignment },
 	{ key = "L", mods = "CTRL|SHIFT", action = act.DisableDefaultAssignment },
 
+	-- F13 is the glazewm modifier (physical Win key via kernel scancode map;
+	-- Hyper = Ctrl+Alt+F13); a bare tap reaching the terminal echoes escape
+	-- sequence residue (~, ;7~) into the shell.
+	{ key = "F13", mods = "NONE", action = act.Nop },
+	{ key = "F13", mods = "SHIFT", action = act.Nop },
+	{ key = "F13", mods = "CTRL|ALT", action = act.Nop },
+	{ key = "F13", mods = "CTRL|ALT|SHIFT", action = act.Nop },
+
 	-- Debug overlay
 	{ key = "phys:d", mods = "LEADER", action = act.ShowDebugOverlay },
 
