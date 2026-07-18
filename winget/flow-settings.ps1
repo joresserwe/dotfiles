@@ -35,7 +35,7 @@ if (Test-Path -LiteralPath $snapPath) {
 # %f / %d are Flow-side placeholders, substituted with the Windows path when
 # Flow invokes the file manager.
 $runHidden = Join-Path $mirror 'winget\run-hidden.vbs'
-$yaziShim  = Join-Path $mirror 'winget\flow-yazi.ps1'
+$yaziShim  = Join-Path $mirror 'winget\open-yazi.ps1'
 $yazi = [PSCustomObject]@{
     Name              = 'yazi'
     Path              = Join-Path $env:WINDIR 'System32\wscript.exe'
