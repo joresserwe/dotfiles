@@ -22,7 +22,11 @@ general:
     # glazewm's model after a cross-DPI move (glazewm#661). Subscribes to
     # move/manage/monitor events and dies with glazewm. See fix-dpi-missize.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\fix-dpi-missize.ps1"'
-    - 'shell-exec --hide-window "C:\Program Files\ShareX\ShareX.exe" -silent'
+    # The space-containing path must be bare, not quoted: glazewm's shell-exec
+    # quote parser looks for a 3rd `"` (match_indices.nth(2)), so a quoted
+    # 2-quote path errors with "command doesn't have an ending `"`". A bare path
+    # is resolved by probing the filesystem for the executable, space and all.
+    - 'shell-exec --hide-window C:\Program Files\ShareX\ShareX.exe -silent'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
