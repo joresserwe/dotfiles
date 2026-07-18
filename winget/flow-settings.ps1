@@ -17,6 +17,8 @@ if ($proc) {
 
 $s = Get-Content $settingsPath -Raw | ConvertFrom-Json
 
+$mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
+
 $snapPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
     $snapRaw = Get-Content -LiteralPath $snapPath -Raw
@@ -24,25 +26,24 @@ if (Test-Path -LiteralPath $snapPath) {
     foreach ($p in $snap.PSObject.Properties) {
         $s | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
     }
-    $mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
     $appliedDir = Join-Path $mirror 'flow.applied'
     New-Item -ItemType Directory -Force $appliedDir | Out-Null
     [IO.File]::WriteAllText((Join-Path $appliedDir 'Settings.snapshot.json'), $snapRaw,
         (New-Object System.Text.UTF8Encoding($false)))
 }
 
-$configdir = Join-Path $env:APPDATA 'wsltty'
 # %f / %d are Flow-side placeholders, substituted with the Windows path when
 # Flow invokes the file manager.
-$argFmt = '--WSL="Ubuntu" --configdir="{0}" /bin/zsh -lc "yazi \"$(wslpath ''{1}'')\""'
+$runHidden = Join-Path $mirror 'winget\run-hidden.vbs'
+$yaziShim  = Join-Path $mirror 'winget\flow-yazi.ps1'
 $yazi = [PSCustomObject]@{
-    Name              = 'yazi (wsltty)'
-    Path              = Join-Path $env:LOCALAPPDATA 'wsltty\bin\mintty.exe'
-    FileArgument      = $argFmt -f $configdir, '%f'
-    DirectoryArgument = $argFmt -f $configdir, '%d'
+    Name              = 'yazi'
+    Path              = Join-Path $env:WINDIR 'System32\wscript.exe'
+    FileArgument      = ('"{0}" "{1}" "%f"' -f $runHidden, $yaziShim)
+    DirectoryArgument = ('"{0}" "{1}" "%d"' -f $runHidden, $yaziShim)
     Editable          = $true
 }
-$list = @($s.CustomExplorerList | Where-Object { $_.Name -ne $yazi.Name }) + $yazi
+$list = @($s.CustomExplorerList | Where-Object { $_.Name -ne $yazi.Name -and $_.Name -ne 'yazi (wsltty)' }) + $yazi
 $s | Add-Member -NotePropertyName 'CustomExplorerList' -NotePropertyValue $list -Force
 $s | Add-Member -NotePropertyName 'CustomExplorerIndex' -NotePropertyValue ($list.Count - 1) -Force
 

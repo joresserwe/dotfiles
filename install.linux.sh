@@ -332,6 +332,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
 
     ensure_dir "$HOME/.local/bin"
     create_link "$DOTFILES_PATH/wt/tmux-main" "$HOME/.local/bin/tmux-main"
+    create_link "$DOTFILES_PATH/wt/yazi-target" "$HOME/.local/bin/yazi-target"
     wt_settings="$win_userprofile_wsl/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
     if [[ -f "$wt_settings" ]]; then
       python3 "$DOTFILES_PATH/wt/apply-settings.py" "$wt_settings" "$DOTFILES_PATH/wt/tmux-profile.json"
