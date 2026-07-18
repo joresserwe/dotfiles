@@ -173,6 +173,11 @@ config.automatically_reload_config = true
 config.status_update_interval = 200
 config.enable_kitty_graphics = true
 
+config.front_end = "WebGpu"
+config.webgpu_power_preference = "HighPerformance"
+config.max_fps = 120
+config.animation_fps = 120
+
 local tab_bar_bg
 if config.tab_bar_at_bottom then
 	tab_bar_bg = "rgba(0, 0, 0, 0)"
