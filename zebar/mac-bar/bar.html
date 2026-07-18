@@ -161,6 +161,22 @@
         i => `https://cdn.jsdelivr.net/gh/Kyome22/menubar_runcat@master/resources/cat/png/${i}.png`
       );
 
+      // No hardware GPU (e.g. RDP/Citrix VM) → WebView2 rasterizes on CPU via
+      // WARP ("Basic Render Driver") or SwiftShader; per-frame animation then
+      // burns a core. gl.RENDERER is masked ("WebKit WebGL") — the real string
+      // is only exposed through WEBGL_debug_renderer_info.
+      const SOFT_RENDER = (() => {
+        try {
+          const gl = document.createElement('canvas').getContext('webgl');
+          if (!gl) return true;
+          const ext = gl.getExtension('WEBGL_debug_renderer_info');
+          if (!ext) return true;
+          const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
+          return /swiftshader|software|llvmpipe|basic render driver|warp/i.test(renderer);
+        } catch { return true; }
+      })();
+      if (SOFT_RENDER) document.documentElement.classList.add('soft-render');
+
       const SPARK_SAMPLES = 30;
       const SPARK_W = 44;
       const SPARK_H = 14;
@@ -214,7 +230,7 @@
       }
 
       function RunCat({ cpuUsage }) {
-        const [frame, setFrame] = useState(0);
+        const [tick, setTick] = useState(0);
         useEffect(() => {
           // Preload all frames once
           CAT_FRAME_URLS.forEach(u => { const img = new Image(); img.src = u; });
@@ -222,11 +238,18 @@
         useEffect(() => {
           // 0% → 220ms/frame (idle trot), 100% → 20ms/frame (sprint)
           const pct = Math.min(100, Math.max(0, cpuUsage ?? 0));
-          const interval = Math.max(20, 220 - pct * 2);
-          const id = setInterval(() => setFrame(f => (f + 1) % 5), interval);
+          const base = 220 - pct * 2;
+          const interval = SOFT_RENDER ? Math.max(60, base * 1.5) : Math.max(20, base);
+          const id = setInterval(() => setTick(t => t + 1), interval);
           return () => clearInterval(id);
         }, [cpuUsage]);
-        return <img className="runcat" src={CAT_FRAME_URLS[frame]} alt="" />;
+        // Soft render: the img is re-rasterized on every frame swap anyway, so
+        // stepping the hue there adds ~nothing — unlike the CSS animation,
+        // which re-runs the filter at full compositor rate between swaps.
+        const style = SOFT_RENDER
+          ? { filter: `invert(1) sepia(1) saturate(5) hue-rotate(${(tick * 40) % 360}deg)` }
+          : undefined;
+        return <img className={'runcat' + (SOFT_RENDER ? '' : ' rainbow')} style={style} src={CAT_FRAME_URLS[tick % 5]} alt="" />;
       }
 
       function App() {
