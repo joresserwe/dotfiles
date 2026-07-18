@@ -105,3 +105,15 @@ if (-not (Test-Path $sharex)) {
 }
 Set-ItemProperty -Path $sharex `
   -Name 'PersonalPath' -Value "$env:LOCALAPPDATA\ShareX" -Type String -Force
+
+# ShareX 21's region capture dies with Win32Exception 87 in RDP sessions
+# created at a DPI other than the persisted system DPI, hence the forced
+# process-wide DPI context.
+if ($env:COMPUTERNAME -like 'LCSKVM*') {
+  $layers = 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers'
+  if (-not (Test-Path $layers)) {
+    New-Item -Path $layers -Force | Out-Null
+  }
+  Set-ItemProperty -Path $layers `
+    -Name 'C:\Program Files\ShareX\ShareX.exe' -Value '~ HIGHDPIAWARE' -Type String -Force
+}
