@@ -2,7 +2,13 @@
 # install.linux.sh — WSL2/Ubuntu installer for the dotfiles repo.
 # Counterpart to install.sh (macOS). Idempotent. Designed to be re-runnable.
 
-set -euo pipefail
+# -E (errtrace): without it the ERR trap below stays silent for failures
+# inside functions.
+set -Eeuo pipefail
+
+# Under set -e a mid-run death is easy to misread as success when the log is
+# piped or backgrounded — print the failing line loudly instead.
+trap 'echo "ERROR: install.linux.sh failed at line $LINENO: $BASH_COMMAND" >&2' ERR
 
 # ----- XDG defaults --------------------------------------------------------
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
@@ -94,14 +100,14 @@ if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh" ]; then
   ZSH="$XDG_CONFIG_HOME/zsh/oh-my-zsh" RUNZSH=no KEEP_ZSHRC=yes CHSH=no \
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 else
-  log_skip "oh-my-zsh already installed"
+  update_repo "$XDG_CONFIG_HOME/zsh/oh-my-zsh"
 fi
 
 P10K_DIR="$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/themes/powerlevel10k"
 if [ ! -d "$P10K_DIR" ]; then
   git clone --depth=1 https://github.com/joresserwe/powerlevel10k.git "$P10K_DIR"
 else
-  log_skip "powerlevel10k already cloned"
+  update_repo "$P10K_DIR"
 fi
 create_link "$DOTFILES_PATH/zsh/.p10k.zsh" "$XDG_CONFIG_HOME/zsh/.p10k.zsh"
 
@@ -109,7 +115,7 @@ ZSH_AUTOSUG_DIR="$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/plugins/zsh-autosuggestio
 if [ ! -d "$ZSH_AUTOSUG_DIR" ]; then
   git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$ZSH_AUTOSUG_DIR"
 else
-  log_skip "zsh-autosuggestions already cloned"
+  update_repo "$ZSH_AUTOSUG_DIR"
 fi
 
 log_done "Phase 1 complete"
@@ -179,7 +185,10 @@ fi
 if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   WIN32YANK_BIN="$HOME/.local/bin/win32yank.exe"
   WIN32YANK_VERSION="v0.1.1"
-  if [ ! -x "$WIN32YANK_BIN" ]; then
+  # The binary has no --version; a stamp file makes a pin bump reinstall on
+  # the next re-run instead of being skipped forever.
+  WIN32YANK_STAMP="$HOME/.local/bin/.win32yank.version"
+  if [ ! -x "$WIN32YANK_BIN" ] || [ "$(cat "$WIN32YANK_STAMP" 2>/dev/null)" != "$WIN32YANK_VERSION" ]; then
     log_step "Installing win32yank ${WIN32YANK_VERSION}"
     ensure_dir "$HOME/.local/bin"
     tmp_zip="$(mktemp --suffix=.zip)"
@@ -188,9 +197,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
     unzip -p "$tmp_zip" win32yank.exe > "$WIN32YANK_BIN"
     chmod +x "$WIN32YANK_BIN"
     rm -f "$tmp_zip"
+    printf '%s' "$WIN32YANK_VERSION" > "$WIN32YANK_STAMP"
     log_done "win32yank installed: $WIN32YANK_BIN"
   else
-    log_skip "win32yank already installed"
+    log_skip "win32yank already installed (${WIN32YANK_VERSION})"
   fi
 else
   log_skip "win32yank: not running under WSL"
@@ -326,7 +336,8 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     dotfiles_win="${win_userprofile_raw}\\.dotfiles"
     mkdir -p "$dotfiles_win_wsl"
     # rsync without perms/owner flags — drvfs rejects chmod/chown metadata.
-    for d in glazewm zebar winget wezterm claude; do
+    # Keep this list in lockstep with winget/sync-windows.ps1.
+    for d in glazewm zebar winget wezterm claude surfingkeys; do
       rsync -rlt --delete "$DOTFILES_PATH/$d/" "$dotfiles_win_wsl/$d/"
     done
     # tacky-borders/config.yaml is mirror-owned runtime state (rotate.ps1 and
@@ -420,21 +431,37 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   # notify crate dep); reload-zebar.ps1 restarts it. The legacy local copy
   # under $USERPROFILE\.glzr\zebar\ is cleaned up here.
   if [[ -n "${win_userprofile_wsl:-}" ]]; then
-    rm -rf "$win_userprofile_wsl/.glzr/zebar"
+    rm -rf "$win_userprofile_wsl/.glzr/zebar" \
+      || log_skip "legacy .glzr/zebar removal failed (locked?) — non-fatal"
     log_done "Zebar: legacy local pack dir removed (config read from $dotfiles_win\\zebar via --config-dir)"
   fi
 
   # ShareX's personal folder is %LOCALAPPDATA%\ShareX (HKCU PersonalPath
-  # override in winget/registry.ps1). The settings files are runtime state
-  # ShareX rewrites on every exit — seeded once here; afterwards
-  # winget/sync-windows.ps1 pulls the live files back into sharex/ on every
-  # Hyper+C, so the repo snapshot tracks them without manual steps.
+  # override in winget/registry.ps1). The repo snapshot is applied on EVERY
+  # run — seed-once meant a `git pull` with sharex/ changes never reached an
+  # already-set-up machine. ShareX rewrites its JSONs on exit, so it must not
+  # be running during the copy; restart it afterwards if it was. A pristine
+  # copy of what was applied lands in the mirror (sharex.applied) so
+  # winget/sync-windows.ps1 can reverse-capture only real GUI edits.
   sharex_personal_wsl="$win_userprofile_wsl/AppData/Local/ShareX"
-  if [[ -n "${win_userprofile_wsl:-}" && ! -f "$sharex_personal_wsl/ApplicationConfig.json" ]]; then
-    mkdir -p "$sharex_personal_wsl"
-    cp "$DOTFILES_PATH"/sharex/*.json "$sharex_personal_wsl/" 2>/dev/null \
-      && log_done "ShareX: settings seeded from sharex/" \
-      || log_skip "ShareX: no snapshot in sharex/ to seed"
+  if [[ -n "${win_userprofile_wsl:-}" ]] && ls "$DOTFILES_PATH"/sharex/*.json >/dev/null 2>&1; then
+    sharex_was_running="$(powershell.exe -NoProfile -Command \
+      "[bool](Get-Process ShareX -ErrorAction SilentlyContinue)" 2>/dev/null | tr -d '\r')"
+    if [[ "$sharex_was_running" == "True" ]]; then
+      powershell.exe -NoProfile -Command \
+        "Stop-Process -Name ShareX -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500" \
+        >/dev/null 2>&1 || true
+    fi
+    mkdir -p "$sharex_personal_wsl" "$dotfiles_win_wsl/sharex.applied"
+    cp "$DOTFILES_PATH"/sharex/*.json "$sharex_personal_wsl/"
+    cp "$DOTFILES_PATH"/sharex/*.json "$dotfiles_win_wsl/sharex.applied/"
+    log_done "ShareX: settings applied from sharex/ (pristine copy -> mirror sharex.applied)"
+    if [[ "$sharex_was_running" == "True" ]]; then
+      powershell.exe -NoProfile -Command \
+        "Start-Process 'C:\Program Files\ShareX\ShareX.exe' -ArgumentList '-silent'" \
+        >/dev/null 2>&1 || true
+      log_done "ShareX: restarted (-silent)"
+    fi
   fi
 
   # winkey.ahk — launched at login ONLY via Scheduled Task (RunLevel=Highest),
@@ -489,24 +516,30 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     powershell.exe -NoProfile -Command \
       "Unregister-ScheduledTask -TaskName winkey-ahk -Confirm:\$false -ErrorAction SilentlyContinue | Out-Null" \
       >/dev/null 2>&1 || true
-    rm -rf "$win_userprofile_wsl/.ahk"
-    rm -rf "$win_userprofile_wsl/.config/winkey"
-    rm -f "$startup_dir/winkey.ahk"
-    rm -f "$startup_dir/winkey.lnk"
 
-    # Live apply: kill any AHK (leftover Medium-integrity instance from the
-    # prior .lnk path) so the AtLogon task's Highest launch is the sole owner
-    # on the next login. Also kickstart one High-integrity instance right now
-    # so the current session isn't left without hotkeys between install and
-    # the next logon.
+    # Kill AHK BEFORE the legacy dir cleanup: on pre-mirror machines the
+    # running instance has ~/.config/winkey as its CWD, which makes the
+    # rm -rf below fail with Permission denied and kill the whole run under
+    # set -e (observed 2026-07-18). The `|| true` guards cover any other
+    # Windows-side lock — legacy leftovers must never abort an install.
     powershell.exe -NoProfile -Command "
       & taskkill.exe /F /IM AutoHotkey64.exe /T 2>&1 | Out-Null
       \$deadline = (Get-Date).AddSeconds(3)
       while ((Get-Date) -lt \$deadline -and (Get-Process AutoHotkey64 -EA SilentlyContinue)) {
         Start-Sleep -Milliseconds 100
       }
-      Start-Process -WindowStyle Hidden -FilePath '$ahk_exe_win' -ArgumentList '\"$winkey_local_win\"'
-    " >/dev/null 2>&1
+    " >/dev/null 2>&1 || true
+    rm -rf "$win_userprofile_wsl/.ahk" || log_skip "legacy ~/.ahk removal failed (locked?) — non-fatal"
+    rm -rf "$win_userprofile_wsl/.config/winkey" || log_skip "legacy .config/winkey removal failed (locked?) — non-fatal"
+    rm -f "$startup_dir/winkey.ahk"
+    rm -f "$startup_dir/winkey.lnk"
+
+    # Live apply: spawn one High-integrity instance right now so the current
+    # session isn't left without hotkeys between install and the next logon
+    # (the AtLogon task's Highest launch is the sole owner from then on).
+    powershell.exe -NoProfile -Command \
+      "Start-Process -WindowStyle Hidden -FilePath '$ahk_exe_win' -ArgumentList '\"$winkey_local_win\"'" \
+      >/dev/null 2>&1
 
     log_done "winkey.ahk: local copy @ $winkey_local_win (restarted; Startup .lnk removed — task launches now)"
 
@@ -589,6 +622,23 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     " >/dev/null 2>&1
     log_done "Scheduled Task 'winkey-glazewm-autostart' registered (AtLogon, Highest → $glazewm_autostart_win)"
 
+    # Restart a running glazewm through the task: a pre-existing instance
+    # carries the env it was born with, so the setx'd vars above
+    # (DOTFILES_WIN, GLAZEWM_TEMPLATE_PATH) are invisible to it — its
+    # %DOTFILES_WIN% shell-exec rules then die in cmd ("The syntax of the
+    # command is incorrect" console flashes) and the zebar startup_command
+    # never comes up (observed 2026-07-18). Task Scheduler rebuilds the env
+    # from the registry at launch, and zebar follows as a child.
+    if powershell.exe -NoProfile -Command \
+        "[bool](Get-Process glazewm -ErrorAction SilentlyContinue)" 2>/dev/null | tr -d '\r' | grep -qi '^true$'; then
+      powershell.exe -NoProfile -Command "
+        Stop-Process -Name glazewm -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+        Start-ScheduledTask -TaskName 'winkey-glazewm-autostart'
+      " >/dev/null 2>&1 || true
+      log_done "glazewm restarted via task (fresh env: DOTFILES_WIN et al.)"
+    fi
+
     # GlazeWM binds TCP 6123 for IPC; Hyper-V/WSL's per-boot dynamic port
     # exclusion range can claim it first, and glazewm then aborts at logon
     # (0xc0000409 — observed on the 2026-07-15 cold boot). Add a persistent
@@ -626,17 +676,25 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   if [[ -n "${win_userprofile_wsl:-}" ]]; then
     tacky_install_dir="$win_userprofile_wsl/tacky-borders"
     tacky_exe="$tacky_install_dir/tacky-borders.exe"
-    if [ ! -x "$tacky_exe" ]; then
+    # Stamp file: a TACKY_VERSION bump must reinstall on the next re-run —
+    # exe presence alone skipped upgrades forever.
+    tacky_stamp="$tacky_install_dir/.tacky-borders.version"
+    if [ ! -x "$tacky_exe" ] || [ "$(cat "$tacky_stamp" 2>/dev/null)" != "$TACKY_VERSION" ]; then
       log_step "Installing tacky-borders ${TACKY_VERSION}"
+      # A running instance locks the exe and the unzip would fail; the
+      # scheduled task registered below brings it back up.
+      powershell.exe -NoProfile -Command \
+        "Stop-Process -Name tacky-borders -Force -ErrorAction SilentlyContinue" >/dev/null 2>&1 || true
       mkdir -p "$tacky_install_dir"
       tmp_zip="$(mktemp --suffix=.zip)"
       curl -fsSL -o "$tmp_zip" \
         "https://github.com/lukeyou05/tacky-borders/releases/download/${TACKY_VERSION}/tacky-borders-${TACKY_VERSION}.zip"
       unzip -o "$tmp_zip" -d "$tacky_install_dir" >/dev/null
       rm -f "$tmp_zip"
+      printf '%s' "$TACKY_VERSION" > "$tacky_stamp"
       log_done "tacky-borders installed: $tacky_exe"
     else
-      log_skip "tacky-borders already installed"
+      log_skip "tacky-borders already installed (${TACKY_VERSION})"
     fi
 
     # Live config.yaml is mirror-owned runtime state — bootstrapped by the
@@ -796,10 +854,11 @@ NVIM_REPO_OLD="https://github.com/joresserwe/astronvim_config"
 if [ -d "$NVIM_DIR/.git" ]; then
   REMOTE="$(git -C "$NVIM_DIR" config --get remote.origin.url 2>/dev/null || echo)"
   if [ "$REMOTE" = "$NVIM_REPO" ] || [ "$REMOTE" = "${NVIM_REPO}.git" ]; then
-    log_skip "nvim config already cloned"
+    update_repo "$NVIM_DIR"
   elif [ "$REMOTE" = "$NVIM_REPO_OLD" ] || [ "$REMOTE" = "${NVIM_REPO_OLD}.git" ]; then
     git -C "$NVIM_DIR" remote set-url origin "$NVIM_REPO"
     log_done "nvim remote updated to renamed repo"
+    update_repo "$NVIM_DIR"
   else
     log_step "Backing up existing nvim dir to nvim_backup_$(date +%s)"
     mv "$NVIM_DIR" "${NVIM_DIR}_backup_$(date +%s)"
@@ -824,7 +883,10 @@ log_step "Phase 5: Claude Code"
 # convention as win32yank; .zshenv already puts ~/.local/bin on PATH) and
 # self-updates from then on. `command -v` alone isn't enough here: this
 # script runs under bash without .zshenv, so probe the install path too.
-if command -v claude >/dev/null 2>&1 || [ -x "$HOME/.local/bin/claude" ]; then
+# A Windows-side claude resolved through interop (/mnt/c/...) must NOT
+# satisfy the probe — WSL needs its own native binary.
+claude_on_path="$(command -v claude 2>/dev/null || true)"
+if [ -x "$HOME/.local/bin/claude" ] || { [ -n "$claude_on_path" ] && [[ "$claude_on_path" != /mnt/* ]]; }; then
   log_skip "claude CLI already installed"
 else
   log_step "Installing Claude Code CLI (native installer)"
@@ -836,6 +898,15 @@ ensure_dir "$XDG_DATA_HOME/claude"
 
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
+
+# Legacy (pre-2026-07): ~/.claude was a symlink to $XDG_DATA_HOME/claude.
+# Through that link the create_link below would land on the XDG settings.json
+# and clobber it with settings.home.json. CLAUDE_CONFIG_DIR (.zshenv) made
+# the link obsolete — drop it so ~/.claude becomes a real directory.
+if [ -L "$HOME/.claude" ]; then
+  rm "$HOME/.claude"
+  log_done "removed legacy ~/.claude symlink"
+fi
 create_link "$DOTFILES_PATH/claude/settings.home.json" "$HOME/.claude/settings.json"
 
 if [ -L "$XDG_DATA_HOME/claude/skills" ] || [ ! -e "$XDG_DATA_HOME/claude/skills" ]; then
