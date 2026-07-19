@@ -201,6 +201,9 @@ create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml
 create_link "$DOTFILES_PATH/yazi/init.lua"    "$XDG_CONFIG_HOME/yazi/init.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/svg-code.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/svg-code.yazi/main.lua"
 
+ensure_dir "$HOME/.local/bin"
+create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
+
 # xdg-open shim (WSL-only): wslu/wslview is gone from Ubuntu 26.04 archives,
 # so yazi's `open` opener routes through cmd.exe to the Windows default app.
 if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then

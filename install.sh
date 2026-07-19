@@ -242,6 +242,8 @@ create_link "$DOTFILES_PATH/mise/config.toml" "$XDG_CONFIG_HOME/mise/config.toml
 # wezterm
 create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
 create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart-split"
+ensure_dir "$HOME/.local/bin"
+create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 
 # -----------------------------------------------------------------------------------------------
 

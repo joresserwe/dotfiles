@@ -142,8 +142,8 @@ fz() {
 }
 
 
-# fh: fuzzy history (atuin). Opens a side pane with stats (tmux split inside
-# tmux, else wezterm split on macOS).
+# fh: fuzzy history (atuin). Opens a stats side pane in the detected terminal
+# backend (tmux/wezterm); plain search when neither is present.
 fh() {
   local stats_cmd='ATUIN_SESSION= atuin stats; printf "\e[?25l"; cat > /dev/null'
 
@@ -156,21 +156,18 @@ fh() {
     return
   fi
 
-  local wez
-  case "$OSTYPE" in
-    darwin*)  command -v wezterm >/dev/null 2>&1 && wez=wezterm ;;
-  esac
-
-  if [ -n "$wez" ] && [ "$TERM_PROGRAM" = "WezTerm" ]; then
+  if [ "$TERM_PROGRAM" = "WezTerm" ] && command -v wezterm >/dev/null 2>&1; then
     local stats_pane current_pane
-    current_pane=${WEZTERM_PANE:-$($wez cli list --format json 2>/dev/null | jq -r '.[] | select(.is_active) | .pane_id')}
-    stats_pane=$($wez cli split-pane --right --percent 30 -- bash -c "PATH='$PATH' $stats_cmd")
-    $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
-    $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
+    current_pane=${WEZTERM_PANE:-$(wezterm cli list --format json 2>/dev/null | jq -r '.[] | select(.is_active) | .pane_id')}
+    stats_pane=$(wezterm cli split-pane --right --percent 30 -- bash -c "PATH='$PATH' $stats_cmd")
+    wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
+    wezterm cli activate-pane --pane-id "$current_pane" 2>/dev/null
     atuin search -i "$@"
-    $wez cli kill-pane --pane-id "$stats_pane" 2>/dev/null
+    wezterm cli kill-pane --pane-id "$stats_pane" 2>/dev/null
     return
   fi
+
+  # kitty: add a backend branch here before the plain fallback
 
   atuin search -i "$@"
 }

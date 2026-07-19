@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# term-spawn [dir] — open a new terminal window/tab at dir (default: $PWD)
+# in whatever terminal environment is active. Exits 1 silently when none
+# is detected.
+set -euo pipefail
+
+dir="${1:-$PWD}"
+
+if [ -n "${TMUX:-}" ]; then
+  exec tmux new-window -c "$dir"
+elif [ "${TERM_PROGRAM:-}" = "WezTerm" ]; then
+  exec wezterm cli spawn --cwd "$dir"
+fi
+# kitty: add a branch here (e.g. gate on KITTY_WINDOW_ID, then
+# `kitten @ launch --type=os-window --cwd "$dir"`)
+
+exit 1
