@@ -142,8 +142,20 @@ fz() {
 }
 
 
-# fh: fuzzy history (atuin). In wezterm, opens a side pane with stats.
+# fh: fuzzy history (atuin). Opens a side pane with stats (tmux split inside
+# tmux, else wezterm split on macOS).
 fh() {
+  local stats_cmd='ATUIN_SESSION= atuin stats; printf "\e[?25l"; cat > /dev/null'
+
+  if [ -n "$TMUX" ]; then
+    local stats_pane
+    stats_pane=$(tmux split-window -h -d -l 30% -P -F '#{pane_id}' \
+      bash -c "PATH='$PATH' $stats_cmd")
+    atuin search -i "$@"
+    tmux kill-pane -t "$stats_pane" 2>/dev/null
+    return
+  fi
+
   local wez
   case "$OSTYPE" in
     darwin*)  command -v wezterm >/dev/null 2>&1 && wez=wezterm ;;
@@ -152,7 +164,6 @@ fh() {
   if [ -n "$wez" ] && [ "$TERM_PROGRAM" = "WezTerm" ]; then
     local stats_pane current_pane
     current_pane=${WEZTERM_PANE:-$($wez cli list --format json 2>/dev/null | jq -r '.[] | select(.is_active) | .pane_id')}
-    local stats_cmd='ATUIN_SESSION= atuin stats; printf "\e[?25l"; cat > /dev/null'
     stats_pane=$($wez cli split-pane --right --percent 30 -- bash -c "PATH='$PATH' $stats_cmd")
     $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
     $wez cli activate-pane --pane-id "$current_pane" 2>/dev/null
