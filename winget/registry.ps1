@@ -20,6 +20,9 @@ Set-ItemProperty -Path $policiesSystem `
 Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
   -Name 'DisabledHotkeys' -Value 'DUH' -Type String -Force
 
+Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
+  -Name 'HideIcons' -Value 1 -Type DWord -Force
+
 # LowLevelHooksTimeout — raise from the Windows default (300ms) to 10s so
 # Windows doesn't silently remove AHK's WH_KEYBOARD_LL hook if the callback
 # doesn't respond during a busy cold boot. Without this, hook-based hotkeys
