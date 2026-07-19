@@ -12,8 +12,17 @@
         "scrollbarState": "hidden",
         "suppressApplicationTitle": true,
         "tabTitle": "Terminal",
-        "opacity": 92,
+        "opacity": 70,
         "icon": null
+    },
+    "defaults": {
+        "opacity": 70,
+        "background": "#000000",
+        "useAcrylic": true,
+        "font": {
+            "face": "0xProto Nerd Font, Sarasa Mono K, codicon",
+            "size": 12.5
+        }
     },
     "actions": [
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "f13" },
@@ -23,7 +32,7 @@
     ],
     "scheme": {
         "name": "Catppuccin Mocha",
-        "background": "#1E1E2E",
+        "background": "#000000",
         "foreground": "#CDD6F4",
         "cursorColor": "#F5E0DC",
         "selectionBackground": "#585B70",

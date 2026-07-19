@@ -17,6 +17,9 @@ profile = frag["profile"]
 profiles[:] = [p for p in profiles if p.get("guid") != profile["guid"]]
 profiles.append(profile)
 
+if "defaults" in frag:
+    settings["profiles"].setdefault("defaults", {}).update(frag["defaults"])
+
 schemes = settings.setdefault("schemes", [])
 scheme = frag["scheme"]
 schemes[:] = [s for s in schemes if s.get("name") != scheme["name"]]
