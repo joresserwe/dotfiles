@@ -228,6 +228,7 @@ create_link "$DOTFILES_PATH/tmux/tmux.conf" "$XDG_CONFIG_HOME/tmux/tmux.conf"
 create_link "$DOTFILES_PATH/tmux/tmux.mapping.conf" "$XDG_CONFIG_HOME/tmux/tmux.mapping.conf"
 create_link "$DOTFILES_PATH/tmux/gitmux.conf" "$XDG_CONFIG_HOME/tmux/gitmux.conf"
 create_link "$DOTFILES_PATH/tmux/smart-split.sh" "$XDG_CONFIG_HOME/tmux/smart-split.sh"
+create_link "$DOTFILES_PATH/tmux/pane-dim.sh" "$XDG_CONFIG_HOME/tmux/pane-dim.sh"
 # [DEPRECATED] yabai/skhd → aerospace로 대체됨
 # create_link "$DOTFILES_PATH/yabai/skhdrc" "$XDG_CONFIG_HOME/skhd/skhdrc"
 # create_link "$DOTFILES_PATH/yabai/yabairc" "$XDG_CONFIG_HOME/yabai/yabairc"
