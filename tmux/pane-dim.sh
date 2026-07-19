@@ -4,8 +4,8 @@ set -euo pipefail
 DIM_PERCENT=50 # brightness kept by dimmed colours
 
 ANSI_BASE=(
-  000000 cc5555 55cc55 cdcd55 5555cc cc55cc 7acaca cccccc
-  555555 ff5555 55ff55 ffff55 5555ff ff55ff 55ffff ffffff
+  45475a f38ba8 a6e3a1 f9e2af 89b4fa f5c2e7 94e2d5 bac2de
+  585b70 f38ba8 a6e3a1 f9e2af 89b4fa f5c2e7 94e2d5 a6adc8
 )
 
 CUBE_STEPS=(0 95 135 175 215 255)
