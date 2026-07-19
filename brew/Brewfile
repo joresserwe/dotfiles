@@ -1,5 +1,5 @@
 # ====== Cross-platform CLI ======
-# 쉘 히스토리를 SQLite에 저장하고 동기화하는 도구
+# Improved shell history, stored in SQLite and syncable across machines
 brew "atuin"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"

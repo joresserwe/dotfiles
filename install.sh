@@ -3,7 +3,6 @@
 # Counterpart to install.linux.sh (WSL/Ubuntu). Idempotent — safe to re-run;
 # a re-run pulls the repo and re-applies whatever changed.
 
-# XDG 변수 기본값 설정 (스크립트 실행 시 XDG 변수가 설정되지 않은 경우를 대비)
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -14,7 +13,7 @@ DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "Homebrew 설치..."
+echo "Installing Homebrew..."
 # Apple Silicon: /opt/homebrew, Intel: /usr/local
 if [[ "$(uname -m)" == "arm64" ]]; then
 	brew_path=/opt/homebrew/bin
@@ -36,14 +35,12 @@ brew analytics off
 echo "dotfiles clone / update..."
 command -v git >/dev/null 2>&1 || brew install git
 if [ -d "$DOTFILES_PATH/.git" ]; then
-	# ff-only pull — 로컬 커밋/dirty 트리가 있으면 건드리지 않고 넘어간다.
-	# 예전의 rm -rf 후 재clone 방식은 커밋 안 된 로컬 작업을 파괴했다.
 	before_head="$(git -C "$DOTFILES_PATH" rev-parse HEAD 2>/dev/null)"
 	git -C "$DOTFILES_PATH" pull --ff-only || echo "dotfiles pull skipped (offline/dirty/diverged)"
 	after_head="$(git -C "$DOTFILES_PATH" rev-parse HEAD 2>/dev/null)"
-	# HEAD가 움직였으면 갱신된 스크립트로 한 번만 재실행 — zsh는 스크립트를
-	# 증분으로 읽기 때문에 pull이 파일을 바꾼 채 계속 실행하면 중간부터
-	# 어긋난 내용이 실행될 수 있다.
+	# Re-exec once when HEAD moved: zsh reads scripts incrementally, so if the
+	# pull rewrote this file mid-run, execution would continue from mismatched
+	# byte offsets in the new content.
 	if [ "$before_head" != "$after_head" ] && [ -z "${DOTFILES_REEXEC:-}" ]; then
 		echo "dotfiles updated — re-executing installer..."
 		DOTFILES_REEXEC=1 exec zsh "$DOTFILES_PATH/install.sh"
@@ -57,7 +54,7 @@ source "$DOTFILES_PATH/lib/common.sh"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "필요 경로 생성..."
+echo "Creating required directories..."
 ensure_dir \
 	"$XDG_CACHE_HOME" \
 	"$XDG_CONFIG_HOME" \
@@ -72,11 +69,11 @@ ensure_dir \
 	"$XDG_RUNTIME_DIR" \
 	"$XDG_STATE_HOME/atuin/logs" \
 	"$XDG_STATE_HOME/zsh"
-chmod 700 "$XDG_RUNTIME_DIR" # XDG에 따르면, runtime의 경로는 700 권한을 줘야한다.
+chmod 700 "$XDG_RUNTIME_DIR" # XDG basedir spec requires mode 700 on the runtime dir
 
 # -----------------------------------------------------------------------------------------------
 
-echo "XDG 환경변수 설정..."
+echo "Applying XDG environment variables..."
 source "$DOTFILES_PATH/zsh/.zshenv"
 
 # -----------------------------------------------------------------------------------------------
@@ -86,7 +83,7 @@ brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "node / java 설치 (via mise)..."
+echo "Installing node / java (via mise)..."
 eval "$(mise activate zsh)"
 mise use -g node@lts
 mise use -g java@temurin-21
@@ -111,13 +108,13 @@ done
 
 # -----------------------------------------------------------------------------------------------
 
-echo "karabiner 설정..."
+echo "Configuring karabiner..."
 # copied (not symlinked) — the app overwrites symlinks on save.
 cp "$DOTFILES_PATH/karabiner/karabiner.json" "$XDG_CONFIG_HOME/karabiner/karabiner.json"
 
 # -----------------------------------------------------------------------------------------------
 
-echo "oh-my-zsh / powerlevel10k 설치..."
+echo "Installing oh-my-zsh / powerlevel10k..."
 if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh" ]; then
 	# CHSH=no: macOS default shell is already zsh, and without it the installer
 	# can block on an interactive [Y/n] prompt in non-interactive runs.
@@ -126,8 +123,6 @@ if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh" ]; then
 else
 	update_repo "$XDG_CONFIG_HOME/zsh/oh-my-zsh"
 fi
-# symlink (was cp): `p10k configure`가 파일을 다시 쓰면 변경이 repo의 git diff로
-# 바로 드러난다 — install.linux.sh와 동일.
 create_link "$DOTFILES_PATH/zsh/.p10k.zsh" "$XDG_CONFIG_HOME/zsh/.p10k.zsh"
 
 P10K_DIR="$XDG_CONFIG_HOME/zsh/oh-my-zsh/custom/themes/powerlevel10k"
@@ -170,15 +165,7 @@ fi
 
 # -----------------------------------------------------------------------------------------------
 
-echo "aerospace 설정..."
-# [DEPRECATED] yabai/skhd → aerospace로 대체됨 (SIP/sudoers 불필요)
-# echo "yabai 설정..."
-# echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 $(which yabai) | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
-# sudo nvram boot-args=-arm64e_preview_abi
-
-# -----------------------------------------------------------------------------------------------
-
-echo "defaults 설정 변경..."
+echo "Applying macOS defaults..."
 defaults write -g ApplePressAndHoldEnabled -bool false
 defaults write -g InitialKeyRepeat -int 15
 defaults write -g KeyRepeat -int 2
@@ -209,7 +196,7 @@ defaults write com.pilotmoon.scroll-reverser InvertScrollingOn -int 1
 
 # -----------------------------------------------------------------------------------------------
 
-echo "설정파일 Symbolic Lync 연결..."
+echo "Linking config files..."
 
 # zsh
 create_link "$DOTFILES_PATH/zsh/.zshenv" ~/.zshenv
@@ -265,7 +252,7 @@ create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart
 
 # -----------------------------------------------------------------------------------------------
 
-echo "Claude Code 설정..."
+echo "Configuring Claude Code..."
 ensure_dir "$XDG_DATA_HOME/claude"
 create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
 git -C "$DOTFILES_PATH" config filter.strip-claude-model.clean 'jq --indent 2 "del(.model)"'
@@ -290,11 +277,11 @@ fi
 
 # -----------------------------------------------------------------------------------------------
 
-echo "zshrc 적용..."
+echo "Sourcing zshrc..."
 source "$XDG_CONFIG_HOME/zsh/.zshrc"
 # -----------------------------------------------------------------------------------------------
 
-echo "기본 브라우저 설정..."
+echo "Setting default browser..."
 open -a "Google Chrome" --args --make-default-browser
 
 open -a Karabiner-Elements

@@ -156,7 +156,7 @@ alt-shift-j = 'move down'
 alt-shift-k = 'move up'
 alt-shift-l = 'move right'
 
-# Focus first window (alt-f) — macOS가 Finder로 포커스를 뺏어간 경우 대비, open -a로 강제 activate
+# Focus first window (alt-f) — force-activate via open -a in case macOS has stolen focus to Finder
 alt-f = 'exec-and-forget open -a "$(aerospace list-windows --workspace focused --format "%{app-name}" | head -1)"'
 
 # Focus recent workspace (alt-z)
@@ -175,7 +175,6 @@ alt-m = 'fullscreen'
 # mirrors Windows f13+shift+m). UNTESTED on a real mac yet.
 alt-shift-m = 'exec-and-forget ~/.config/.dotfiles/aerospace/minimize.sh'
 
-# Toggle split (shift+alt+s) — join-with 사용 (normalization과 호환)
 alt-shift-s = 'layout tiles horizontal vertical'
 
 # Focus monitor (alt-[ / alt-])
@@ -222,7 +221,7 @@ ctrl-alt-cmd-5 = 'summon-workspace 5'
 ctrl-alt-cmd-6 = 'summon-workspace 6'
 ctrl-alt-cmd-7 = 'summon-workspace 7'
 ctrl-alt-cmd-8 = 'summon-workspace 8'
-# summon-workspace는 이름 지정만 가능 (prev/next 미지원)
+# summon-workspace only accepts a workspace name (prev/next unsupported)
 
 # Enter modes
 ctrl-alt-cmd-r = ['mode resize', 'exec-and-forget borders "active_color=gradient(top_left=0xffFF1493,bottom_right=0xffFF6B6B)"']

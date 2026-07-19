@@ -32,7 +32,7 @@ esac
 [ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
 
 # use vim as the editor
-# VIMINIT은 nvim의 기본 init 로딩을 막으므로, vim 전용 MYVIMRC만 설정
+# VIMINIT would suppress nvim's default init loading, so only vim's MYVIMRC is set
 export MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc"
 export EDITOR=nvim
 

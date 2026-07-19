@@ -5,7 +5,7 @@
 # no synthetic LWin is ever re-injected, so Windows never sees a Win
 # modifier and native Win+<x> behaviors (Start menu, Win+P/N, Win+L) are
 # structurally impossible. The physical key position still matches
-# alt/option on Mac keyboards. Hyper (한자 via winkey.ahk) = ctrl+alt+f13.
+# alt/option on Mac keyboards. Hyper (Hanja key via winkey.ahk) = ctrl+alt+f13.
 # Reference: aerospace/aerospace.toml
 
 general:

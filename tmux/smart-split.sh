@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# tmux smart split: 넓으면 세로 분할, 좁으면 가로 분할 (셀 종횡비 2.2x 보정)
 # Usage: smart-split.sh [--pane-id %N] [-- command args...]
 #   tmux.conf:  bind Enter run-shell "~/.config/tmux/smart-split.sh"
 #   nvim:       vim.fn.system("~/.config/tmux/smart-split.sh -- nvim file.lua")
@@ -21,6 +20,7 @@ TARGET="${PANE_ID:+-t $PANE_ID}"
 WIDTH=$(tmux display -p ${TARGET:+$TARGET} '#{pane_width}')
 HEIGHT=$(tmux display -p ${TARGET:+$TARGET} '#{pane_height}')
 
+# 22/10: a terminal cell renders ~2.2x taller than wide
 if [ "$WIDTH" -gt "$(( HEIGHT * 22 / 10 ))" ]; then
   DIR="-h"
 else
