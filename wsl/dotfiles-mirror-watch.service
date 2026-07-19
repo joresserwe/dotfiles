@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync the Windows dotfiles mirror on repo changes
+
+[Service]
+Type=simple
+ExecStart=%h/.config/.dotfiles/wsl/mirror-watch.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

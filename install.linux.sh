@@ -375,30 +375,23 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     dotfiles_win_wsl="$win_userprofile_wsl/.dotfiles"
     dotfiles_win="${win_userprofile_raw}\\.dotfiles"
     mkdir -p "$dotfiles_win_wsl"
-    # rsync without perms/owner flags — drvfs rejects chmod/chown metadata.
-    # Keep this list in lockstep with winget/sync-windows.ps1.
-    for d in glazewm winget claude surfingkeys; do
-      rsync -rlt --delete "$DOTFILES_PATH/$d/" "$dotfiles_win_wsl/$d/"
-    done
-    # sync-windows.ps1 must keep the same profile.js exclusion — it runs on
-    # Windows and cannot read $XDG_STATE_HOME to regenerate the file.
-    rsync -rlt --delete --exclude 'mac-bar/profile.js' \
-      "$DOTFILES_PATH/zebar/" "$dotfiles_win_wsl/zebar/"
-    printf 'window.DOTFILES_PROFILE = "%s";\n' "$DOTFILES_PROFILE" \
-      > "$dotfiles_win_wsl/zebar/mac-bar/profile.js"
-    log_done "zebar: mirror profile.js -> $DOTFILES_PROFILE"
-    # tacky-borders/config.yaml is mirror-owned runtime state (rotate.ps1 and
-    # the zsh tacky-theme helper write it) — exclude it so the sync can
-    # neither overwrite nor delete it.
-    rsync -rlt --delete --exclude 'config.yaml' \
-      "$DOTFILES_PATH/tacky-borders/" "$dotfiles_win_wsl/tacky-borders/"
-    if [[ ! -f "$dotfiles_win_wsl/tacky-borders/config.yaml" ]]; then
-      cp "$DOTFILES_PATH/tacky-borders/themes/violet-pink.yaml" \
-         "$dotfiles_win_wsl/tacky-borders/config.yaml"
-      log_done "tacky-borders: mirror config.yaml bootstrapped (violet-pink)"
-    fi
+    printf '%s' "$dotfiles_win_wsl" > "$XDG_STATE_HOME/dotfiles/mirror-path"
+    bash "$DOTFILES_PATH/wsl/sync-mirror.sh" \
+      || log_skip "mirror sync reported errors (locked files?) — non-fatal"
     cmd.exe /c setx DOTFILES_WIN "$dotfiles_win" >/dev/null 2>&1
     log_done "DOTFILES_WIN -> $dotfiles_win (mirror refreshed)"
+
+    if [ -d /run/systemd/system ]; then
+      ensure_dir "$XDG_CONFIG_HOME/systemd/user"
+      create_link "$DOTFILES_PATH/wsl/dotfiles-mirror-watch.service" \
+        "$XDG_CONFIG_HOME/systemd/user/dotfiles-mirror-watch.service"
+      systemctl --user daemon-reload || true
+      systemctl --user enable dotfiles-mirror-watch.service >/dev/null 2>&1 || true
+      systemctl --user restart dotfiles-mirror-watch.service || true
+      log_done "mirror watcher: dotfiles-mirror-watch.service enabled"
+    else
+      log_skip "mirror watcher: systemd not running (set systemd=true in /etc/wsl.conf)"
+    fi
 
     ensure_dir "$HOME/.local/bin"
     create_link "$DOTFILES_PATH/wt/tmux-main" "$HOME/.local/bin/tmux-main"
