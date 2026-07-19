@@ -303,6 +303,9 @@ keybindings:
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\toggle-tile-float.ps1"']
     bindings: ['f13+space']
 
+  - commands: ['shell-exec --hide-window C:\Windows\System32\wscript.exe "%DOTFILES_WIN%\winget\open-terminal.vbs"']
+    bindings: ['f13+t']
+
   # ---- Close window (alt+q) — owned by winkey.ahk, NOT bound here ----
   # glazewm's close acts on its INTERNAL focus, so with an ignored window
   # focused (PiP, games) it silently closed the last MANAGED window in the
