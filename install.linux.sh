@@ -265,7 +265,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   # Raycast burns ~1 CPU core constantly on GPU-less RDP hosts (observed
   # 2026-07-18 on the VM, beta 0.69, not config-fixable)
   WIN_HAS_GPU=1
-  win_gpus="$(/mnt/c/Windows/System32/wbem/wmic.exe path Win32_VideoController get Name 2>/dev/null | tr -d '\0\r' || true)"
+  win_gpus="$(powershell.exe -NoProfile -Command 'Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name' 2>/dev/null | tr -d '\0\r' || true)"
   if [[ -n "$win_gpus" ]] \
      && ! grep -qivE '^[[:space:]]*$|^Name|Microsoft|Citrix|Remote|Indirect|Virtual|RDP|Basic' <<<"$win_gpus"; then
     WIN_HAS_GPU=0
