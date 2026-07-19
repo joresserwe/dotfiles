@@ -25,23 +25,16 @@ wezterm.on("window-config-reloaded", function(window)
 	end
 end)
 
-local is_windows = wezterm.target_triple:find("windows") ~= nil
 local is_darwin = wezterm.target_triple:find("darwin") ~= nil
 
--- Homebrew prefix differs per OS. On Windows (WSL stub case) WezTerm runs
--- natively on Windows and cannot exec WSL-side binaries directly, so leave
--- brew_bin empty and skip brew-path-dependent features below.
-local brew_bin = is_darwin and "/opt/homebrew/bin/" or (not is_windows and "/home/linuxbrew/.linuxbrew/bin/" or "")
--- Homebrew path for commands running inside WSL panes (pane:split args)
-local wsl_brew_bin = is_windows and "/home/linuxbrew/.linuxbrew/bin/" or brew_bin
-local clip_cmd = is_windows and "win32yank.exe -i --crlf" or "pbcopy"
+local brew_bin = is_darwin and "/opt/homebrew/bin/" or "/home/linuxbrew/.linuxbrew/bin/"
 
-if workspace_switcher and brew_bin ~= "" then
+if workspace_switcher then
 	workspace_switcher.zoxide_path = brew_bin .. "zoxide"
 end
 
 ---------------------------------------------------------------------------
--- AI Tools (여기에 추가하면 C-a+A 메뉴에 자동 반영)
+-- AI tools
 ---------------------------------------------------------------------------
 local ai_tools = {
 	{ key = "c", label = "Claude Code", cmd = { "claude" } },
@@ -50,7 +43,6 @@ local ai_tools = {
 	-- { key = 'g', label = 'Gemini CLI',          cmd = { 'gemini' } },
 }
 
--- 자주 쓰는 프로젝트 경로 (C-a+A 메뉴에서 프로젝트 선택 후 AI 도구 실행)
 local projects = {
 	-- { label = 'my-project', path = '/Users/cyan/dev/my-project' },
 }
@@ -72,7 +64,6 @@ end
 ---------------------------------------------------------------------------
 -- config.color_scheme = 'Catppuccin Mocha'
 
--- 현재 테마에서 색상 자동 추출
 local scheme = config.color_scheme and wezterm.color.get_builtin_schemes()[config.color_scheme]
 	or wezterm.color.get_default_colors()
 local ansi = scheme.ansi or {}
@@ -129,7 +120,7 @@ config.warn_about_missing_glyphs = false
 -- half size on the 192-DPI monitor, and update-status font_size overrides
 -- were tried and removed — every fire on monitor crossing re-triggered
 -- window jitter under GlazeWM.
-config.font_size = is_windows and 12.5 or 14.0
+config.font_size = 14.0
 
 config.adjust_window_size_when_changing_font_size = false
 
@@ -137,18 +128,9 @@ config.custom_block_glyphs = true
 config.window_decorations = "RESIZE"
 config.window_padding = { left = 8, right = 8, top = 8, bottom = 8 }
 
-local window_opacity = is_windows and 0.75 or 0.85
+local window_opacity = 0.85
 config.window_background_opacity = window_opacity
-if is_windows then
-	-- In RDP sessions (SESSIONNAME=RDP-Tcp#N) the Acrylic backdrop renders
-	-- as a solid surface that masks the window alpha entirely — the window
-	-- turns fully opaque. Plain DWM alpha compositing still works there.
-	if not (os.getenv("SESSIONNAME") or ""):find("^RDP%-") then
-		config.win32_system_backdrop = "Acrylic"
-	end
-else
-	config.macos_window_background_blur = 10
-end
+config.macos_window_background_blur = 10
 
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = false
@@ -186,7 +168,7 @@ config.colors = {
 }
 
 ---------------------------------------------------------------------------
--- Leader key (C-a, tmux 호환)
+-- Leader key
 ---------------------------------------------------------------------------
 config.leader = { key = "phys:a", mods = "CTRL", timeout_milliseconds = 1000 }
 
@@ -194,7 +176,6 @@ config.leader = { key = "phys:a", mods = "CTRL", timeout_milliseconds = 1000 }
 -- Key bindings
 ---------------------------------------------------------------------------
 config.keys = {
-	-- C-a 두번 입력 시 화면 전체 선택 (Copy Mode → 스크롤백 맨 위 → 맨 아래까지 선택)
 	{
 		key = "phys:a",
 		mods = "LEADER|CTRL",
@@ -217,14 +198,6 @@ config.keys = {
 	{ key = "DownArrow", mods = "CTRL|SHIFT|ALT", action = act.DisableDefaultAssignment },
 	{ key = "L", mods = "CTRL|SHIFT", action = act.DisableDefaultAssignment },
 
-	-- F13 is the glazewm modifier (physical Win key via kernel scancode map;
-	-- Hyper = Ctrl+Alt+F13); a bare tap reaching the terminal echoes escape
-	-- sequence residue (~, ;7~) into the shell.
-	{ key = "F13", mods = "NONE", action = act.Nop },
-	{ key = "F13", mods = "SHIFT", action = act.Nop },
-	{ key = "F13", mods = "CTRL|ALT", action = act.Nop },
-	{ key = "F13", mods = "CTRL|ALT|SHIFT", action = act.Nop },
-
 	-- Debug overlay
 	{ key = "phys:d", mods = "LEADER", action = act.ShowDebugOverlay },
 
@@ -232,7 +205,6 @@ config.keys = {
 	{ key = "\\", mods = "LEADER", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 	{ key = "-", mods = "LEADER", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
 
-	-- Pane resize (C-a+Arrow → resize 모드 진입, 1초 무입력 시 자동 종료)
 	{
 		key = "UpArrow",
 		mods = "LEADER",
@@ -269,22 +241,7 @@ config.keys = {
 	-- Maximize pane (zoom)
 	{ key = "phys:m", mods = "LEADER", action = act.TogglePaneZoomState },
 
-	-- Tab. Shell-less panes (C-a+a AI splits, resurrect restores) never
-	-- report an OSC 7 cwd, so the mux keeps their Windows-side spawn cwd
-	-- (C:/Users/...) and a plain SpawnTab would land the new WSL tab in
-	-- %USERPROFILE%. Fall back to ~ unless the pane reports a unix path.
-	{
-		key = "phys:t",
-		mods = "LEADER",
-		action = wezterm.action_callback(function(win, pane)
-			local cwd_uri = pane:get_current_working_dir()
-			local dir = cwd_uri and cwd_uri.file_path or nil
-			if is_windows and (not dir or not dir:find("^/")) then
-				dir = "~"
-			end
-			win:perform_action(act.SpawnCommandInNewTab({ domain = "CurrentPaneDomain", cwd = dir }), pane)
-		end),
-	},
+	{ key = "phys:t", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
 	{ key = "phys:l", mods = "LEADER", action = act.ActivateTabRelative(1) },
 	{ key = "phys:h", mods = "LEADER", action = act.ActivateTabRelative(-1) },
 	-- Hangul IME delivers composed jamo instead of h/l, so bind those too
@@ -301,7 +258,6 @@ config.keys = {
 		end),
 	},
 
-	-- QuickSelect: URL → 브라우저, 그 외 → 클립보드 복사
 	{
 		key = "phys:q",
 		mods = "LEADER",
@@ -325,65 +281,39 @@ config.keys = {
 		}),
 	},
 
-	-- 검색 모드 (fzf로 스크롤백 검색, 한글 지원)
 	{
 		key = "/",
 		mods = "LEADER",
 		action = wezterm.action_callback(function(win, pane)
-			local pane_id = pane:pane_id()
-			if is_windows then
-				-- On Windows, Lua io runs on the Windows filesystem and mangles encoding.
-				-- Instead, the new pane fetches scrollback directly via wezterm.exe cli.
-				pane:split({
-					direction = "Bottom",
-					size = 0.4,
-					args = {
-						"/bin/zsh",
-						"-c",
-						"result=$(wezterm.exe cli get-text --pane-id "
-							.. tostring(pane_id)
-							.. " | "
-							.. wsl_brew_bin
-							.. 'fzf -m --tac --no-sort --exact --height=100% --layout=default --prompt="Search> "'
-							.. '); [ -n "$result" ] && printf "%s" "$result" | '
-							.. clip_cmd,
-					},
-				})
-			else
-				local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
-				local tmp = "/tmp/wezterm_search_" .. tostring(os.time())
-				local f = io.open(tmp, "w")
-				if not f then return end
-				f:write(text)
-				f:close()
-				pane:split({
-					direction = "Bottom",
-					size = 0.4,
-					args = {
-						"/bin/zsh",
-						"-c",
-						"result=$("
-							.. brew_bin
-							.. 'fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
-							.. tmp
-							.. '"); rm -f "'
-							.. tmp
-							.. '"; '
-							.. '[ -n "$result" ] && printf "%s" "$result" | '
-							.. clip_cmd,
-					},
-				})
-			end
+			local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
+			local tmp = "/tmp/wezterm_search_" .. tostring(os.time())
+			local f = io.open(tmp, "w")
+			if not f then return end
+			f:write(text)
+			f:close()
+			pane:split({
+				direction = "Bottom",
+				size = 0.4,
+				args = {
+					"/bin/zsh",
+					"-c",
+					"result=$("
+						.. brew_bin
+						.. 'fzf -m --tac --no-sort --exact --layout=default --prompt="Search> " < "'
+						.. tmp
+						.. '"); rm -f "'
+						.. tmp
+						.. '"; '
+						.. '[ -n "$result" ] && printf "%s" "$result" | pbcopy',
+				},
+			})
 		end),
 	},
 
-	-- 패인 위치 스왑
 	{ key = "=", mods = "LEADER", action = act.PaneSelect({ mode = "SwapWithActive" }) },
 
-	-- 커맨드 팔레트
 	{ key = ":", mods = "LEADER", action = act.ActivateCommandPalette },
 
-	-- Close pane/tab (선택 후 즉시 종료, 추가 확인창 없음)
 	{
 		key = "phys:x",
 		mods = "LEADER",
@@ -406,7 +336,6 @@ config.keys = {
 	-- Reload config
 	{ key = "phys:r", mods = "LEADER", action = act.ReloadConfiguration },
 
-	-- Workspace (zoxide 연동 fuzzy 검색)
 	{
 		key = "phys:p",
 		mods = "LEADER",
@@ -447,48 +376,48 @@ config.keys = {
 						'echo "  Keybindings"',
 						'echo "  ─────────────────────────────────"',
 						'echo ""',
-						'echo "  C-a ?       이 도움말"',
-						'echo "  C-a \\\\       수평 분할"',
-						'echo "  C-a -       수직 분할"',
-						'echo "  C-a ↑↓←→    패인 크기 조절"',
-						'echo "  C-a m       패인 줌 토글"',
-						'echo "  C-a x       패인 닫기"',
-						'echo "  C-a t       새 탭"',
-						'echo "  C-a h/l     이전/다음 탭"',
-						'echo "  C-a ,       탭 이름 변경"',
-						'echo "  C-a v       복사 모드"',
-						'echo "  C-a /       검색 모드"',
-						'echo "  C-a q       QuickSelect (URL/경로/hash/IP)"',
-						'echo "  C-a =       패인 위치 스왑"',
-						'echo "  C-a :       커맨드 팔레트"',
-						'echo "  C-a r       설정 리로드"',
-						'echo "  C-a p       워크스페이스 (zoxide fuzzy)"',
-						'echo "  C-a [/]     이전/다음 워크스페이스"',
-						'echo "  C-a n       새 워크스페이스"',
-						'echo "  C-a \\$       세션명 변경"',
+						'echo "  C-a ?       this help"',
+						'echo "  C-a \\\\       horizontal split"',
+						'echo "  C-a -       vertical split"',
+						'echo "  C-a ↑↓←→    resize pane"',
+						'echo "  C-a m       toggle pane zoom"',
+						'echo "  C-a x       close pane"',
+						'echo "  C-a t       new tab"',
+						'echo "  C-a h/l     previous/next tab"',
+						'echo "  C-a ,       rename tab"',
+						'echo "  C-a v       copy mode"',
+						'echo "  C-a /       search mode"',
+						'echo "  C-a q       QuickSelect (URL/path/hash/IP)"',
+						'echo "  C-a =       swap panes"',
+						'echo "  C-a :       command palette"',
+						'echo "  C-a r       reload config"',
+						'echo "  C-a p       workspace (zoxide fuzzy)"',
+						'echo "  C-a [/]     previous/next workspace"',
+						'echo "  C-a n       new workspace"',
+						'echo "  C-a \\$       rename session"',
 						'echo ""',
-						'echo "  Session (C-a s 후)"',
+						'echo "  Session (after C-a s)"',
 						'echo "  ─────────────────────────────────"',
 						'echo ""',
-						'echo "  s           세션 저장"',
-						'echo "  l           세션 복원 (fuzzy)"',
-						'echo "  d           세션 삭제"',
-						'echo "  C-]         패인 이동 모드 (HJKL, 1초)"',
+						'echo "  s           save session"',
+						'echo "  l           restore session (fuzzy)"',
+						'echo "  d           delete session"',
+						'echo "  C-]         pane move mode (HJKL, 1s)"',
 						'echo ""',
-						'echo "  AI (C-a a 후)"',
+						'echo "  AI (after C-a a)"',
 						'echo "  ─────────────────────────────────"',
 						'echo ""',
 						'echo "  a           Claude Code"',
 						'echo "  r           Claude Code resume"',
-						'echo "  p           프로젝트 선택 → Claude"',
-						'echo "  l           AI 도구 목록"',
+						'echo "  p           pick project → Claude"',
+						'echo "  l           AI tool list"',
 						'echo ""',
 						'echo "  Navigation"',
 						'echo "  ─────────────────────────────────"',
 						'echo ""',
-						'echo "  C-h/j/k/l   패인 이동 (nvim 연동)"',
+						'echo "  C-h/j/k/l   move between panes (nvim-aware)"',
 						'echo ""',
-						'read -n1 -s -p "  아무 키나 누르면 닫힙니다..."',
+						'read -n1 -s -p "  Press any key to close..."',
 					}, "; "),
 				},
 			})
@@ -523,13 +452,10 @@ config.keys = {
 		}),
 	},
 
-	-- Session management (C-a+s → session 모드)
 	{ key = "phys:s", mods = "LEADER", action = act.ActivateKeyTable({ name = "session", one_shot = true }) },
 
-	-- AI tools (C-a+a → AI 모드)
 	{ key = "phys:a", mods = "LEADER", action = act.ActivateKeyTable({ name = "ai", one_shot = true }) },
 
-	-- Pane 이동 모드 (C-] → 1초간 HJKL로 pane 전환)
 	{
 		key = "]",
 		mods = "CTRL",
@@ -538,14 +464,15 @@ config.keys = {
 }
 
 ---------------------------------------------------------------------------
--- Pane navigation (nvim-aware, vim-tmux-navigator 대체)
+-- Pane navigation (nvim-aware)
 ---------------------------------------------------------------------------
--- nvim 측(polish.lua) 이 OSC 1337 로 broadcast 하는 user_var:
---   IS_NVIM         : 이 pane 에 nvim 떠있음
---   NVIM_AT_<DIR>   : 현재 nvim 창이 해당 방향 edge 에 위치 (DIR ∈ LEFT/RIGHT/UP/DOWN)
--- 두 플래그 조합으로:
---   nvim + non-edge  -> SendKey (nvim 내부 창 이동)
---   nvim + edge      -> ActivatePaneDirection (wezterm 직접 전환, CLI 호출 없음)
+-- user_vars broadcast by nvim over OSC 1337 (see the nvim config's
+-- terminal integration):
+--   IS_NVIM         : nvim is running in this pane
+--   NVIM_AT_<DIR>   : the current nvim window sits at that edge (DIR ∈ LEFT/RIGHT/UP/DOWN)
+-- Combined:
+--   nvim + non-edge  -> SendKey (nvim-internal window move)
+--   nvim + edge      -> ActivatePaneDirection (no CLI call needed)
 --   non-nvim         -> ActivatePaneDirection
 local edge_flag = { h = "NVIM_AT_LEFT", j = "NVIM_AT_DOWN", k = "NVIM_AT_UP", l = "NVIM_AT_RIGHT" }
 local function should_send_to_nvim(pane, nav_key)
@@ -578,11 +505,11 @@ for _, nav in ipairs(nav_keys) do
 end
 
 ---------------------------------------------------------------------------
--- Status bar (catppuccin 스타일)
+-- Status bar
 ---------------------------------------------------------------------------
 -- gitmux JSON pushed by the shell as a pane user var on every prompt
 -- (see __wezterm_git_status_precmd in zsh/.zshrc). Pane-scoped escape
--- sequences cross the WSL/SSH boundary, so no subprocess or file access
+-- sequences cross the SSH boundary, so no subprocess or file access
 -- is needed here.
 local function get_git_info(pane)
 	local ok, vars = pcall(pane.get_user_vars, pane)
@@ -621,8 +548,6 @@ local function get_git_info(pane)
 	}
 end
 
--- tmux catppuccin 스타일 (build_status_module: fill=icon, connect=no)
--- ROUND_L fg=color bg=default, icon fg=thm_gray bg=color, text fg=thm_fg bg=thm_gray, ROUND_R fg=thm_gray bg=default
 local ROUND_L = utf8.char(0xe0b6)
 local ROUND_R = utf8.char(0xe0b4)
 local TAB_BG = tab_bar_bg
@@ -660,27 +585,22 @@ wezterm.on("update-status", function(window, pane)
 	end
 	local cwd = cwd_uri and cwd_uri.file_path or ""
 
-	-- Left: session (터미널 아이콘은 초록/빨강 배경, 세션명은 기존 스타일)
 	local workspace = window:active_workspace()
 	local leader_active = window:leader_is_active()
 	local move_pane_active = window:active_key_table() == "move_pane"
 	local session_color = leader_active and C.red or move_pane_active and C.sky or C.green
 	window:set_left_status(wezterm.format({
-		-- 반원
 		{ Background = { Color = TAB_BG } },
 		{ Foreground = { Color = session_color } },
 		{ Text = "  " .. ROUND_L },
-		-- 터미널 아이콘
 		{ Background = { Color = session_color } },
 		{ Foreground = { Color = C.crust } },
 		{ Text = utf8.char(0xe795) },
 		{ Foreground = { Color = session_color } },
 		{ Text = "█" },
-		-- 세션명 (기존 surface0 배경)
 		{ Background = { Color = C.surface0 } },
 		{ Foreground = { Color = C.text } },
 		{ Text = " " .. workspace },
-		-- 오른쪽 반원
 		{ Background = { Color = TAB_BG } },
 		{ Foreground = { Color = C.surface0 } },
 		{ Text = ROUND_R .. " " },
@@ -699,7 +619,6 @@ wezterm.on("update-status", function(window, pane)
 	-- git
 	if git then
 		local git_icon_color = C.green
-		-- 반원 + 아이콘
 		append(right, {
 			{ Background = { Color = TAB_BG } },
 			{ Foreground = { Color = git_icon_color } },
@@ -709,7 +628,6 @@ wezterm.on("update-status", function(window, pane)
 			{ Text = utf8.char(0xf418) },
 			{ Foreground = { Color = git_icon_color } },
 			{ Text = "█" },
-			-- 텍스트 영역
 			{ Background = { Color = C.surface0 } },
 			{ Foreground = { Color = C.text } },
 			{ Text = " " .. git.branch },
@@ -756,7 +674,6 @@ wezterm.on("update-status", function(window, pane)
 				{ Text = " ✔" },
 			})
 		end
-		-- 닫기
 		append(right, {
 			{ Background = { Color = TAB_BG } },
 			{ Foreground = { Color = C.surface0 } },
@@ -773,7 +690,7 @@ wezterm.on("update-status", function(window, pane)
 end)
 
 ---------------------------------------------------------------------------
--- Tab title (catppuccin pill 스타일, zoom 표시)
+-- Tab title
 ---------------------------------------------------------------------------
 wezterm.on("format-tab-title", function(tab)
 	local raw_title = tab.active_pane.title or ""
@@ -785,7 +702,7 @@ wezterm.on("format-tab-title", function(tab)
 	else
 		pname = proc:match("([^/\\]+)$") or raw_title
 	end
-	-- raw_title의 첫 문자(아이콘)를 추출
+	-- byte-class pattern: the first full UTF-8 character (icon glyph)
 	local icon = raw_title:match("^([%z\1-\127\194-\244][\128-\191]*)") or ""
 	local title = icon ~= "" and (icon .. " " .. pname) or pname
 	if #title > 24 then
@@ -806,7 +723,6 @@ wezterm.on("format-tab-title", function(tab)
 	local num_fg = tab.is_active and C.text or C.overlay1
 
 	return {
-		-- 왼쪽 반원 + 프로세스명 (같은 색)
 		{ Background = { Color = TAB_BG } },
 		{ Foreground = { Color = accent } },
 		{ Text = ROUND_L },
@@ -815,13 +731,11 @@ wezterm.on("format-tab-title", function(tab)
 		{ Text = title .. zoomed },
 		{ Foreground = { Color = accent } },
 		{ Text = "█" },
-		-- 인덱스
 		{ Background = { Color = num_bg } },
 		{ Foreground = { Color = num_bg } },
 		{ Text = "█" },
 		{ Foreground = { Color = num_fg } },
 		{ Text = tostring(index) },
-		-- 오른쪽 반원
 		{ Background = { Color = TAB_BG } },
 		{ Foreground = { Color = num_bg } },
 		{ Text = ROUND_R },
@@ -832,7 +746,6 @@ end)
 -- Key tables
 ---------------------------------------------------------------------------
 config.key_tables = {
-	-- Copy mode: 기본 + vi 스타일 검색(/, ?, n, N)
 	copy_mode = (function()
 		local t = wezterm.gui.default_key_tables().copy_mode
 		local extra = {
@@ -863,7 +776,6 @@ config.key_tables = {
 		return t
 	end)(),
 
-	-- Search mode: Enter로 검색 확정 후 copy mode 복귀, Escape로 취소
 	search_mode = (function()
 		local t = wezterm.gui.default_key_tables().search_mode
 		local extra = {
@@ -883,7 +795,6 @@ config.key_tables = {
 		return t
 	end)(),
 
-	-- Pane resize 모드 (C-a+Arrow로 진입, 방향키 반복, Escape로 종료)
 	resize_pane = {
 		{ key = "UpArrow", action = act.AdjustPaneSize({ "Up", 5 }) },
 		{ key = "DownArrow", action = act.AdjustPaneSize({ "Down", 5 }) },
@@ -892,7 +803,6 @@ config.key_tables = {
 		{ key = "Escape", action = "PopKeyTable" },
 	},
 
-	-- Pane 이동 모드 (C-] 로 진입, HJKL로 pane 전환, 1초 무입력 시 자동 종료)
 	move_pane = {
 		{ key = "phys:h", action = act.ActivatePaneDirection("Left") },
 		{ key = "phys:j", action = act.ActivatePaneDirection("Down") },
@@ -906,7 +816,6 @@ config.key_tables = {
 		{ key = "Escape", action = "PopKeyTable" },
 	},
 
-	-- config.key_tables 안에 추가
 	session = {
 		{
 			key = "s",
@@ -920,18 +829,11 @@ config.key_tables = {
 		},
 		{
 			key = "l",
-			action = wezterm.action_callback(function(win, pane)
-				-- 여기에 resurrect load 관련 로직 (이전 코드에 있던 내용) 추가
-			end),
+			action = wezterm.action_callback(function(win, pane) end),
 		},
 		{ key = "Escape", action = "PopKeyTable" },
 	},
 
-	-- C-a, a → AI 모드
-	--   a: Claude Code (현재 cwd)
-	--   r: Claude Code resume
-	--   p: 프로젝트 선택 → Claude Code
-	--   l: AI 도구 선택
 	ai = {
 		{ key = "phys:a", action = spawn_ai_tool(ai_tools[1].cmd) },
 		{ key = "phys:r", action = spawn_ai_tool(ai_tools[2].cmd) },
@@ -1019,7 +921,6 @@ config.key_tables = {
 ---------------------------------------------------------------------------
 -- Session persistence (resurrect.wezterm)
 ---------------------------------------------------------------------------
--- 15분마다 워크스페이스 자동 저장
 if resurrect then
 	resurrect.state_manager.periodic_save({
 		interval_seconds = 900,
@@ -1028,7 +929,6 @@ if resurrect then
 		save_tabs = true,
 	})
 
-	-- 워크스페이스 전환 시 자동 저장/복원 (smart_workspace_switcher 연동)
 	wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function()
 		resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
 	end)
@@ -1042,27 +942,6 @@ if resurrect then
 			on_pane_restore = resurrect.tab_state.default_on_pane_restore,
 		})
 	end)
-end
-
----------------------------------------------------------------------------
--- OS-specific
----------------------------------------------------------------------------
-if is_windows then
-	-- Without EGL wezterm falls back to WGL, and in an RDP session WGL
-	-- exposes only OpenGL 1.1 — glium aborts window creation ("The OpenGL
-	-- implementation is too old"), hence EGL (ANGLE/D3D11) is forced here.
-	config.prefer_egl = true
-
-	-- Launch WSL (Ubuntu) + zsh as a login shell by default
-	config.default_domain = "WSL:Ubuntu"
-
-	-- Without default_cwd, panes spawned with no known cwd inherit
-	-- wezterm.exe's Windows cwd (%USERPROFILE% → /mnt/c/Users/...).
-	local wsl_domains = wezterm.default_wsl_domains()
-	for _, dom in ipairs(wsl_domains) do
-		dom.default_cwd = "~"
-	end
-	config.wsl_domains = wsl_domains
 end
 
 return config

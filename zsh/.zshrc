@@ -12,7 +12,6 @@ plugins=(
 	git
 	fzf
 	zsh-autosuggestions
-	# tmux
 
 	sprunge
 	sdk
@@ -71,11 +70,6 @@ eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 [ -s "$HOME/.config/envman/load.sh" ] && . "$HOME/.config/envman/load.sh"
 
 
-# BindKey
-# zle (Z-shell Line Editor)를 등록한 후, 단축키를 Binding 한다.
-# zle -N src
-# bindkey '^e' src # ^e를 누르면 src 명령어가 나간다.
-
 # aliases
 [ -f "$XDG_CONFIG_HOME/zsh/.aliases" ] && . "$XDG_CONFIG_HOME/zsh/.aliases"
 
@@ -92,11 +86,7 @@ if [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
     local json b64
     json="$(command gitmux -dbg -timeout 500ms "$PWD" 2>/dev/null)" || json=""
     b64="$(printf %s "$json" | base64 | tr -d '\n')"
-    if [[ -z "${TMUX-}" ]]; then
-      printf "\033]1337;SetUserVar=%s=%s\007" "git_status" "$b64"
-    else
-      printf "\033Ptmux;\033\033]1337;SetUserVar=%s=%s\007\033\\" "git_status" "$b64"
-    fi
+    printf "\033]1337;SetUserVar=%s=%s\007" "git_status" "$b64"
   }
   precmd_functions+=(__wezterm_git_status_precmd)
 fi
