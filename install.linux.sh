@@ -357,12 +357,14 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     done
     if [[ -n "$wt_settings" ]]; then
       python3 "$DOTFILES_PATH/wt/apply-settings.py" "$wt_settings" "$DOTFILES_PATH/wt/tmux-profile.json"
-      powershell.exe -NoProfile -ExecutionPolicy Bypass \
-        -File "$(wslpath -w "$DOTFILES_PATH/winget/wt-shortcuts.ps1")" >/dev/null 2>&1 || true
-      log_done "Windows Terminal: tmux profile, scheme, and shortcuts applied"
+      log_done "Windows Terminal: tmux profile and scheme applied"
     else
       log_skip "Windows Terminal: settings.json not found"
     fi
+
+    powershell.exe -NoProfile -ExecutionPolicy Bypass \
+      -File "$(wslpath -w "$DOTFILES_PATH/winget/wsl-terminal-shortcut.ps1")" >/dev/null 2>&1 || true
+    log_done "Start Menu: WSL-Terminal (Raycast-indexable -> wt -f -p Terminal)"
 
     # Zero-flash launcher for every powershell-based logon task — see
     # winget/run-hidden.vbs. Console-subsystem task actions flash a window
