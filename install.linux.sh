@@ -90,7 +90,10 @@ done
 create_link "$DOTFILES_PATH/zsh/.zshenv" "$HOME/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshrc"  "$XDG_CONFIG_HOME/zsh/.zshrc"
 create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
-[ -e "$XDG_CONFIG_HOME/zsh/zfunc" ] || ln -sf "$DOTFILES_PATH/zsh/zfunc" "$XDG_CONFIG_HOME/zsh/zfunc"
+if [ -L "$XDG_CONFIG_HOME/zsh/zfunc" ] && [ ! -e "$XDG_CONFIG_HOME/zsh/zfunc" ]; then
+  rm "$XDG_CONFIG_HOME/zsh/zfunc"
+  log_done "removed dangling zfunc symlink"
+fi
 
 if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh" ]; then
   log_step "Installing oh-my-zsh"
@@ -130,6 +133,10 @@ log_step "Phase 2: brew bundle (Linux subset) + tool configs"
 brew trust arl/arl 2>/dev/null || true
 
 brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
+
+# `|| true`: cleanup (without --force) exits nonzero whenever removal
+# candidates exist — fatal under set -e
+brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" || true
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 

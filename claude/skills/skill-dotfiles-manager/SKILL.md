@@ -54,7 +54,6 @@ XDG_CACHE_HOME  = ~/.cache
 ├── zsh/.zshenv            # Environment variables (XDG paths, tool env vars)
 ├── zsh/.zshrc             # Interactive shell init (plugins, completions, tool init)
 ├── zsh/.aliases           # Command aliases and shell functions
-├── zsh/zfunc/             # Autoload functions
 ├── install.sh             # Idempotent setup script
 ├── <tool>/                # Per-tool config directories
 └── claude/skills/         # Claude Code skills (this file lives here)

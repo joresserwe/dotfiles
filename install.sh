@@ -80,6 +80,7 @@ source "$DOTFILES_PATH/zsh/.zshenv"
 
 echo "brew install..."
 brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
+brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" || true
 
 # -----------------------------------------------------------------------------------------------
 
@@ -202,8 +203,9 @@ echo "Linking config files..."
 create_link "$DOTFILES_PATH/zsh/.zshenv" ~/.zshenv
 create_link "$DOTFILES_PATH/zsh/.zshrc" "$XDG_CONFIG_HOME/zsh/.zshrc"
 create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
-# -sfn (no-follow): 링크가 이미 있으면 그 안으로 파고들지 않고 링크 자체를 교체
-ln -sfn "$DOTFILES_PATH/zsh/zfunc" "$XDG_CONFIG_HOME/zsh/zfunc"
+if [ -L "$XDG_CONFIG_HOME/zsh/zfunc" ] && [ ! -e "$XDG_CONFIG_HOME/zsh/zfunc" ]; then
+	rm "$XDG_CONFIG_HOME/zsh/zfunc"
+fi
 # ideavim
 create_link "$DOTFILES_PATH/ideavim/mac/.ideavimrc" "$XDG_CONFIG_HOME/ideavim/ideavimrc"
 # git
