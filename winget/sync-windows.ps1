@@ -24,9 +24,13 @@ if (-not $src -or -not (Test-Path -LiteralPath $src)) {
   exit 0  # WSL down or var unset — keep serving the existing mirror
 }
 
-foreach ($d in 'glazewm', 'zebar', 'winget', 'claude', 'surfingkeys') {
+foreach ($d in 'glazewm', 'winget', 'claude', 'surfingkeys') {
   robocopy "$src\$d" "$dst\$d" /MIR /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 }
+# profile.js is written into the mirror by install.linux.sh from WSL-side
+# state ($XDG_STATE_HOME) that this script cannot read — /MIR must not
+# delete it; preserve whatever install.linux.sh last wrote.
+robocopy "$src\zebar" "$dst\zebar" /MIR /XF profile.js /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 
 # First-run bootstrap for the tacky runtime config.

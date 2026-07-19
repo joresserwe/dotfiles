@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="./styles.css" />
+    <!-- Not in the repo — install.linux.sh generates it in the Windows mirror.
+         A 404 is expected there and in dev; the code falls back to WARP
+         auto-detection when window.DOTFILES_PROFILE is undefined. -->
+    <script src="./profile.js"></script>
     <script
       src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"
       integrity="sha256-aS0B0wnsaDByLfE16h4MDCP1fQFccysd1YWOcV+gbBo="
@@ -167,6 +171,8 @@
       // burns a core. gl.RENDERER is masked ("WebKit WebGL") — the real string
       // is only exposed through WEBGL_debug_renderer_info.
       const SOFT_RENDER = (() => {
+        if (window.DOTFILES_PROFILE === 'light') return true;
+        if (window.DOTFILES_PROFILE === 'full') return false;
         try {
           const gl = document.createElement('canvas').getContext('webgl');
           if (!gl) return true;
@@ -177,6 +183,7 @@
         } catch { return true; }
       })();
       if (SOFT_RENDER) document.documentElement.classList.add('soft-render');
+      if (window.DOTFILES_PROFILE === 'light') document.body.classList.add('profile-light');
 
       const SPARK_SAMPLES = 30;
       const SPARK_W = 44;

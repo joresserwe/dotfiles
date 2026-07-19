@@ -27,6 +27,39 @@ fi
 # shellcheck source=lib/common.sh
 source "$DOTFILES_PATH/lib/common.sh"
 
+DOTFILES_PROFILE_FILE="$XDG_STATE_HOME/dotfiles/profile"
+DOTFILES_PROFILE_ARG=""
+for arg in "$@"; do
+  case "$arg" in
+    --light) DOTFILES_PROFILE_ARG="light" ;;
+    --full)  DOTFILES_PROFILE_ARG="full" ;;
+    *)
+      echo "Usage: install.linux.sh [--light|--full]" >&2
+      echo "  --light  lightweight Windows-side profile: Flow Launcher, reduced zebar effects" >&2
+      echo "  --full   full profile: Raycast, full zebar effects (default on first run)" >&2
+      echo "Without a flag, the profile persisted in $DOTFILES_PROFILE_FILE is reused." >&2
+      exit 1
+      ;;
+  esac
+done
+DOTFILES_PROFILE_PREV="$(cat "$DOTFILES_PROFILE_FILE" 2>/dev/null || true)"
+case "$DOTFILES_PROFILE_PREV" in
+  light|full) ;;
+  *) DOTFILES_PROFILE_PREV="" ;;
+esac
+# Raycast burns ~1 CPU core on GPU-less RDP hosts (observed 2026-07-18,
+# beta 0.69, not config-fixable) — those hosts run Flow Launcher, so its
+# presence must win over the plain `full` default.
+if [ -z "$DOTFILES_PROFILE_ARG" ] && [ -z "$DOTFILES_PROFILE_PREV" ] \
+   && command -v winget.exe >/dev/null 2>&1 \
+   && winget.exe list --accept-source-agreements </dev/null 2>/dev/null | tr -d '\0' | grep -q 'Flow-Launcher.Flow-Launcher'; then
+  DOTFILES_PROFILE_PREV="light"
+fi
+DOTFILES_PROFILE="${DOTFILES_PROFILE_ARG:-${DOTFILES_PROFILE_PREV:-full}}"
+mkdir -p "${DOTFILES_PROFILE_FILE%/*}"
+printf '%s' "$DOTFILES_PROFILE" > "$DOTFILES_PROFILE_FILE"
+log_step "Install profile: $DOTFILES_PROFILE (persisted in $DOTFILES_PROFILE_FILE)"
+
 # ============================================================================
 # Phase 0 — Bootstrap (XDG dirs, apt packages, Homebrew on Linux)
 # ============================================================================
@@ -273,25 +306,15 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     echo "  distro from it, and re-run install.linux.sh." >&2
     exit 1
   fi
-  # Raycast burns ~1 CPU core constantly on GPU-less RDP hosts (observed
-  # 2026-07-18 on the VM, beta 0.69, not config-fixable)
-  WIN_HAS_GPU=1
-  win_gpus="$(powershell.exe -NoProfile -Command 'Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name' 2>/dev/null | tr -d '\0\r' || true)"
-  if [[ -n "$win_gpus" ]] \
-     && ! grep -qivE '^[[:space:]]*$|^Name|Microsoft|Citrix|Remote|Indirect|Virtual|RDP|Basic' <<<"$win_gpus"; then
-    WIN_HAS_GPU=0
-  fi
-  log_done "GPU detection: WIN_HAS_GPU=$WIN_HAS_GPU"
-
   log_step "winget: install packages from winget/packages.txt"
   while IFS= read -r line; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
     # Parse "<id> [source]". Source defaults to winget.
     read -r pkg src <<<"$line"
     src="${src:-winget}"
-    if [[ "$pkg" == "9PFXXSHC64H3" && "$WIN_HAS_GPU" == "0" ]] \
-       || [[ "$pkg" == "Flow-Launcher.Flow-Launcher" && "$WIN_HAS_GPU" == "1" ]]; then
-      log_skip "winget: $pkg (WIN_HAS_GPU=$WIN_HAS_GPU)"
+    if [[ "$pkg" == "9PFXXSHC64H3" && "$DOTFILES_PROFILE" == "light" ]] \
+       || [[ "$pkg" == "Flow-Launcher.Flow-Launcher" && "$DOTFILES_PROFILE" == "full" ]]; then
+      log_skip "winget: $pkg (profile=$DOTFILES_PROFILE)"
       continue
     fi
     # Match installed packages by scanning full list: `winget list --id <id>`
@@ -312,6 +335,20 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       fi
     fi
   done < "$DOTFILES_PATH/winget/packages.txt"
+
+  if [[ -n "$DOTFILES_PROFILE_PREV" && "$DOTFILES_PROFILE_PREV" != "$DOTFILES_PROFILE" ]]; then
+    if [[ "$DOTFILES_PROFILE" == "light" ]]; then
+      counterpart_pkg="9PFXXSHC64H3"
+    else
+      counterpart_pkg="Flow-Launcher.Flow-Launcher"
+    fi
+    log_step "winget: profile switched ($DOTFILES_PROFILE_PREV -> $DOTFILES_PROFILE) — uninstalling $counterpart_pkg"
+    if winget.exe uninstall --id "$counterpart_pkg" --accept-source-agreements </dev/null >/dev/null 2>&1; then
+      log_done "winget: uninstalled $counterpart_pkg"
+    else
+      log_skip "winget: uninstall $counterpart_pkg (not installed or failed — non-fatal)"
+    fi
+  fi
 
   log_step "ShareX: Start Menu capture shortcuts"
   powershell.exe -NoProfile -ExecutionPolicy Bypass \
@@ -340,9 +377,16 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     mkdir -p "$dotfiles_win_wsl"
     # rsync without perms/owner flags — drvfs rejects chmod/chown metadata.
     # Keep this list in lockstep with winget/sync-windows.ps1.
-    for d in glazewm zebar winget claude surfingkeys; do
+    for d in glazewm winget claude surfingkeys; do
       rsync -rlt --delete "$DOTFILES_PATH/$d/" "$dotfiles_win_wsl/$d/"
     done
+    # sync-windows.ps1 must keep the same profile.js exclusion — it runs on
+    # Windows and cannot read $XDG_STATE_HOME to regenerate the file.
+    rsync -rlt --delete --exclude 'mac-bar/profile.js' \
+      "$DOTFILES_PATH/zebar/" "$dotfiles_win_wsl/zebar/"
+    printf 'window.DOTFILES_PROFILE = "%s";\n' "$DOTFILES_PROFILE" \
+      > "$dotfiles_win_wsl/zebar/mac-bar/profile.js"
+    log_done "zebar: mirror profile.js -> $DOTFILES_PROFILE"
     # tacky-borders/config.yaml is mirror-owned runtime state (rotate.ps1 and
     # the zsh tacky-theme helper write it) — exclude it so the sync can
     # neither overwrite nor delete it.

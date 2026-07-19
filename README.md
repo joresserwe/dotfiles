@@ -126,6 +126,8 @@ git clone https://github.com/joresserwe/dotfiles ~/.config/.dotfiles
 ~/.config/.dotfiles/install.linux.sh
 ```
 
+Optional profile flags: `--full` (default; Raycast, full zebar effects) or `--light` (Flow Launcher, reduced zebar effects — for GPU-less VMs/RDP hosts). The choice is persisted in `$XDG_STATE_HOME/dotfiles/profile` and reused on flagless re-runs.
+
 The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powerlevel10k, neovim/AstroNvim, tmux, yazi, atuin, mise, claude code) using a hybrid **apt + Homebrew on Linux** setup. macOS-only tools (aerospace, karabiner, raycast, wallpaperkiller, casks, mas) are skipped automatically via `if OS.mac?` guards in the shared `Brewfile`.
 
 ### Architecture
