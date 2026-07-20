@@ -9,6 +9,11 @@
 # Fullscreen itself stays f13+m's job entirely.
 
 $ErrorActionPreference = 'SilentlyContinue'
+
+# PS 5.1 decodes native stdout via the console codepage while glazewm emits
+# UTF-8 — without this, a Korean window title mis-decodes into invalid JSON
+# and every query below parses to $null.
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 $glazewm = 'C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe'
 
 # Float-locked processes: for apps float-ruled in config.yaml that f13+space
