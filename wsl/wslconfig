@@ -1,0 +1,9 @@
+# Copy manually to %USERPROFILE%\.wslconfig on each Windows host, then `wsl --shutdown`.
+# memory is a hard cap, not a reservation — tune per machine.
+[wsl2]
+networkingMode=mirrored
+memory=12GB
+
+[experimental]
+autoMemoryReclaim=gradual
+sparseVhd=true
