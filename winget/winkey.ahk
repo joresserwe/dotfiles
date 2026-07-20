@@ -302,27 +302,30 @@ FloatNav(dx, dy) {
                 bestDist := dist, best := hwnd
         }
     }
-    if best
+    if best {
         WinActivate("ahk_id " best)
+        return true
+    }
+    return false
 }
 FloatKey(dir, dx, dy) {
     MarkHotkey("Float-" dir)
+    gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
     mode := ""
     try mode := Trim(FileRead(A_Temp "\glazewm-float-focus.flag"))
     if (mode = "workspace") {
-        gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
         RunWait(gw ' command focus --workspace-in-direction ' dir, , 'Hide')
         return
     }
     if GetKeyState("Shift", "P") {
-        gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
         RunWait(gw ' command move --direction ' dir, , 'Hide')
         mirror := EnvGet('DOTFILES_WIN')
         if mirror
             Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' mirror '\glazewm\recenter-floating.ps1"', , 'Hide')
         return
     }
-    FloatNav(dx, dy)
+    if !FloatNav(dx, dy)
+        RunWait(gw ' command focus --workspace-in-direction ' dir, , 'Hide')
 }
 #HotIf FileExist(A_Temp "\glazewm-float-focus.flag")
 ~F13 & h::FloatKey("left", -1, 0)
