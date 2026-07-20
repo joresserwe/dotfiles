@@ -23,8 +23,6 @@ base_rgb() { # colour index -> BASE_R / BASE_G / BASE_B (decimal)
   fi
 }
 
-DEFAULT_FG=cdd6f4 # must match the wt/tmux-profile.json scheme foreground
-
 cmds=""
 for ((i = 0; i < 256; i++)); do
   base_rgb "$i"
@@ -33,13 +31,13 @@ for ((i = 0; i < 256; i++)); do
   cmds+="set -p \"pane-colours[$i]\" \"$dimmed\" ; "
 done
 
-# pane-colours only remaps the 256 indexed colours; text drawn with the
-# default foreground bypasses the palette and needs window-style to dim.
-printf -v dimmed_fg '#%02x%02x%02x' \
-  $((16#${DEFAULT_FG:0:2} * DIM_PERCENT / 100)) \
-  $((16#${DEFAULT_FG:2:2} * DIM_PERCENT / 100)) \
-  $((16#${DEFAULT_FG:4:2} * DIM_PERCENT / 100))
-cmds+="set -p window-style \"fg=$dimmed_fg\" ; "
+# pane-colours only remaps the 256 indexed colours, and on a client focus-out
+# the pane stays ACTIVE, so its default-fg text keeps window-active-style's
+# bright fg.
+inactive_fg="$(tmux show -gv window-style 2>/dev/null | grep -o 'fg=[^,]*' | cut -d= -f2)"
+if [ -n "$inactive_fg" ] && [ "$inactive_fg" != "default" ]; then
+  cmds+="set -p window-active-style \"fg=$inactive_fg\" ; "
+fi
 
 tmux set-hook -g pane-focus-out "${cmds% ; }"
-tmux set-hook -g pane-focus-in 'set -pu pane-colours ; set -pu window-style'
+tmux set-hook -g pane-focus-in 'set -pu pane-colours ; set -pu window-active-style'
