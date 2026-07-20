@@ -384,8 +384,14 @@ JumpToWindow(idx) {
     if (idx > toks.Length)
         return
     hwnd := toks[idx] + 0
-    if (hwnd && WinExist("ahk_id " hwnd))
+    if (hwnd && WinExist("ahk_id " hwnd)) {
+        ; WinActivate alone skips restore when the minimized target is already
+        ; the active window (glazewm keeps focus on a window it minimizes), and
+        ; the OS then hands foreground to some other visible window.
+        if WinGetMinMax(hwnd) = -1
+            WinRestore(hwnd)
         WinActivate("ahk_id " hwnd)
+    }
 }
 ~F13 & a::JumpToWindow(1)
 ~F13 & s::JumpToWindow(2)
