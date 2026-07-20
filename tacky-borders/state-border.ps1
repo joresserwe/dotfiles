@@ -36,11 +36,17 @@ function Sync-BorderState {
   $f = $res.data.focused
 
   # Flag for winkey.ahk's floating-nav hotkeys: glazewm's focus --direction
-  # is a no-op when the FOCUSED window is floating (verified live), so AHK
-  # takes over f13+hjkl only while this flag exists.
+  # is a no-op when the FOCUSED window is floating (verified live) and when
+  # an EMPTY workspace has focus (no origin window), so AHK takes over
+  # f13+hjkl only while this flag exists; the file CONTENT is the takeover
+  # mode winkey.ahk reads ('floating' or 'workspace').
   $flag = Join-Path $env:TEMP 'glazewm-float-focus.flag'
-  if ($f.type -eq 'window' -and $f.state.type -eq 'floating') {
-    if (-not (Test-Path $flag)) { New-Item -ItemType File -Path $flag -Force | Out-Null }
+  $mode = $null
+  if ($f.type -eq 'workspace') { $mode = 'workspace' }
+  elseif ($f.type -eq 'window' -and $f.state.type -eq 'minimized') { $mode = 'workspace' }
+  elseif ($f.type -eq 'window' -and $f.state.type -eq 'floating') { $mode = 'floating' }
+  if ($mode) {
+    [IO.File]::WriteAllText($flag, $mode)
   } elseif (Test-Path $flag) {
     Remove-Item $flag -Force
   }

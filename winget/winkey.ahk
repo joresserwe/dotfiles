@@ -252,12 +252,15 @@ CycleOnMonitor(dir) {
 ; also covers unmanaged windows like Win+U/D already do.
 ~F13 & f::CycleOnMonitor(1)
 
-; --- Directional focus while a FLOATING window has focus -----------------
-; glazewm's `focus --direction` is a no-op when the focused window is
-; floating (verified live 2026-07-15: focus stays put), so Win+H/L felt
-; dead inside Webex. The state-border daemon flags floating focus via
+; --- Directional focus takeover (floating / minimized / empty workspace) --
+; glazewm's `focus --direction` is a no-op when the focused container is a
+; floating window (verified live 2026-07-15: focus stays put — Win+H/L felt
+; dead inside Webex), a minimized window, or an empty workspace (no origin).
+; The state-border daemon flags those cases via
 ; %TEMP%\glazewm-float-focus.flag; only while it exists do these hotkeys
 ; activate — tiled focus keeps glazewm's native (zero-latency) handling.
+; The flag CONTENT picks the takeover: 'workspace' = glazewm
+; focus --workspace-in-direction, otherwise geometric nearest-window nav.
 ;
 ; Custom combos fire on EVERY modifier variant, so shift is dispatched
 ; here too: plain = geometric nearest-window focus, shift = glazewm
@@ -304,6 +307,13 @@ FloatNav(dx, dy) {
 }
 FloatKey(dir, dx, dy) {
     MarkHotkey("Float-" dir)
+    mode := ""
+    try mode := Trim(FileRead(A_Temp "\glazewm-float-focus.flag"))
+    if (mode = "workspace") {
+        gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
+        RunWait(gw ' command focus --workspace-in-direction ' dir, , 'Hide')
+        return
+    }
     if GetKeyState("Shift", "P") {
         gw := '"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe"'
         RunWait(gw ' command move --direction ' dir, , 'Hide')
