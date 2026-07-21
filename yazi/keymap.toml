@@ -15,6 +15,7 @@ prepend_keymap = [
 
 	{ on = "<C-g>",              run = "shell 'lazygit' --block",            desc = "Open lazygit" },
 	{ on = "<C-n>",              run = "shell 'term-spawn' --orphan",        desc = "New terminal here" },
+	{ on = "!",                  run = "shell '[ -d \"$0\" ] && cd -- \"$0\"; exec zsh' --block", desc = "Open zsh here (hovered dir)" },
 ]
 
 keymap = [
