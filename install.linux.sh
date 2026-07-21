@@ -127,7 +127,7 @@ if [ -f /etc/sudoers.d/no-admin-flag ]; then
 else
   tmpf="$(mktemp)"
   printf 'Defaults !admin_flag\n' > "$tmpf"
-  if sudo visudo -c -f "$tmpf"; then
+  if sudo visudo -c -q -f "$tmpf"; then
     sudo install -m 440 -o root -g root "$tmpf" /etc/sudoers.d/no-admin-flag
     log_done "sudo: admin_flag disabled"
   else
