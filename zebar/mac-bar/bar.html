@@ -229,8 +229,8 @@
           let alive = true;
           const poll = async () => {
             try {
-              const r = await zebar.shellExec('cmd.exe', ['/c', 'type', '%TEMP%\\ime-state.txt']);
-              if (alive) setIme((r.stdout || '').trim() || null);
+              const r = await fetch('./ime-state.txt', { cache: 'no-store' });
+              if (alive) setIme(r.ok ? (await r.text()).trim() || null : null);
             } catch { /* file may not exist yet */ }
           };
           poll();

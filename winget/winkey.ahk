@@ -404,10 +404,10 @@ JumpToWindow(idx) {
 ~F13 & r::JumpToWindow(9)
 
 ; --- IME state monitor for Zebar --------------------------------------
-; Writes "KO" or "EN" to %TEMP%\ime-state.txt whenever the foreground
+; Writes "KO" or "EN" to zebar/mac-bar/ime-state.txt whenever the foreground
 ; window's IME open-status changes. Zebar polls the file to render the
 ; bar's IME badge. Adds ~0MB — reuses this same AHK process.
-imeStateFile := A_Temp "\ime-state.txt"
+imeStateFile := A_ScriptDir "\..\zebar\mac-bar\ime-state.txt"
 lastImeState := ""
 
 IME_GetConversionMode(hWnd) {
