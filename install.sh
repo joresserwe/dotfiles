@@ -79,7 +79,7 @@ source "$DOTFILES_PATH/zsh/.zshenv"
 # -----------------------------------------------------------------------------------------------
 
 echo "brew install..."
-brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
+brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
 # -----------------------------------------------------------------------------------------------

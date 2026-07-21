@@ -165,7 +165,7 @@ log_step "Phase 2: brew bundle (Linux subset) + tool configs"
 # (needed for arl/arl/gitmux). `|| true`: older brew has no `trust` command.
 brew trust arl/arl 2>/dev/null || true
 
-brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
+brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 
 # `|| true`: cleanup (without --force) exits nonzero whenever removal
 # candidates exist — fatal under set -e
