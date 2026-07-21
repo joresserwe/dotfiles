@@ -265,7 +265,18 @@
 
       function App() {
         const [out, setOut] = useState(providers.outputMap);
-        useEffect(() => providers.onOutput(() => setOut(providers.outputMap)), []);
+        useEffect(() => {
+          if (!SOFT_RENDER) return providers.onOutput(() => setOut(providers.outputMap));
+          // glazewm emits an event per window-title change — a busy terminal
+          // fires several per second, and every repaint is a CPU rasterize on
+          // WARP. Trailing 250ms debounce caps renders at 4/s worst-case.
+          let id = null;
+          const unsub = providers.onOutput(() => {
+            if (id) return;
+            id = setTimeout(() => { id = null; setOut(providers.outputMap); }, 250);
+          });
+          return () => { clearTimeout(id); if (typeof unsub === 'function') unsub(); };
+        }, []);
         const ime = useImeState();
         useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
 
