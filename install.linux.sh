@@ -120,6 +120,26 @@ for f in .bashrc .profile .bash_logout; do
   fi
 done
 
+# Ubuntu sudo (--enable-admin-flag) recreates ~/.sudo_as_admin_successful on
+# every sudo run unless the sudoers admin_flag option is disabled.
+if [ -f /etc/sudoers.d/no-admin-flag ]; then
+  log_skip "sudo admin_flag already disabled"
+else
+  tmpf="$(mktemp)"
+  printf 'Defaults !admin_flag\n' > "$tmpf"
+  if sudo visudo -c -f "$tmpf"; then
+    sudo install -m 440 -o root -g root "$tmpf" /etc/sudoers.d/no-admin-flag
+    log_done "sudo: admin_flag disabled"
+  else
+    log_skip "sudo admin_flag drop-in failed visudo check — not installed"
+  fi
+  rm -f "$tmpf"
+fi
+if [ -f "$HOME/.sudo_as_admin_successful" ]; then
+  rm "$HOME/.sudo_as_admin_successful"
+  log_done "removed ~/.sudo_as_admin_successful"
+fi
+
 create_link "$DOTFILES_PATH/zsh/.zshenv" "$HOME/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshrc"  "$XDG_CONFIG_HOME/zsh/.zshrc"
 create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
