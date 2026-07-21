@@ -153,7 +153,7 @@ if [ ! -d "$XDG_CONFIG_HOME/zsh/oh-my-zsh" ]; then
   # CHSH=no: chsh is already handled above, and without it the installer
   # blocks on an interactive [Y/n] prompt when $SHELL isn't zsh yet
   # (i.e. every non-interactive first run on a fresh machine).
-  ZSH="$XDG_CONFIG_HOME/zsh/oh-my-zsh" RUNZSH=no KEEP_ZSHRC=yes CHSH=no \
+  ZDOTDIR="$XDG_CONFIG_HOME/zsh" ZSH="$XDG_CONFIG_HOME/zsh/oh-my-zsh" RUNZSH=no KEEP_ZSHRC=yes CHSH=no \
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 else
   update_repo "$XDG_CONFIG_HOME/zsh/oh-my-zsh"
