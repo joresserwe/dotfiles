@@ -1,0 +1,5 @@
+" An explicit vimrc suppresses the implicit defaults.vim load (:h defaults.vim)
+unlet! skip_defaults_vim
+source $VIMRUNTIME/defaults.vim
+
+set viminfofile=$XDG_STATE_HOME/vim/viminfo

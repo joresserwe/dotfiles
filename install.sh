@@ -208,6 +208,7 @@ if [ -L "$XDG_CONFIG_HOME/zsh/zfunc" ] && [ ! -e "$XDG_CONFIG_HOME/zsh/zfunc" ];
 fi
 # ideavim
 create_link "$DOTFILES_PATH/ideavim/mac/.ideavimrc" "$XDG_CONFIG_HOME/ideavim/ideavimrc"
+create_link "$DOTFILES_PATH/vim/vimrc" "$XDG_CONFIG_HOME/vim/vimrc"
 # git
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 # npm

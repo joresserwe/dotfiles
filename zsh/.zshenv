@@ -32,8 +32,11 @@ esac
 [ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
 
 # use vim as the editor
-# VIMINIT would suppress nvim's default init loading, so only vim's MYVIMRC is set
+# vim (< 9.1.0327) has no XDG support: EXINIT points it at the XDG vimrc.
+# Unlike VIMINIT, EXINIT is read only when no vimrc/init is found, so nvim
+# (which has init.lua) never sees it.
 export MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc"
+export EXINIT='source $MYVIMRC'
 export EDITOR=nvim
 
 # mise (replaces fnm + pyenv; manages node, python, go, ruby, etc.)
