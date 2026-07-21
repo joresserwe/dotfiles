@@ -1,7 +1,7 @@
 # Rehome every workspace to its bound monitor — hyper+w.
 #
-# Mapping mirrors generate-config.ps1's bind_to_monitor: ws 1-3 -> monitor 0,
-# 4-6 -> monitor 1, 7-9 -> monitor 2 (glazewm monitor list order). glazewm
+# Mapping mirrors generate-config.ps1's bind_to_monitor: ws 1-5 -> monitor 0,
+# 6-10 -> monitor 1, 11-15 -> monitor 2 (glazewm monitor list order). glazewm
 # honors bind_to_monitor only at workspace creation; f13+shift+[ / ] (or any
 # move-workspace) permanently re-homes one and there is no built-in reset,
 # so an accidental press leaves layouts like [1] | [2,3,4,5,6] behind.
@@ -16,7 +16,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 # and every query below parses to $null.
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 $gw = 'C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe'
-$wsPerMon = 3
+$wsPerMon = 5
 
 $orig = (& $gw query focused 2>$null | ConvertFrom-Json).data.focused
 

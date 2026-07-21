@@ -81,22 +81,29 @@ window_behavior:
       maximized: false
       shown_on_top: false
 
-# Workspaces — 3 per monitor, bound dynamically by generate-config.ps1 which
+# Workspaces — 5 per monitor, bound dynamically by generate-config.ps1 which
 # rewrites the BEGIN/END block on reload based on current monitor count.
 # Keybindings below have matching BEGIN/END blocks (focus/move workspace).
-# The committed content assumes 3 monitors (ws1-9) as a readable default;
-# generator reduces it to monitor_count × 3 on live config at reload.
+# The committed content assumes 3 monitors (ws1-15) as a readable default;
+# generator reduces it to monitor_count × 5 on live config at reload.
+# Only ws1-10 get a digit binding (f13+0 = ws10).
 workspaces:
   # BEGIN_GENERATED_WORKSPACES
   - { name: '1', bind_to_monitor: 0, keep_alive: true }
   - { name: '2', bind_to_monitor: 0, keep_alive: true }
   - { name: '3', bind_to_monitor: 0, keep_alive: true }
-  - { name: '4', bind_to_monitor: 1, keep_alive: true }
-  - { name: '5', bind_to_monitor: 1, keep_alive: true }
+  - { name: '4', bind_to_monitor: 0, keep_alive: true }
+  - { name: '5', bind_to_monitor: 0, keep_alive: true }
   - { name: '6', bind_to_monitor: 1, keep_alive: true }
-  - { name: '7', bind_to_monitor: 2, keep_alive: true }
-  - { name: '8', bind_to_monitor: 2, keep_alive: true }
-  - { name: '9', bind_to_monitor: 2, keep_alive: true }
+  - { name: '7', bind_to_monitor: 1, keep_alive: true }
+  - { name: '8', bind_to_monitor: 1, keep_alive: true }
+  - { name: '9', bind_to_monitor: 1, keep_alive: true }
+  - { name: '10', bind_to_monitor: 1, keep_alive: true }
+  - { name: '11', bind_to_monitor: 2, keep_alive: true }
+  - { name: '12', bind_to_monitor: 2, keep_alive: true }
+  - { name: '13', bind_to_monitor: 2, keep_alive: true }
+  - { name: '14', bind_to_monitor: 2, keep_alive: true }
+  - { name: '15', bind_to_monitor: 2, keep_alive: true }
   # END_GENERATED_WORKSPACES
 
 # ---------------------------------------------------------------------------
@@ -137,6 +144,7 @@ window_rules:
       # dialog class these tools might use.
       - window_process: { regex: '(?i)AutoHotkey' }
       - window_process: { equals: 'tacky-borders' }
+      - window_process: { equals: 'steamwebhelper' }
 
 # ---------------------------------------------------------------------------
 # Binding Modes (resize / move — mirrors AeroSpace modes)
@@ -229,7 +237,7 @@ keybindings:
   - commands: ['move --direction right', *recenter]
     bindings: ['f13+shift+l']
 
-  # ---- Workspace focus (win+1~9) ----
+  # ---- Workspace focus (win+1~9, win+0) ----
   # BEGIN_GENERATED_WS_FOCUS
   - commands: ['focus --workspace 1']
     bindings: ['f13+1']
@@ -249,9 +257,11 @@ keybindings:
     bindings: ['f13+8']
   - commands: ['focus --workspace 9']
     bindings: ['f13+9']
+  - commands: ['focus --workspace 10']
+    bindings: ['f13+0']
   # END_GENERATED_WS_FOCUS
 
-  # ---- Move window to workspace (win+shift+1~9) with focus follow ----
+  # ---- Move window to workspace (win+shift+1~9, win+shift+0) with focus follow ----
   # *recenter fixes floats that land off-monitor on cross-monitor sends.
   # BEGIN_GENERATED_WS_MOVE
   - commands: ['move --workspace 1', 'focus --workspace 1', *recenter]
@@ -272,6 +282,8 @@ keybindings:
     bindings: ['f13+shift+8']
   - commands: ['move --workspace 9', 'focus --workspace 9', *recenter]
     bindings: ['f13+shift+9']
+  - commands: ['move --workspace 10', 'focus --workspace 10', *recenter]
+    bindings: ['f13+shift+0']
   # END_GENERATED_WS_MOVE
 
   # ---- Next/prev workspace on current monitor (win+n/p) ----
@@ -367,7 +379,7 @@ keybindings:
 
   # ---- Swap displayed workspaces with the adjacent monitor (win+ctrl+[ / ])
   # Contents of the two visible workspaces trade places; the workspace-to-
-  # monitor assignment stays canonical (123|456), so nothing gets re-homed.
+  # monitor assignment stays canonical (1-5|6-10), so nothing gets re-homed.
   # 3+ monitors: pairs with the monitor in the pressed direction.
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\swap-displayed-workspaces.ps1" -Direction left']
     bindings: ['ctrl+f13+oem_open_brackets']
@@ -432,7 +444,7 @@ keybindings:
     bindings: ['ctrl+alt+f13+c']
 
   # ---- Rehome workspaces (Hyper+W) ----
-  # Puts every workspace back on its bound monitor (1-3 -> mon0, 4-6 -> mon1,
+  # Puts every workspace back on its bound monitor (1-5 -> mon0, 6-10 -> mon1,
   # ...). move-workspace re-homes permanently and glazewm has no reset, so an
   # accidental f13+shift+[ / ] leaves layouts like [1] | [2,3,4,5,6] behind.
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\rehome-workspaces.ps1"']

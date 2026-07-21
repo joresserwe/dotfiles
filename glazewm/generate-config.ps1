@@ -1,6 +1,6 @@
 # Generates live config.yaml from WSL-side template based on current monitor
-# count. Writes monitor_count × 3 workspaces (capped at 9 / 3 monitors) into
-# the BEGIN/END generated blocks, leaves the rest of the template untouched.
+# count. Writes monitor_count × 5 workspaces (capped at 3 monitors) into the
+# BEGIN/END generated blocks, leaves the rest of the template untouched.
 # Called from the Hyper+C reload chain; triggers wm-reload-config itself so
 # reload sees the fresh file (glazewm's shell-exec is fire-and-forget, so
 # chaining reload in config.yaml would race the file write).
@@ -21,7 +21,8 @@ if (-not $template) {
 }
 $output     = Join-Path $env:USERPROFILE '.glzr\glazewm\config.yaml'
 $maxMons    = 3
-$wsPerMon   = 3
+$wsPerMon   = 5
+$maxBound   = 10
 
 if (-not $template) {
     Write-Error "GLAZEWM_TEMPLATE_PATH env var not set — run install.linux.sh"
@@ -56,13 +57,16 @@ $wsBlock    = for ($w = 1; $w -le $totalWs; $w++) {
     $mon = [Math]::Floor(($w - 1) / $wsPerMon)
     "  - { name: '$w', bind_to_monitor: $mon, keep_alive: true }"
 }
-$focusBlock = for ($w = 1; $w -le $totalWs; $w++) {
+$boundWs    = [Math]::Min($totalWs, $maxBound)
+$focusBlock = for ($w = 1; $w -le $boundWs; $w++) {
+    $key = if ($w -eq 10) { '0' } else { "$w" }
     "  - commands: ['focus --workspace $w']"
-    "    bindings: ['f13+$w']"
+    "    bindings: ['f13+$key']"
 }
-$moveBlock  = for ($w = 1; $w -le $totalWs; $w++) {
+$moveBlock  = for ($w = 1; $w -le $boundWs; $w++) {
+    $key = if ($w -eq 10) { '0' } else { "$w" }
     "  - commands: ['move --workspace $w', 'focus --workspace $w', *recenter]"
-    "    bindings: ['f13+shift+$w']"
+    "    bindings: ['f13+shift+$key']"
 }
 
 function Replace-Between($lines, $beginPattern, $endPattern, $newBlock) {
