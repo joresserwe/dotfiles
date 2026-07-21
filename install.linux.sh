@@ -169,7 +169,7 @@ brew bundle install --file "$DOTFILES_PATH/brew/Brewfile"
 
 # `|| true`: cleanup (without --force) exits nonzero whenever removal
 # candidates exist — fatal under set -e
-brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" || true
+brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 
