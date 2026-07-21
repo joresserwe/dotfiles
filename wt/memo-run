@@ -1,0 +1,10 @@
+#!/bin/sh
+# nvim lives on brew paths that a bare `wsl -e sh` PATH does not include.
+if [ -z "$MEMO_TARGET_ENV" ]; then
+  MEMO_TARGET_ENV=1 exec /usr/bin/zsh -lc "/bin/sh $0"
+fi
+
+memo_dir="${XDG_DATA_HOME:-$HOME/.local/share}/memo"
+mkdir -p "$memo_dir"
+cd "$memo_dir" || exit 1
+NVIM_MEMO=1 exec nvim

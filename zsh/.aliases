@@ -207,6 +207,19 @@ function y() {
 	rm -f -- "$tmp"
 }
 
+# np — Notepad++-style memo pad: focus (or launch) the standalone memo nvim
+# WT window via the same open-memo.ps1 the file association uses. WSL-only.
+if [[ -n "$WSL_DISTRO_NAME" || -n "$WSL_INTEROP" ]]; then
+  np() {
+    local up
+    up="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
+
+    /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
+      -NoProfile -ExecutionPolicy Bypass \
+      -File "${up}\\.dotfiles\\winget\\open-memo.ps1" >/dev/null 2>&1 &!
+  }
+fi
+
 # todo
 alias todo="$EDITOR $XDG_DATA_HOME/todo/todo.md"
 

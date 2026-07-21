@@ -120,3 +120,22 @@ if ($env:COMPUTERNAME -like 'LCSKVM*') {
   Set-ItemProperty -Path $layers `
     -Name 'C:\Program Files\ShareX\ShareX.exe' -Value '~ HIGHDPIAWARE' -Type String -Force
 }
+
+# "Open with" entry routing text files into the WSL memo nvim. Registers the
+# ProgID + per-extension OpenWithProgids only; Windows protects the default
+# handler (UserChoice hash), so picking "always use" is a one-time manual step.
+$memoProgId = 'HKCU:\SOFTWARE\Classes\NvimMemo'
+$memoCmd = 'wscript.exe "{0}\.dotfiles\winget\run-hidden.vbs" "{0}\.dotfiles\winget\open-memo.ps1" "%1"' -f $env:USERPROFILE
+if (-not (Test-Path "$memoProgId\shell\open\command")) {
+  New-Item -Path "$memoProgId\shell\open\command" -Force | Out-Null
+}
+Set-ItemProperty -Path $memoProgId -Name '(default)' -Value 'Neovim Memo' -Force
+Set-ItemProperty -Path "$memoProgId\shell\open\command" -Name '(default)' -Value $memoCmd -Force
+
+foreach ($ext in '.txt', '.log', '.md', '.ini', '.cfg', '.conf', '.json', '.yaml', '.yml', '.xml', '.csv') {
+  $owp = "HKCU:\SOFTWARE\Classes\$ext\OpenWithProgids"
+  if (-not (Test-Path $owp)) {
+    New-Item -Path $owp -Force | Out-Null
+  }
+  Set-ItemProperty -Path $owp -Name 'NvimMemo' -Value '' -Type String -Force
+}

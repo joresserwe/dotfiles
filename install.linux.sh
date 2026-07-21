@@ -396,6 +396,8 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     ensure_dir "$HOME/.local/bin"
     create_link "$DOTFILES_PATH/wt/tmux-main" "$HOME/.local/bin/tmux-main"
     create_link "$DOTFILES_PATH/wt/yazi-target" "$HOME/.local/bin/yazi-target"
+    create_link "$DOTFILES_PATH/wt/memo-target" "$HOME/.local/bin/memo-target"
+    create_link "$DOTFILES_PATH/wt/memo-run" "$HOME/.local/bin/memo-run"
     wt_settings=""
     for cand in \
       "$win_userprofile_wsl/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json" \
