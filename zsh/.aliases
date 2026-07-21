@@ -371,5 +371,17 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
     powershell.exe -NoProfile -Command "Start-Process -FilePath '$exe' -ArgumentList '--remote-debugging-port=9222'" >/dev/null 2>&1 \
       && echo 'comet-debug: Comet started with CDP on 9222'
   }
+
+  # Windows Chrome CDP for wsl/chrome-mcp.sh. Chrome 136+ requires a
+  # dedicated user-data-dir for CDP, so this is a separate profile. WSL-only.
+  chrome-debug() {
+    local exe='C:\Program Files\Google\Chrome\Application\chrome.exe'
+    if /mnt/c/Windows/System32/curl.exe -s --max-time 2 http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+      echo 'chrome-debug: CDP already listening on 9222'
+      return 0
+    fi
+    powershell.exe -NoProfile -Command "Start-Process -FilePath '$exe' -ArgumentList '--remote-debugging-port=9222', \"--user-data-dir=\$env:LOCALAPPDATA\chrome-cdp-profile\"" >/dev/null 2>&1 \
+      && echo 'chrome-debug: Chrome started with CDP on 9222 (dedicated chrome-cdp-profile)'
+  }
 fi
 
