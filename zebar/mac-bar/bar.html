@@ -114,7 +114,10 @@
       let lastJumpMap = null;
 
       function writeJumpMap(glazewm) {
-        if (!glazewm?.displayedWorkspace?.hasFocus) return;
+        if (!glazewm?.displayedWorkspace?.hasFocus) {
+          lastJumpMap = null;
+          return;
+        }
         const handles = workspaceWindows(glazewm.displayedWorkspace)
           .slice(0, JUMP_HINTS.length)
           .map(w => w.handle);
