@@ -59,6 +59,17 @@ for letter in $letters; do
   linked+=("${letter^^}")
 done
 
+profile_raw="$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
+if [[ -n "$profile_raw" ]]; then
+  profile_wsl="$(wslpath "$profile_raw")"
+  ln -sfn "$profile_wsl" "$DRIVES_DIR/UserProfile"
+  ln -sfn "$profile_wsl/Downloads" "$DRIVES_DIR/Downloads"
+  ln -sfn "$profile_wsl/AppData" "$DRIVES_DIR/AppData"
+  linked+=(UserProfile Downloads AppData)
+else
+  echo "link-drives: could not resolve %USERPROFILE% — profile links skipped" >&2
+fi
+
 # Prune links for drives Windows no longer has. Only touch single-letter
 # symlinks pointing into /mnt — anything else in the dir is user-owned.
 for link in "$DRIVES_DIR"/*; do
