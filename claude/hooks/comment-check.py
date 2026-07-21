@@ -17,6 +17,9 @@ COMMENT_LEADERS = {
     '.c': '//', '.h': '//', '.cpp': '//', '.hpp': '//', '.cs': '//',
     '.go': '//', '.rs': '//', '.java': '//', '.kt': '//', '.swift': '//',
     '.vbs': "'",
+    '.html': ('//', '<!--'), '.htm': ('//', '<!--'), '.xml': '<!--',
+    '.vue': ('//', '<!--'), '.svelte': ('//', '<!--'),
+    '.css': '/*', '.scss': ('//', '/*'),
 }
 
 CHECKLIST = """\
@@ -45,9 +48,11 @@ def main():
     tool = data.get('tool_name', '')
     ti = data.get('tool_input') or {}
     path = ti.get('file_path') or ''
-    leader = COMMENT_LEADERS.get(os.path.splitext(path)[1].lower())
-    if not leader:
+    leaders = COMMENT_LEADERS.get(os.path.splitext(path)[1].lower())
+    if not leaders:
         return
+    if isinstance(leaders, str):
+        leaders = (leaders,)
     if tool == 'Edit':
         new_text = ti.get('new_string') or ''
         old_lines = set((ti.get('old_string') or '').splitlines())
@@ -56,7 +61,8 @@ def main():
         old_lines = set()
     else:
         return
-    pat = re.compile(r'^\s*' + re.escape(leader) + r'(?!!)')
+    alt = '|'.join(re.escape(l) for l in leaders)
+    pat = re.compile(r'^\s*(?:' + alt + r')(?!!)')
     added = [ln.strip() for ln in new_text.splitlines()
              if ln not in old_lines and pat.match(ln)]
     if not added:
