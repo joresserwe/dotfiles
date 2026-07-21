@@ -12,13 +12,16 @@
         "scrollbarState": "hidden",
         "suppressApplicationTitle": true,
         "tabTitle": "Terminal",
-        "opacity": 70,
+        "opacity": 80,
         "icon": null
     },
     "defaults": {
-        "opacity": 70,
+        "opacity": 80,
         "background": "#000000",
-        "useAcrylic": true,
+        "useAcrylic": false,
+        "unfocusedAppearance": {
+            "colorScheme": "Catppuccin Mocha Dim"
+        },
         "font": {
             "face": "0xProto Nerd Font, Sarasa Mono K, codicon",
             "size": 12.5
@@ -30,27 +33,52 @@
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+f13" },
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+shift+f13" }
     ],
-    "scheme": {
-        "name": "Catppuccin Mocha",
-        "background": "#000000",
-        "foreground": "#CDD6F4",
-        "cursorColor": "#F5E0DC",
-        "selectionBackground": "#585B70",
-        "black": "#45475A",
-        "red": "#F38BA8",
-        "green": "#A6E3A1",
-        "yellow": "#F9E2AF",
-        "blue": "#89B4FA",
-        "purple": "#F5C2E7",
-        "cyan": "#94E2D5",
-        "white": "#BAC2DE",
-        "brightBlack": "#585B70",
-        "brightRed": "#F38BA8",
-        "brightGreen": "#A6E3A1",
-        "brightYellow": "#F9E2AF",
-        "brightBlue": "#89B4FA",
-        "brightPurple": "#F5C2E7",
-        "brightCyan": "#94E2D5",
-        "brightWhite": "#A6ADC8"
-    }
+    "schemes": [
+        {
+            "name": "Catppuccin Mocha",
+            "background": "#000000",
+            "foreground": "#CDD6F4",
+            "cursorColor": "#F5E0DC",
+            "selectionBackground": "#585B70",
+            "black": "#45475A",
+            "red": "#F38BA8",
+            "green": "#A6E3A1",
+            "yellow": "#F9E2AF",
+            "blue": "#89B4FA",
+            "purple": "#F5C2E7",
+            "cyan": "#94E2D5",
+            "white": "#BAC2DE",
+            "brightBlack": "#585B70",
+            "brightRed": "#F38BA8",
+            "brightGreen": "#A6E3A1",
+            "brightYellow": "#F9E2AF",
+            "brightBlue": "#89B4FA",
+            "brightPurple": "#F5C2E7",
+            "brightCyan": "#94E2D5",
+            "brightWhite": "#A6ADC8"
+        },
+        {
+            "name": "Catppuccin Mocha Dim",
+            "background": "#000000",
+            "foreground": "#5C606E",
+            "cursorColor": "#6E6563",
+            "selectionBackground": "#282932",
+            "black": "#1F2028",
+            "red": "#6D3F4C",
+            "green": "#4B6648",
+            "yellow": "#70664F",
+            "blue": "#3E5170",
+            "purple": "#6E5768",
+            "cyan": "#436660",
+            "white": "#545764",
+            "brightBlack": "#282932",
+            "brightRed": "#6D3F4C",
+            "brightGreen": "#4B6648",
+            "brightYellow": "#70664F",
+            "brightBlue": "#3E5170",
+            "brightPurple": "#6E5768",
+            "brightCyan": "#436660",
+            "brightWhite": "#4B4E5A"
+        }
+    ]
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inject the dotfiles-managed profile and color scheme into a live Windows
+"""Inject the dotfiles-managed profile and color schemes into a live Windows
 Terminal settings.json, replacing prior copies by guid/name. Everything else
 in the file (user-managed profiles, global settings) is left untouched."""
 import json
@@ -21,9 +21,11 @@ if "defaults" in frag:
     settings["profiles"].setdefault("defaults", {}).update(frag["defaults"])
 
 schemes = settings.setdefault("schemes", [])
-scheme = frag["scheme"]
-schemes[:] = [s for s in schemes if s.get("name") != scheme["name"]]
-schemes.append(scheme)
+
+frag_scheme_names = {s["name"] for s in frag["schemes"]}
+schemes[:] = [s for s in schemes if s.get("name") not in frag_scheme_names]
+
+schemes.extend(frag["schemes"])
 
 actions = settings.setdefault("actions", [])
 frag_keys = {a["keys"] for a in frag.get("actions", [])}
@@ -39,4 +41,5 @@ if isinstance(keybindings, list):
 
 with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(settings, f, indent=4, ensure_ascii=False)
-print(f"applied profile '{profile['name']}' and scheme '{scheme['name']}'")
+scheme_names = ", ".join(s["name"] for s in frag["schemes"])
+print(f"applied profile '{profile['name']}' and schemes: {scheme_names}")
