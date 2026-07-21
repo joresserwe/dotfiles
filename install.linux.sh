@@ -867,6 +867,7 @@ if command -v ya >/dev/null 2>&1; then
     yazi-rs/plugins:toggle-pane \
     yazi-rs/plugins:smart-enter \
     Reledia/glow \
+    h-hg/yamb \
     yazi-rs/flavors:catppuccin-mocha; do
     ya pkg add "$pkg" || log_skip "ya pkg add $pkg (already installed or failed)"
   done

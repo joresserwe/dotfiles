@@ -234,6 +234,7 @@ for pkg in \
 	yazi-rs/plugins:toggle-pane \
 	yazi-rs/plugins:smart-enter \
 	Reledia/glow \
+	h-hg/yamb \
 	yazi-rs/flavors:catppuccin-mocha; do
 	ya pkg add "$pkg" || true # already-installed exits nonzero; keep going
 done
