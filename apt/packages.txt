@@ -1,3 +1,4 @@
+bubblewrap
 build-essential
 ca-certificates
 curl
