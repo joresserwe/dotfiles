@@ -10,4 +10,6 @@ if [[ "$target" == *://* ]]; then
 else
   win="$(wslpath -w "$(realpath "$target")")"
 fi
-exec cmd.exe /c start "" "$win" 2>/dev/null
+# cmd.exe by absolute path: launcher-spawned sessions (e.g. Flow -> wt ->
+# wsl -e) inherit a stripped Windows PATH, so bare cmd.exe resolves to nothing.
+exec /mnt/c/Windows/System32/cmd.exe /c start "" "$win" 2>/dev/null

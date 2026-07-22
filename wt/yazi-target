@@ -7,4 +7,9 @@ tmpfile="$(wslpath -u "$win_temp")/open-yazi-target.txt"
 [ -f "$tmpfile" ] || exit 1
 dir="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
 cd "$dir" || exit 1
+# The wt.exe this session rides in inherits a stripped Windows PATH, so
+# appendWindowsPath contributes no system dirs; restore them for interop
+# tools resolved by name (cmd.exe, clip.exe, explorer.exe).
+PATH="$PATH:/mnt/c/Windows/System32:/mnt/c/Windows"
+export PATH
 exec /usr/bin/zsh -lic yazi
