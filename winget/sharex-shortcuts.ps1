@@ -1,4 +1,4 @@
-# Start Menu is what launcher search (Raycast, Start, Win+R) indexes — the
+# Start Menu is what launcher search (Flow Launcher, Start, Win+R) indexes — the
 # .lnk files must live there, not in an arbitrary folder, for the capture
 # modes to be launchable by name without launcher-side configuration.
 

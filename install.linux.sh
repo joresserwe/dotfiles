@@ -35,8 +35,8 @@ for arg in "$@"; do
     --full)  DOTFILES_PROFILE_ARG="full" ;;
     *)
       echo "Usage: install.linux.sh [--light|--full]" >&2
-      echo "  --light  lightweight Windows-side profile: Flow Launcher, reduced zebar effects" >&2
-      echo "  --full   full profile: Raycast, full zebar effects (default on first run)" >&2
+      echo "  --light  lightweight Windows-side profile: reduced zebar effects" >&2
+      echo "  --full   full profile: full zebar effects (default on first run)" >&2
       echo "Without a flag, the profile persisted in $DOTFILES_PROFILE_FILE is reused." >&2
       exit 1
       ;;
@@ -47,14 +47,6 @@ case "$DOTFILES_PROFILE_PREV" in
   light|full) ;;
   *) DOTFILES_PROFILE_PREV="" ;;
 esac
-# Raycast burns ~1 CPU core on GPU-less RDP hosts (observed 2026-07-18,
-# beta 0.69, not config-fixable) — those hosts run Flow Launcher, so its
-# presence must win over the plain `full` default.
-if [ -z "$DOTFILES_PROFILE_ARG" ] && [ -z "$DOTFILES_PROFILE_PREV" ] \
-   && command -v winget.exe >/dev/null 2>&1 \
-   && winget.exe list --accept-source-agreements </dev/null 2>/dev/null | tr -d '\0' | grep -q 'Flow-Launcher.Flow-Launcher'; then
-  DOTFILES_PROFILE_PREV="light"
-fi
 DOTFILES_PROFILE="${DOTFILES_PROFILE_ARG:-${DOTFILES_PROFILE_PREV:-full}}"
 mkdir -p "${DOTFILES_PROFILE_FILE%/*}"
 printf '%s' "$DOTFILES_PROFILE" > "$DOTFILES_PROFILE_FILE"
@@ -336,11 +328,6 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     # Parse "<id> [source]". Source defaults to winget.
     read -r pkg src <<<"$line"
     src="${src:-winget}"
-    if [[ "$pkg" == "9PFXXSHC64H3" && "$DOTFILES_PROFILE" == "light" ]] \
-       || [[ "$pkg" == "Flow-Launcher.Flow-Launcher" && "$DOTFILES_PROFILE" == "full" ]]; then
-      log_skip "winget: $pkg (profile=$DOTFILES_PROFILE)"
-      continue
-    fi
     # Match installed packages by scanning full list: `winget list --id <id>`
     # doesn't reliably match msstore-style IDs (e.g. 9PFXXSHC64H3).
     # </dev/null on every winget.exe call: interop lets it drain our stdin,
@@ -359,20 +346,6 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       fi
     fi
   done < "$DOTFILES_PATH/winget/packages.txt"
-
-  if [[ -n "$DOTFILES_PROFILE_PREV" && "$DOTFILES_PROFILE_PREV" != "$DOTFILES_PROFILE" ]]; then
-    if [[ "$DOTFILES_PROFILE" == "light" ]]; then
-      counterpart_pkg="9PFXXSHC64H3"
-    else
-      counterpart_pkg="Flow-Launcher.Flow-Launcher"
-    fi
-    log_step "winget: profile switched ($DOTFILES_PROFILE_PREV -> $DOTFILES_PROFILE) — uninstalling $counterpart_pkg"
-    if winget.exe uninstall --id "$counterpart_pkg" --accept-source-agreements </dev/null >/dev/null 2>&1; then
-      log_done "winget: uninstalled $counterpart_pkg"
-    else
-      log_skip "winget: uninstall $counterpart_pkg (not installed or failed — non-fatal)"
-    fi
-  fi
 
   log_step "ShareX: Start Menu capture shortcuts"
   powershell.exe -NoProfile -ExecutionPolicy Bypass \
@@ -438,7 +411,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
 
     powershell.exe -NoProfile -ExecutionPolicy Bypass \
       -File "$(wslpath -w "$DOTFILES_PATH/winget/wsl-terminal-shortcut.ps1")" >/dev/null 2>&1 || true
-    log_done "Start Menu: WSL-Terminal (Raycast-indexable -> wt -f -p Terminal)"
+    log_done "Start Menu: WSL-Terminal (launcher-indexable -> wt -f -p Terminal)"
 
     # Zero-flash launcher for every powershell-based logon task — see
     # winget/run-hidden.vbs. Console-subsystem task actions flash a window
