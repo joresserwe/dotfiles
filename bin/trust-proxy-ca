@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# trust-proxy-ca [-y] [url] — fix curl exit 60 (peer certificate verification
+# failure) caused by a TLS-intercepting proxy: extract the self-signed root
+# the proxy presents for url (default https://formulae.brew.sh), confirm it
+# with the user, and register it system-wide via update-ca-certificates.
+set -euo pipefail
+
+if ! command -v update-ca-certificates >/dev/null 2>&1; then
+  echo "ERROR: update-ca-certificates not found — this script targets Debian/Ubuntu." >&2
+  exit 1
+fi
+
+ASSUME_YES=0
+URL="https://formulae.brew.sh"
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) ASSUME_YES=1 ;;
+    https://*) URL="$arg" ;;
+    *) echo "Usage: trust-proxy-ca [-y] [https://host[:port][/path]]" >&2; exit 1 ;;
+  esac
+done
+
+host="${URL#https://}"
+host="${host%%/*}"
+port=443
+case "$host" in
+  *:*) port="${host##*:}"; host="${host%%:*}" ;;
+esac
+
+rc=0
+curl -fsS --max-time 15 -o /dev/null "$URL" || rc=$?
+if [ "$rc" -eq 0 ]; then
+  echo "OK: $URL already verifies — nothing to do."
+  exit 0
+elif [ "$rc" -ne 60 ]; then
+  echo "ERROR: curl exit $rc for $URL is not a certificate-verification failure (60) — not a job for this script." >&2
+  exit "$rc"
+fi
+
+workdir="$(mktemp -d)"
+trap 'rm -rf "$workdir"' EXIT
+
+openssl s_client -connect "$host:$port" -servername "$host" -showcerts </dev/null 2>/dev/null \
+  | awk -v dir="$workdir" '/BEGIN CERTIFICATE/{i++} i{print > (dir "/chain-" i ".pem")}'
+
+last="$(find "$workdir" -name 'chain-*.pem' | sort -V | tail -1)"
+if [ -z "$last" ]; then
+  echo "ERROR: could not retrieve a certificate chain from $host:$port." >&2
+  exit 1
+fi
+
+subject="$(openssl x509 -in "$last" -noout -subject)"
+issuer="$(openssl x509 -in "$last" -noout -issuer)"
+if [ "${subject#subject=}" != "${issuer#issuer=}" ]; then
+  echo "ERROR: topmost certificate presented for $host is not self-signed:" >&2
+  printf '  %s\n  %s\n' "$subject" "$issuer" >&2
+  echo "The proxy did not send its root CA — obtain the root certificate manually and place it in /usr/local/share/ca-certificates/ as a .crt, then run: sudo update-ca-certificates" >&2
+  exit 1
+fi
+
+echo "Untrusted self-signed root presented for $host:"
+openssl x509 -in "$last" -noout -subject -issuer -enddate -fingerprint -sha256 | sed 's/^/  /'
+
+if [ "$ASSUME_YES" -ne 1 ]; then
+  if [ ! -t 0 ]; then
+    echo "ERROR: stdin is not a TTY — re-run with -y to skip confirmation." >&2
+    exit 1
+  fi
+  printf 'Trust this certificate system-wide? [y/N] '
+  read -r answer
+  case "$answer" in
+    y|Y|yes|YES) ;;
+    *) echo "Aborted — nothing installed."; exit 1 ;;
+  esac
+fi
+
+# update-ca-certificates only picks up PEM files with a .crt extension here.
+hash="$(openssl x509 -in "$last" -noout -subject_hash)"
+dest="/usr/local/share/ca-certificates/proxy-root-$hash.crt"
+sudo install -m 0644 "$last" "$dest"
+sudo update-ca-certificates
+
+rc=0
+curl -fsS --max-time 15 -o /dev/null "$URL" || rc=$?
+if [ "$rc" -eq 0 ]; then
+  echo "OK: $URL now verifies. Installed: $dest"
+else
+  echo "ERROR: $URL still fails (curl exit $rc) after installing $dest." >&2
+  echo "Remove it with: sudo rm $dest && sudo update-ca-certificates" >&2
+  exit 1
+fi

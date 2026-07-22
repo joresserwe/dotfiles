@@ -75,6 +75,18 @@ sudo apt-get update -y
 # shellcheck disable=SC2046
 sudo apt-get install -y $(grep -vE '^\s*#|^\s*$' "$DOTFILES_PATH/apt/packages.txt")
 
+log_step "TLS preflight: probe https://formulae.brew.sh"
+tls_rc=0
+curl -fsS --max-time 15 -o /dev/null https://formulae.brew.sh || tls_rc=$?
+if [ "$tls_rc" -eq 0 ]; then
+  log_skip "HTTPS certificate trust OK"
+elif [ "$tls_rc" -eq 60 ]; then
+  "$DOTFILES_PATH/bin/trust-proxy-ca" https://formulae.brew.sh
+else
+  echo "ERROR: https://formulae.brew.sh unreachable (curl exit $tls_rc) — check network/DNS/proxy." >&2
+  exit "$tls_rc"
+fi
+
 if ! command -v brew >/dev/null 2>&1 && [ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
   log_step "Installing Homebrew on Linux"
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -252,6 +264,8 @@ create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/paste.ps1" "$XDG_CONFIG_
 
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
+create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
+create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 
 # xdg-open shim (WSL-only): wslu/wslview is gone from Ubuntu 26.04 archives,
 # so yazi's `open` opener routes through cmd.exe to the Windows default app.
