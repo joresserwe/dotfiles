@@ -1,6 +1,3 @@
-# Generates live config.yaml from WSL-side template based on current monitor
-# count. Writes monitor_count × 5 workspaces (capped at 3 monitors) into the
-# BEGIN/END generated blocks, leaves the rest of the template untouched.
 # Called from the Hyper+C reload chain; triggers wm-reload-config itself so
 # reload sees the fresh file (glazewm's shell-exec is fire-and-forget, so
 # chaining reload in config.yaml would race the file write).
@@ -33,40 +30,34 @@ if (-not (Test-Path -LiteralPath $template)) {
     exit 1
 }
 
-# Detect monitor count. Prefer glazewm IPC (same source-of-truth as bind
-# indexes), but fall back to .NET Screen API when glazewm isn't up yet
-# (first boot, post-crash) — otherwise the generator writes a 1-monitor
-# config and glazewm fails with "No workspace config available to activate
-# workspace." on the unbound monitor.
-$n = 0
-try {
-    $res = & $glazewm query monitors 2>$null | ConvertFrom-Json
-    if ($res.success) { $n = $res.data.monitors.Count }
-} catch { }
-if ($n -lt 1) {
-    try {
-        Add-Type -AssemblyName System.Windows.Forms
-        $n = [System.Windows.Forms.Screen]::AllScreens.Count
-    } catch { $n = 1 }
-}
-$n = [Math]::Min([Math]::Max($n, 1), $maxMons)
-$totalWs = $n * $wsPerMon
+# Spare inactive workspace configs are load-bearing: a monitor that appears
+# while every config is already active stays workspace-less (observed
+# 2026-07-22: RDP reconnect against a live config sized to 1 monitor left
+# the second monitor empty; reload alone never repaired it).
+$totalWs = $maxMons * $wsPerMon
 
 # Build the three generated blocks
 $wsBlock    = for ($w = 1; $w -le $totalWs; $w++) {
     $mon = [Math]::Floor(($w - 1) / $wsPerMon)
-    "  - { name: '$w', bind_to_monitor: $mon, keep_alive: true }"
+    "  - { name: '$w', bind_to_monitor: $mon }"
 }
-$boundWs    = [Math]::Min($totalWs, $maxBound)
-$focusBlock = for ($w = 1; $w -le $boundWs; $w++) {
-    $key = if ($w -eq 10) { '0' } else { "$w" }
+$focusBlock = for ($w = 1; $w -le $totalWs; $w++) {
     "  - commands: ['focus --workspace $w']"
-    "    bindings: ['f13+$key']"
+    if ($w -le $maxBound) {
+        $key = if ($w -eq 10) { '0' } else { "$w" }
+        "    bindings: ['f13+$key', 'lwin+$key']"
+    } else {
+        "    bindings: ['ctrl+alt+f13+$($w - $maxBound)']"
+    }
 }
-$moveBlock  = for ($w = 1; $w -le $boundWs; $w++) {
-    $key = if ($w -eq 10) { '0' } else { "$w" }
+$moveBlock  = for ($w = 1; $w -le $totalWs; $w++) {
     "  - commands: ['move --workspace $w', 'focus --workspace $w', *recenter]"
-    "    bindings: ['f13+shift+$key']"
+    if ($w -le $maxBound) {
+        $key = if ($w -eq 10) { '0' } else { "$w" }
+        "    bindings: ['f13+shift+$key', 'lwin+shift+$key']"
+    } else {
+        "    bindings: ['ctrl+alt+f13+shift+$($w - $maxBound)']"
+    }
 }
 
 function Replace-Between($lines, $beginPattern, $endPattern, $newBlock) {
