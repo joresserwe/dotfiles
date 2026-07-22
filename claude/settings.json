@@ -134,7 +134,7 @@
     "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "chrome-devtools-mcp@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -145,8 +145,9 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
+  "prefersReducedMotion": true,
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "switchModelsOnFlag": false
