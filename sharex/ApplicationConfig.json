@@ -259,7 +259,7 @@
           "CutOutBackgroundColor": "Transparent"
         },
         "LastRegionTool": "RegionRectangle",
-        "LastAnnotationTool": "DrawingRectangle",
+        "LastAnnotationTool": "ToolSelect",
         "LastEditorTool": "DrawingRectangle",
         "ImageEditorStartMode": "AutoSize",
         "ImageEditorWindowState": {
