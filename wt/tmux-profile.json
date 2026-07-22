@@ -12,11 +12,11 @@
         "scrollbarState": "hidden",
         "suppressApplicationTitle": true,
         "tabTitle": "Terminal",
-        "opacity": 80,
+        "opacity": 85,
         "icon": null
     },
     "defaults": {
-        "opacity": 80,
+        "opacity": 85,
         "background": "#000000",
         "useAcrylic": false,
         "unfocusedAppearance": {
