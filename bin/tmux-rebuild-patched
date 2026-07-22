@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LIMIT="${FORMAT_TIME_LIMIT_MS:-10000}"
+VERSION="${1:-$(brew list --versions tmux 2>/dev/null | awk '{print $2}' | sed 's/_.*//')}"
+[ -n "$VERSION" ] || { echo "usage: tmux-rebuild-patched [version]" >&2; exit 1; }
+
+for dep in byacc pkgconf; do
+  command -v "$dep" >/dev/null 2>&1 || brew install "$dep"
+done
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+cd "$work"
+
+echo "fetching tmux ${VERSION} release tarball"
+curl -fsSL -o tmux.tar.gz "https://github.com/tmux/tmux/releases/download/${VERSION}/tmux-${VERSION}.tar.gz"
+tar xzf tmux.tar.gz
+cd "tmux-${VERSION}"
+
+grep -Eq '#define FORMAT_TIME_LIMIT [0-9]+' format.c || {
+  echo "FORMAT_TIME_LIMIT not found in format.c — upstream changed, patch manually" >&2
+  exit 1
+}
+sed -i -E "s/#define FORMAT_TIME_LIMIT [0-9]+/#define FORMAT_TIME_LIMIT ${LIMIT}/" format.c
+
+brew_prefix="$(brew --prefix)"
+rpath=""
+for lib in libevent ncurses utf8proc; do
+  rpath="${rpath} -Wl,-rpath,${brew_prefix}/opt/${lib}/lib"
+done
+
+# The git tree needs autogen/autoconf to build; release tarballs ship configure.
+echo "building"
+YACC=byacc LDFLAGS="$rpath" ./configure --enable-utf8proc --prefix="$HOME/.local" \
+  >configure.log 2>&1 || { tail -n 30 configure.log >&2; exit 1; }
+make -j"$(nproc)" >build.log 2>&1 || { tail -n 30 build.log >&2; exit 1; }
+
+install -m 755 tmux "$HOME/.local/bin/tmux"
+"$HOME/.local/bin/tmux" -V
+echo "installed to ~/.local/bin/tmux (shadows brew tmux; status expansion time limit ${LIMIT}ms)"
+echo "apply with: tmux kill-server, then reopen the terminal profile"
