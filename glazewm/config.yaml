@@ -18,6 +18,7 @@ general:
     # bleeds onto the neighboring monitor). Subscribes to focus_changed and
     # dies with glazewm. See tacky-borders/state-border.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1"'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\monitor-watch.ps1"'
     # The space-containing path must be bare, not quoted: glazewm's shell-exec
     # quote parser looks for a 3rd `"` (match_indices.nth(2)), so a quoted
     # 2-quote path errors with "command doesn't have an ending `"`". A bare path

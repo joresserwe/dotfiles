@@ -80,6 +80,13 @@ SetTimer(CheckReloadSignal, 500)
 ; stays as a safety net — if this script dies the taskbar falls back to
 ; auto-hide rather than always-visible.
 HideShellTaskbars() {
+    ; Explorer's live auto-hide state sticks at OFF across RDP reconnects
+    ; (StuckRects3 is read only at shell startup), and a hidden taskbar in
+    ; that state keeps its work-area reservation — hence the ABM_SETSTATE.
+    abd := Buffer(A_PtrSize = 8 ? 48 : 36, 0)
+    NumPut("UInt", abd.Size, abd)
+    NumPut("Int", 1, abd, A_PtrSize = 8 ? 40 : 32)   ; lParam = ABS_AUTOHIDE
+    DllCall("shell32\SHAppBarMessage", "UInt", 0xA, "Ptr", abd)  ; ABM_SETSTATE
     for cls in ["Shell_TrayWnd", "Shell_SecondaryTrayWnd"] {
         for hwnd in WinGetList("ahk_class " cls)
             DllCall("ShowWindow", "Ptr", hwnd, "Int", 0)  ; SW_HIDE
@@ -110,6 +117,26 @@ TaskbarShowHook(hHook, event, hwnd, idObject, idChild, idThread, dwmsTime) {
 DllCall("SetWinEventHook", "UInt", 0x8002, "UInt", 0x8002, "Ptr", 0,
     "Ptr", CallbackCreate(TaskbarShowHook, "F"), "UInt", 0, "UInt", 0,
     "UInt", 0)  ; WINEVENT_OUTOFCONTEXT
+
+; Zebar's bar window survives fullscreen<->windowed resolution changes
+; but stays invisible after a session disconnect -> reconnect even though
+; the zebar process is alive (observed 2026-07-22: reconnect 23:12:19,
+; bar dead until a manual reload at 23:13:59). Reconnects also emit
+; monitor add/remove in bursts (see glazewm/monitor-watch.ps1), so the
+; restart runs on a one-shot timer after the layout settles.
+DllCall("wtsapi32\WTSRegisterSessionNotification", "Ptr", A_ScriptHwnd,
+    "UInt", 0)  ; NOTIFY_FOR_THIS_SESSION
+OnMessage(0x02B1, SessionChanged)  ; WM_WTSSESSION_CHANGE
+SessionChanged(wParam, lParam, msg, hwnd) {
+    if (wParam = 0x3)  ; WTS_REMOTE_CONNECT
+        SetTimer(ReviveZebar, -3000)
+}
+ReviveZebar() {
+    mirror := EnvGet("DOTFILES_WIN")
+    if (mirror = "")
+        mirror := EnvGet("USERPROFILE") "\.dotfiles"
+    Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' mirror '\glazewm\reload-zebar.ps1"', , 'Hide')
+}
 
 ; Suppress Start Menu on lone Win press for keys the kernel remap does NOT
 ; cover: RWin is never remapped, and LWin only reaches here on machines
