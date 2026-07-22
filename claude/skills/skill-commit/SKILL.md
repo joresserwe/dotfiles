@@ -24,26 +24,18 @@ Choose the verb that best describes the **nature** of the change, not just "what
 
 | Verb | When to use |
 |---|---|
-| Add | New code, tests, examples, documents |
-| Implement | Significant new functionality (class, module, feature) |
-| Remove | Deleting unnecessary code or files |
-| Use | Switching to a specific tool, library, or approach |
-| Simplify | Reducing complexity in existing code |
-| Fix | Correcting broken or incorrect behavior |
-| Refactor | Restructuring code without changing behavior |
-| Make | Changing existing behavior |
-| Allow | Enabling a feature or capability |
-| Improve | Performance, compatibility, accessibility enhancements |
+| Add | New code, functionality, tests, documents |
+| Fix | Correcting broken or incorrect behavior, typos, naming |
 | Update | Version bumps, dependency updates, resource revisions |
-| Correct | Typos, naming, grammatical fixes |
+| Remove | Deleting unnecessary code or files |
+| Make | Changing existing behavior |
+| Use | Switching to a specific tool, library, or approach |
+| Prevent | Blocking undesired behavior |
+| Set | Minor value changes (config values, flags) |
 | Ensure | Guaranteeing a certain behavior or state |
-| Prevent | Blocking undesired actions or behaviors |
-| Avoid | Circumventing or working around issues |
+| Refactor | Restructuring or simplifying code without changing behavior |
 | Move | Relocating code within the project |
 | Rename | Changing names of variables, files, functions |
-| Verify | Adding validation or condition checks |
-| Set | Minor value changes (config values, flags) |
-| Pass | Parameter or argument handling changes |
 
 If none fit, pick the closest. Off-table verbs require explicit justification — state which table rows you considered and why each failed. "Reads naturally" is not sufficient reason.
 
