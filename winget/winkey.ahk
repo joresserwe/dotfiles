@@ -398,8 +398,7 @@ global curActiveHwnd := 0, prevActiveHwnd := 0
 ; zebar's bar shows a hint letter next to each window on the focused
 ; workspace and writes their hwnds in the same order to
 ; %TEMP%\glazewm-jump-map.txt (bar.html JUMP_HINTS — keep the letter set in
-; sync with the combos below). Letters run asdf → zxcv → qwer minus combos
-; already taken above (d/f/z). Resident handling instead of glazewm
+; sync with the combos below). Resident handling instead of glazewm
 ; shell-exec: the per-press powershell cold start queued up and fired
 ; seconds late. WinActivate restores minimized targets on its own.
 JumpToWindow(idx) {
@@ -428,7 +427,8 @@ JumpToWindow(idx) {
 ~F13 & q::JumpToWindow(6)
 ~F13 & w::JumpToWindow(7)
 ~F13 & e::JumpToWindow(8)
-~F13 & r::JumpToWindow(9)
+~F13 & g::JumpToWindow(9)
+~F13 & r::(MarkHotkey("RunDlg"), ComObject("Shell.Application").FileRun())
 
 ; --- IME state monitor for Zebar --------------------------------------
 ; Writes "KO" or "EN" to zebar/mac-bar/ime-state.txt whenever the foreground
