@@ -15,6 +15,7 @@ Get-ChildItem $dir -Filter *.lnk -ErrorAction SilentlyContinue | Remove-Item -Fo
 $ws = New-Object -ComObject WScript.Shell
 $commands = @{
   'Capture Region'       = '-RectangleRegion'
+  'Capture OCR'          = '-OCR'
   'Capture Fullscreen'   = '-PrintScreen'
   'Capture Window'       = '-ActiveWindow'
   'Screen Recorder'      = '-ScreenRecorder'
