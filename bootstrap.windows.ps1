@@ -65,7 +65,9 @@ if (Get-AppxPackage MicrosoftCorporationII.WindowsSubsystemForLinux) {
   Log-Skip 'WSL Store package'
 } else {
   Log-Step 'WSL Store package: installing via winget'
-  winget install --id Microsoft.WSL --accept-source-agreements --accept-package-agreements --disable-interactivity
+  # Pinned to the winget source: an msstore source lookup failure aborts the
+  # whole install (exit 94) on Store-blocked networks.
+  winget install --id Microsoft.WSL -e --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
   if ($LASTEXITCODE -ne 0) { throw "winget install Microsoft.WSL failed (exit $LASTEXITCODE)" }
   Log-Done 'WSL Store package'
 }
@@ -158,7 +160,12 @@ if (Test-FontInstalled 'Sarasa Mono K') {
     Select-Object -First 1
   if (-not $asset) { throw 'Sarasa-Gothic latest release has no SarasaMonoK-TTF asset' }
   Invoke-WebRequest $asset.browser_download_url -OutFile "$tmp\SarasaMonoK.7z"
-  Invoke-WebRequest 'https://www.7-zip.org/a/7zr.exe' -OutFile "$tmp\7zr.exe"
+  # 7-zip.org fails behind some TLS-inspecting proxies.
+  try {
+    Invoke-WebRequest 'https://github.com/ip7z/7zip/releases/latest/download/7zr.exe' -OutFile "$tmp\7zr.exe"
+  } catch {
+    Invoke-WebRequest 'https://www.7-zip.org/a/7zr.exe' -OutFile "$tmp\7zr.exe"
+  }
   & "$tmp\7zr.exe" x "$tmp\SarasaMonoK.7z" -o"$tmp\sarasa" -y | Out-Null
   if ($LASTEXITCODE -ne 0) { throw "7zr extraction failed (exit $LASTEXITCODE)" }
   Get-ChildItem "$tmp\sarasa" -Filter *.ttf | ForEach-Object { Install-Ttf $_ }
