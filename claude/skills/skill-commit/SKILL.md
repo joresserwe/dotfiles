@@ -30,7 +30,7 @@ Choose the verb that best describes the **nature** of the change, not just "what
 | Remove | Deleting unnecessary code or files |
 | Make | Changing existing behavior |
 | Use | Switching to a specific tool, library, or approach |
-| Prevent | Blocking undesired behavior |
+| Prevent | Blocking or working around undesired behavior |
 | Set | Minor value changes (config values, flags) |
 | Ensure | Guaranteeing a certain behavior or state |
 | Refactor | Restructuring or simplifying code without changing behavior |
