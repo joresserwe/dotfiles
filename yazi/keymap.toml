@@ -112,6 +112,7 @@ keymap = [
 	{ on = [ "c", "d" ], run = "copy dirname",          desc = "Copy the directory path" },
 	{ on = [ "c", "f" ], run = "copy filename",         desc = "Copy the filename" },
 	{ on = [ "c", "n" ], run = "copy name_without_ext", desc = "Copy the filename without extension" },
+	{ on = [ "c", "w" ], run = "shell 'for f in \"$@\"; do wslpath -w \"$f\"; done | head -c -1 | /mnt/c/Windows/System32/clip.exe'", desc = "Copy the Windows path" },
 
 	# Filter
 	{ on = "f", run = "filter --smart", desc = "Filter files" },

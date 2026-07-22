@@ -54,26 +54,33 @@ play = [
 	{ run = 'mpv --force-window %*', orphan = true, for = "windows" },
 	{ run = '''mediainfo "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show media info", for = "unix" },
 ]
+pager = [
+	{ run = 'bat --paging=always "$@"', block = true, desc = "bat", for = "unix" },
+]
+winopen = [
+	{ run = '/mnt/c/Windows/System32/OpenWith.exe "$(wslpath -w "$1")"', orphan = true, desc = "Open with… (Windows)", for = "linux" },
+]
 
 [open]
 rules = [
 	# Folder
 	{ url = "*/", use = [ "edit", "open", "reveal" ] },
+	{ mime = "text/html", use = [ "edit", "open", "winopen", "reveal" ] },
 	# Text
-	{ mime = "text/*", use = [ "edit", "reveal" ] },
+	{ mime = "text/*", use = [ "edit", "pager", "winopen", "open", "reveal" ] },
 	# Image
-	{ mime = "image/*", use = [ "open", "reveal" ] },
+	{ mime = "image/*", use = [ "open", "winopen", "reveal" ] },
 	# Media
-	{ mime = "{audio,video}/*", use = [ "play", "reveal" ] },
+	{ mime = "{audio,video}/*", use = [ "play", "winopen", "reveal" ] },
 	# Archive
-	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "reveal" ] },
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "winopen", "reveal" ] },
 	# JSON
-	{ mime = "application/{json,ndjson}", use = [ "edit", "reveal" ] },
-	{ mime = "*/javascript", use = [ "edit", "reveal" ] },
+	{ mime = "application/{json,ndjson}", use = [ "edit", "pager", "winopen", "open", "reveal" ] },
+	{ mime = "*/javascript", use = [ "edit", "pager", "winopen", "open", "reveal" ] },
 	# Empty file
 	{ mime = "inode/empty", use = [ "edit", "reveal" ] },
 	# Fallback
-	{ url = "*", use = [ "open", "reveal" ] },
+	{ url = "*", use = [ "open", "winopen", "reveal" ] },
 ]
 
 [tasks]
