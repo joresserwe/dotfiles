@@ -1,14 +1,8 @@
 # Windows registry tweaks applied from WSL via install.linux.sh.
 # Idempotent — safe to re-run.
 
-# Block Win+L. Handled by winlogon so AutoHotkey cannot intercept it.
-# Side effect: removes "Lock" from Ctrl+Alt+Del and the Start menu user tile.
-$policiesSystem = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
-if (-not (Test-Path $policiesSystem)) {
-  New-Item -Path $policiesSystem -Force | Out-Null
-}
-Set-ItemProperty -Path $policiesSystem `
-  -Name 'DisableLockWorkstation' -Value 1 -Type DWord -Force
+Remove-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' `
+  -Name 'DisableLockWorkstation' -ErrorAction SilentlyContinue
 
 # Block Explorer-handled Win+<key> shortcuts. REG_SZ, one char per key.
 # D = Show Desktop, U = Accessibility, H = Voice typing. Windows processes these before AHK's
@@ -78,7 +72,8 @@ if ($settings[8] -ne 3) {
 # Win+<x> (including winlogon's Win+L, which no policy or hook can intercept
 # on a Citrix client) is dead at the kernel. glazewm binds f13+<key>
 # DIRECTLY (config.yaml) — nothing re-materializes a Win key, so the
-# policies above are only a safety net for pre-reboot / unmapped states.
+# DisabledHotkeys value above is only a safety net for pre-reboot / unmapped
+# states.
 # Scancode Map: header(8) + count(4) + mapping(4)*n + null(4).
 # Mapping entry is target-then-source: LCtrl (0x001D) ← CapsLock (0x003A),
 # F13 (0x0064) ← LWin (0xE05B), F13 (0x0064) ← RWin (0xE05C).

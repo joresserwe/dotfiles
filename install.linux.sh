@@ -835,8 +835,6 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     log_skip "tacky-borders: could not resolve %USERPROFILE%"
   fi
 
-  # Apply Windows registry tweaks + AppX cleanup: CapsLock→Ctrl, Win+L/D/U
-  # blocks, taskbar auto-hide, Xbox Game Bar removal. See winget/registry.ps1.
   log_step "Applying Windows registry tweaks"
   powershell.exe -NoProfile -ExecutionPolicy Bypass \
     -File "$(wslpath -w "$DOTFILES_PATH/winget/registry.ps1")" >/dev/null 2>&1
