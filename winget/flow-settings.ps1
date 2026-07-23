@@ -15,11 +15,44 @@ if ($proc) {
     Start-Sleep -Seconds 2
 }
 
+$repo = Split-Path $PSScriptRoot -Parent
+
+$plugins = @(
+    [PSCustomObject]@{
+        Name    = 'Volume Controller'
+        Version = '1.0.0'
+        Url     = 'https://github.com/z1nc0r3/Flow.Launcher.Plugin.VolumeController/releases/download/v1.0.0/VolumeController-1.0.0.zip'
+    }
+)
+foreach ($p in $plugins) {
+    $dest = Join-Path $env:APPDATA ('FlowLauncher\Plugins\{0}-{1}' -f $p.Name, $p.Version)
+    if (Test-Path -LiteralPath $dest) { continue }
+    $zip = Join-Path $env:TEMP ('flow-plugin-{0}.zip' -f $p.Version)
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest $p.Url -OutFile $zip
+        Expand-Archive $zip $dest -Force
+        Write-Host ('flow-settings: installed plugin {0} {1}' -f $p.Name, $p.Version)
+    } catch {
+        Write-Host ('flow-settings: plugin {0} failed — {1}' -f $p.Name, $_.Exception.Message)
+    } finally {
+        Remove-Item $zip -Force -ErrorAction SilentlyContinue
+    }
+}
+
+$themeSrc = Join-Path $repo 'flowlauncher\Themes'
+if (Test-Path -LiteralPath $themeSrc) {
+    $themeDst = Join-Path $env:APPDATA 'FlowLauncher\Themes'
+    New-Item -ItemType Directory -Force $themeDst | Out-Null
+    Copy-Item (Join-Path $themeSrc '*.xaml') $themeDst -Force
+}
+
 $s = Get-Content $settingsPath -Raw | ConvertFrom-Json
 
 $mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
 
-$snapPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'flowlauncher\Settings.snapshot.json'
+$snapPath = Join-Path $repo 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
     $snapRaw = Get-Content -LiteralPath $snapPath -Raw
     $snap = $snapRaw | ConvertFrom-Json
