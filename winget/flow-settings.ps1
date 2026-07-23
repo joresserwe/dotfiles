@@ -7,12 +7,46 @@ if (-not (Test-Path $settingsPath)) {
     exit 0
 }
 
-# Flow flushes its in-memory settings over this file on exit (observed
-# 2026-07-18: keys patched while it ran were lost), so stop it first.
-$proc = Get-Process Flow.Launcher -ErrorAction SilentlyContinue
+# Flow only flushes settings (incl. per-plugin) on a graceful close and
+# rewrites Settings.json from memory on exit, so it must be closed and waited
+# on before this file is read (keys patched while it ran were lost — observed
+# 2026-07-18); taskkill without /F never reaches its hidden WPF windows and a
+# force kill drops the unsaved flush (observed 2026-07-23).
+$proc = Get-Process Flow.Launcher -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($proc) {
-    $proc | Stop-Process -Force
-    Start-Sleep -Seconds 2
+    Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class FlowClose {
+    delegate bool EnumProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb, IntPtr lp);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+    [DllImport("user32.dll", CharSet=CharSet.Auto)] static extern int GetClassName(IntPtr h, StringBuilder sb, int max);
+    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
+    const uint WM_CLOSE = 0x0010;
+    public static void CloseWpfWindows(int targetPid) {
+        var hwnds = new List<IntPtr>();
+        EnumWindows((h, l) => {
+            uint winPid;
+            GetWindowThreadProcessId(h, out winPid);
+            if (winPid == targetPid) {
+                var sb = new StringBuilder(256);
+                GetClassName(h, sb, 256);
+                if (sb.ToString().StartsWith("HwndWrapper")) hwnds.Add(h);
+            }
+            return true;
+        }, IntPtr.Zero);
+        foreach (var h in hwnds) PostMessage(h, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+    }
+}
+'@
+    [FlowClose]::CloseWpfWindows($proc.Id)
+    if (-not $proc.WaitForExit(15000)) {
+        $proc | Stop-Process -Force
+        Start-Sleep -Seconds 2
+    }
 }
 
 $repo = Split-Path $PSScriptRoot -Parent
