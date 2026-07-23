@@ -68,6 +68,33 @@ CheckReloadSignal() {
 }
 SetTimer(CheckReloadSignal, 500)
 
+; Windows drops a WH_KEYBOARD_LL hook whose callback stalls past
+; LowLevelHooksTimeout — the process stays healthy while every hook hotkey
+; goes deaf, hence this probe. SendEvent: SendInput uninstalls the hooks
+; while sending. SendLevel(1): level-0 injected events never trigger
+; hotkeys. {Blind}: Send otherwise releases user-held modifiers.
+global hookProbeSeen := true
+*vkFC:: {
+    global hookProbeSeen
+    hookProbeSeen := true
+}
+HookProbe() {
+    global hookProbeSeen
+    hookProbeSeen := false
+    SendLevel(1)
+    SendEvent("{Blind}{vkFC}")
+    SendLevel(0)
+    SetTimer(HookProbeCheck, -1000)
+}
+HookProbeCheck() {
+    global hookProbeSeen
+    if hookProbeSeen
+        return
+    InstallKeybdHook(true, true)
+    DbgLog("HOOK-REINSTALL probe-miss")
+}
+SetTimer(HookProbe, 10000)
+
 ; --- Windows taskbar suppression ---------------------------------
 ; Hide Shell_TrayWnd (primary) + Shell_SecondaryTrayWnd (per extra monitor)
 ; because zebar already owns the tray/clock/workspace surface — a visible
