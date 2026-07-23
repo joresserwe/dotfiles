@@ -145,7 +145,7 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "prefersReducedMotion": true,
   "skipDangerousModePermissionPrompt": true,
