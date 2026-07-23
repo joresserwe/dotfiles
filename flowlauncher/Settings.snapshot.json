@@ -56,7 +56,7 @@
     "ShowHomePage":  true,
     "ShowHistoryResultsForHomePage":  false,
     "MaxHistoryResultsToShowForHomePage":  5,
-    "AutoRestartAfterChanging":  true,
+    "AutoRestartAfterChanging":  false,
     "ShowUnknownSourceWarning":  true,
     "AutoUpdatePlugins":  true,
     "CustomBrowserIndex":  0,
