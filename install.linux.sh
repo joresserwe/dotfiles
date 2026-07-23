@@ -427,6 +427,11 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       -File "$(wslpath -w "$DOTFILES_PATH/winget/wsl-terminal-shortcut.ps1")" >/dev/null 2>&1 || true
     log_done "Start Menu: WSL-Terminal (launcher-indexable -> wt -f -p Terminal)"
 
+    ensure_dir "$HOME/Applications"
+    ln -sfn "/mnt/c/ProgramData/Microsoft/Windows/Start Menu/Programs" "$HOME/Applications/system"
+    ln -sfn "$win_userprofile_wsl/AppData/Roaming/Microsoft/Windows/Start Menu/Programs" "$HOME/Applications/user"
+    log_done "Applications: ~/Applications/{system,user} -> Start Menu Programs"
+
     # Zero-flash launcher for every powershell-based logon task — see
     # winget/run-hidden.vbs. Console-subsystem task actions flash a window
     # at logon even with -WindowStyle Hidden.
@@ -727,6 +732,20 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     fi
   else
     log_skip "GlazeWM task: glazewm.exe missing or startup_dir unset"
+  fi
+
+  if [[ -n "${dotfiles_win:-}" && -n "${run_hidden_win:-}" ]]; then
+    watchdog_local_win="${dotfiles_win}\\winget\\wslhost-watchdog.ps1"
+    powershell.exe -NoProfile -Command "
+      \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$watchdog_local_win\"'
+      \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30) -RepetitionDuration ([TimeSpan]::MaxValue)
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+      \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
+      Register-ScheduledTask -TaskName 'wslhost-watchdog' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
+    " >/dev/null 2>&1
+    log_done "Scheduled Task 'wslhost-watchdog' registered (every 30 min -> $watchdog_local_win)"
+  else
+    log_skip "wslhost-watchdog: dotfiles mirror not resolved"
   fi
 
   # tacky-borders (Windows side): custom window borders with adjustable
