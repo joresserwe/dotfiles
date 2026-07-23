@@ -4,11 +4,13 @@
 # (observed: --cd C:\Program Files -> Wsl/ERROR_FILE_NOT_FOUND).
 param([string]$Target)
 
+# Split-Path -LiteralPath -Parent dies with AmbiguousParameterSet under
+# PowerShell 5.1.
 $dir = $Target
-if (Test-Path -LiteralPath $Target -PathType Leaf) {
-    $dir = Split-Path -LiteralPath $Target -Parent
+if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
+    $dir = [IO.Path]::GetDirectoryName($Target)
 }
-if (-not (Test-Path -LiteralPath $dir)) { exit 1 }
+if (-not $dir -or -not (Test-Path -LiteralPath $dir -PathType Container)) { exit 1 }
 
 [IO.File]::WriteAllText((Join-Path $env:TEMP 'open-yazi-target.txt'), $dir,
     (New-Object System.Text.UTF8Encoding($false)))
