@@ -394,7 +394,7 @@ FloatKey(dir, dx, dy) {
 ; closed the last MANAGED window in the background. WinClose targets the
 ; real foreground window — polite WM_CLOSE, same net effect as Alt+F4.
 ; League/Riot are excluded: Alt+Q/W/E/R level abilities in-game.
-#HotIf !WinActive("ahk_exe League of Legends.exe") && !WinActive("ahk_exe LeagueClientUx.exe") && !WinActive("ahk_exe RiotClientUx.exe")
+#HotIf !WinActive("ahk_exe League of Legends.exe") && !WinActive("ahk_exe LeagueClientUx.exe") && !WinActive("ahk_exe RiotClientUx.exe") && !WinActive("ahk_exe AccordD64.exe")
 !q::(MarkHotkey("AltQ"), WinClose("A"))
 #HotIf
 
