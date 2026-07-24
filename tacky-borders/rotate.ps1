@@ -35,12 +35,15 @@ $pick = $themes[$seed % $themes.Count]
 $tmp = "$live.tmp"
 Copy-Item -Force $pick.FullName $tmp
 if (Test-Path $live) {
+  # [NullString]::Value: PowerShell binds $null to "" for string parameters,
+  # and File.Replace throws "The path is not of a legal form" on an empty
+  # backup path.
   $swapped = $false
   for ($i = 0; $i -lt 10; $i++) {
-    try { [System.IO.File]::Replace($tmp, $live, $null); $swapped = $true; break }
+    try { [System.IO.File]::Replace($tmp, $live, [NullString]::Value); $swapped = $true; break }
     catch { Start-Sleep -Milliseconds 30 }
   }
-  if (-not $swapped) { [System.IO.File]::Replace($tmp, $live, $null) }
+  if (-not $swapped) { [System.IO.File]::Replace($tmp, $live, [NullString]::Value) }
 } else {
   Move-Item -Force $tmp $live
 }
