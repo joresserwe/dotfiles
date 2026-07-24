@@ -28,6 +28,9 @@ window_rules:
   - match: Process
     name: "ShareX"
     enabled: False
+  - match: Title
+    name: "LauncherSearchWindow"
+    enabled: False
 
 global:
   border_width: 5
