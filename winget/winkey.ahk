@@ -70,30 +70,14 @@ SetTimer(CheckReloadSignal, 500)
 
 ; Windows drops a WH_KEYBOARD_LL hook whose callback stalls past
 ; LowLevelHooksTimeout — the process stays healthy while every hook hotkey
-; goes deaf, hence this probe. SendEvent: SendInput uninstalls the hooks
-; while sending. SendLevel(1): level-0 injected events never trigger
-; hotkeys. {Blind}: Send otherwise releases user-held modifiers.
-global hookProbeSeen := true
-*vkFC:: {
-    global hookProbeSeen
-    hookProbeSeen := true
-}
-HookProbe() {
-    global hookProbeSeen
-    hookProbeSeen := false
-    SendLevel(1)
-    SendEvent("{Blind}{vkFC}")
-    SendLevel(0)
-    SetTimer(HookProbeCheck, -1000)
-}
-HookProbeCheck() {
-    global hookProbeSeen
-    if hookProbeSeen
-        return
-    InstallKeybdHook(true, true)
-    DbgLog("HOOK-REINSTALL probe-miss")
-}
-SetTimer(HookProbe, 10000)
+; goes deaf. InstallKeybdHook(true, true) repositions the hook at the top of
+; the chain and clears that system-disabled state.
+; Docs: https://www.autohotkey.com/docs/v2/lib/InstallKeybdHook.htm
+;
+; A liveness probe would have to inject a keystroke, and injected input resets
+; the system idle timer — powering a blanked display back on and keeping the
+; native display timeout from ever elapsing.
+SetTimer(() => InstallKeybdHook(true, true), 60000)
 
 ; --- Windows taskbar suppression ---------------------------------
 ; Hide Shell_TrayWnd (primary) + Shell_SecondaryTrayWnd (per extra monitor)
