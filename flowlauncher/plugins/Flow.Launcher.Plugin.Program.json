@@ -1,0 +1,177 @@
+{
+    "ProgramSources":  [
+
+                       ],
+    "DisabledProgramSources":  [
+                                   {
+                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu",
+                                       "Name":  "Ubuntu",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\ubuntu.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_2.7.10.0_x64__8wekyb3d8bbwe",
+                                       "Name":  "wsl",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\windowsapps\\microsoftcorporationii.windowssubsystemforlinux_2.7.10.0_x64__8wekyb3d8bbwe\\wsl.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files (x86)\\Windows Media Player",
+                                       "Name":  "wmplayer",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files (x86)\\windows media player\\wmplayer.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories",
+                                       "Name":  "Windows Media Player Legacy",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\accessories\\windows media player legacy.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\LGElectronics.LGMonitorApp_1.2606.1601.0_x86__cfnzzhwkr8z5w",
+                                       "Name":  "LG Monitor App Installer",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "lgelectronics.lgmonitorapp_cfnzzhwkr8z5w!app"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\Microsoft.DesktopAppInstaller_1.29.279.0_x64__8wekyb3d8bbwe",
+                                       "Name":  "WindowsPackageManagerServer",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\windowsapps\\microsoft.desktopappinstaller_1.29.279.0_x64__8wekyb3d8bbwe\\windowspackagemanagerserver.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\반디집",
+                                       "Name":  "반디집",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\반디집\\반디집.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\Bandizip",
+                                       "Name":  "bz",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\bandizip\\bz.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\Internet Explorer",
+                                       "Name":  "IEDIAGCMD",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\internet explorer\\iediagcmd.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\Internet Explorer",
+                                       "Name":  "IEXPLORE",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\internet explorer\\iexplore.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility",
+                                       "Name":  "Magnify",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\accessibility\\magnify.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\R2beat",
+                                       "Name":  "Uninstall",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\r2beat\\uninstall.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
+                                       "Name":  "Windows PowerShell ISE (x86)",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell ise (x86).lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
+                                       "Name":  "Windows PowerShell (x86)",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell (x86).lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\팟플레이어",
+                                       "Name":  "팟플레이어 64 비트 (재생 전용)",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\팟플레이어\\팟플레이어 64 비트 (재생 전용).lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
+                                       "Name":  "Windows PowerShell ISE",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell ise.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\Windows Mail",
+                                       "Name":  "wabmig",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\program files\\windows mail\\wabmig.exe"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\ShareX",
+                                       "Name":  "Uninstall ShareX",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\sharex\\uninstall sharex.lnk"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\Microsoft.MicrosoftSolitaireCollection_4.25.7150.0_x64__8wekyb3d8bbwe",
+                                       "Name":  "Solitaire \u0026 Casual Games",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "microsoft.microsoftsolitairecollection_8wekyb3d8bbwe!app"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\Clipchamp.Clipchamp_4.5.10920.0_x64__yxz26nhyzhsrt",
+                                       "Name":  "Microsoft Clipchamp",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "clipchamp.clipchamp_yxz26nhyzhsrt!app"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\Microsoft.WindowsFeedbackHub_2.2606.702.0_x64__8wekyb3d8bbwe",
+                                       "Name":  "피드백 허브",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "microsoft.windowsfeedbackhub_8wekyb3d8bbwe!app"
+                                   },
+                                   {
+                                       "Location":  "C:\\Program Files\\WindowsApps\\MicrosoftCorporationII.QuickAssist_2.0.43.0_x64__8wekyb3d8bbwe",
+                                       "Name":  "빠른 지원",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "microsoftcorporationii.quickassist_8wekyb3d8bbwe!app"
+                                   },
+                                   {
+                                       "Location":  "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CoreAI_cw5n1h2txyewy",
+                                       "Name":  "수행하려면 클릭",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "microsoftwindows.client.coreai_cw5n1h2txyewy!clicktodoapp"
+                                   },
+                                   {
+                                       "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Git",
+                                       "Name":  "Git Release Notes",
+                                       "Enabled":  false,
+                                       "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\git\\git release notes.lnk"
+                                   }
+                               ],
+    "CustomSuffixes":  [
+
+                       ],
+    "CustomProtocols":  [
+
+                        ],
+    "BuiltinSuffixesStatus":  {
+                                  "exe":  true,
+                                  "appref-ms":  true,
+                                  "lnk":  true
+                              },
+    "BuiltinProtocolsStatus":  {
+                                   "steam":  true,
+                                   "epic":  true,
+                                   "http":  false
+                               },
+    "UseCustomSuffixes":  false,
+    "UseCustomProtocols":  false,
+    "EnableStartMenuSource":  true,
+    "EnableDescription":  false,
+    "HideAppsPath":  true,
+    "HideUninstallers":  true,
+    "EnableRegistrySource":  true,
+    "EnablePathSource":  false,
+    "EnableUWP":  true,
+    "HideDuplicatedWindowsApp":  true
+}

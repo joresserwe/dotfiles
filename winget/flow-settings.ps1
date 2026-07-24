@@ -86,6 +86,9 @@ $s = Get-Content $settingsPath -Raw | ConvertFrom-Json
 
 $mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
 
+$appliedDir = Join-Path $mirror 'flow.applied'
+New-Item -ItemType Directory -Force $appliedDir | Out-Null
+
 $snapPath = Join-Path $repo 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
     $snapRaw = Get-Content -LiteralPath $snapPath -Raw
@@ -93,10 +96,31 @@ if (Test-Path -LiteralPath $snapPath) {
     foreach ($p in $snap.PSObject.Properties) {
         $s | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
     }
-    $appliedDir = Join-Path $mirror 'flow.applied'
-    New-Item -ItemType Directory -Force $appliedDir | Out-Null
     [IO.File]::WriteAllText((Join-Path $appliedDir 'Settings.snapshot.json'), $snapRaw,
         (New-Object System.Text.UTF8Encoding($false)))
+}
+
+$pluginSnapDir = Join-Path $repo 'flowlauncher\plugins'
+if (Test-Path -LiteralPath $pluginSnapDir) {
+    $appliedPluginDir = Join-Path $appliedDir 'plugins'
+    New-Item -ItemType Directory -Force $appliedPluginDir | Out-Null
+    foreach ($snapFile in Get-ChildItem -LiteralPath $pluginSnapDir -Filter '*.json') {
+        $raw = Get-Content -LiteralPath $snapFile.FullName -Raw
+        $liveDir = Join-Path $env:APPDATA ('FlowLauncher\Settings\Plugins\{0}' -f $snapFile.BaseName)
+        $livePath = Join-Path $liveDir 'Settings.json'
+        if (Test-Path -LiteralPath $livePath) {
+            $live = Get-Content -LiteralPath $livePath -Raw | ConvertFrom-Json
+            foreach ($p in ($raw | ConvertFrom-Json).PSObject.Properties) {
+                $live | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
+            }
+            $live | ConvertTo-Json -Depth 15 | Out-File $livePath -Encoding UTF8
+        } else {
+            New-Item -ItemType Directory -Force $liveDir | Out-Null
+            [IO.File]::WriteAllText($livePath, $raw, (New-Object System.Text.UTF8Encoding($false)))
+        }
+        [IO.File]::WriteAllText((Join-Path $appliedPluginDir $snapFile.Name), $raw,
+            (New-Object System.Text.UTF8Encoding($false)))
+    }
 }
 
 # %f / %d are Flow-side placeholders, substituted with the Windows path when

@@ -1,0 +1,79 @@
+{
+    "SearchSources":  [
+                          {
+                              "Title":  "Google",
+                              "ActionKeyword":  "*",
+                              "Icon":  "google.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://www.google.com/search?q={q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "Google Maps",
+                              "ActionKeyword":  "maps",
+                              "Icon":  "google_maps.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://maps.google.com/maps?q={q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "Google Translate",
+                              "ActionKeyword":  "translate",
+                              "Icon":  "google_translate.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://translate.google.com/#auto|en|{q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "GitHub",
+                              "ActionKeyword":  "github",
+                              "Icon":  "github.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://github.com/search?q={q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "Gmail",
+                              "ActionKeyword":  "gmail",
+                              "Icon":  "gmail.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://mail.google.com/mail/ca/u/0/#apps/{q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "Google Drive",
+                              "ActionKeyword":  "drive",
+                              "Icon":  "google_drive.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://drive.google.com/?hl=en\u0026tab=bo#search/{q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "Google Images",
+                              "ActionKeyword":  "image",
+                              "Icon":  "google.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://www.google.com/search?q={q}\u0026tbm=isch",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          },
+                          {
+                              "Title":  "YouTube",
+                              "ActionKeyword":  "youtube",
+                              "Icon":  "youtube.png",
+                              "CustomIcon":  false,
+                              "Url":  "https://www.youtube.com/results?search_query={q}",
+                              "IsPrivateMode":  false,
+                              "Enabled":  true
+                          }
+                      ],
+    "EnableSuggestion":  false,
+    "MaxSuggestions":  1,
+    "Suggestion":  "Google"
+}
