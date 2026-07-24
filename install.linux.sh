@@ -427,6 +427,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       -File "$(wslpath -w "$DOTFILES_PATH/winget/wsl-terminal-shortcut.ps1")" >/dev/null 2>&1 || true
     log_done "Start Menu: WSL-Terminal (launcher-indexable -> wt -f -p Terminal)"
 
+    powershell.exe -NoProfile -ExecutionPolicy Bypass \
+      -File "$(wslpath -w "$DOTFILES_PATH/winget/sleep-display-shortcut.ps1")" >/dev/null 2>&1 || true
+    log_done "Start Menu: Sleep Display (launcher-indexable -> SC_MONITORPOWER)"
+
     ensure_dir "$HOME/Applications"
     ln -sfn "/mnt/c/ProgramData/Microsoft/Windows/Start Menu/Programs" "$HOME/Applications/system"
     ln -sfn "$win_userprofile_wsl/AppData/Roaming/Microsoft/Windows/Start Menu/Programs" "$HOME/Applications/user"
