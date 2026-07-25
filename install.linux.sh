@@ -419,6 +419,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     if [[ -n "$wt_settings" ]]; then
       python3 "$DOTFILES_PATH/wt/apply-settings.py" "$wt_settings" "$DOTFILES_PATH/wt/tmux-profile.json"
       log_done "Windows Terminal: tmux profile and scheme applied"
+      if [[ "$DOTFILES_PROFILE" == "light" ]]; then
+        python3 "$DOTFILES_PATH/wt/apply-settings.py" "$wt_settings" "$DOTFILES_PATH/wt/light-globals.json"
+        log_done "Windows Terminal: light-profile globals applied"
+      fi
     else
       log_skip "Windows Terminal: settings.json not found"
     fi
