@@ -10,17 +10,17 @@ if (-not $RepoPath -or -not (Test-Path -LiteralPath $RepoPath)) { exit 0 }
 
 function Capture-Snapshot([string]$LivePath, [string[]]$Excluded, [string]$SnapName) {
     if (-not (Test-Path -LiteralPath $LivePath)) { return }
-    $s = Get-Content -LiteralPath $LivePath -Raw | ConvertFrom-Json
+    $s = Get-Content -LiteralPath $LivePath -Raw -Encoding UTF8 | ConvertFrom-Json
     foreach ($k in $Excluded) { $s.PSObject.Properties.Remove($k) }
     $filtered = $s | ConvertTo-Json -Depth 15
 
     $appliedPath = Join-Path $MirrorPath ('flow.applied\{0}' -f $SnapName)
     if ((Test-Path -LiteralPath $appliedPath) -and
-        ((Get-Content -LiteralPath $appliedPath -Raw) -eq $filtered)) { return }
+        ((Get-Content -LiteralPath $appliedPath -Raw -Encoding UTF8) -eq $filtered)) { return }
 
     $snapPath = Join-Path (Join-Path $RepoPath 'flowlauncher') $SnapName
     if ((Test-Path -LiteralPath $snapPath) -and
-        ((Get-Content -LiteralPath $snapPath -Raw) -eq $filtered)) { return }
+        ((Get-Content -LiteralPath $snapPath -Raw -Encoding UTF8) -eq $filtered)) { return }
 
     New-Item -ItemType Directory -Force (Split-Path $snapPath) | Out-Null
     [IO.File]::WriteAllText($snapPath, $filtered, (New-Object System.Text.UTF8Encoding($false)))

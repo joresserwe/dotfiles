@@ -82,7 +82,7 @@ if (Test-Path -LiteralPath $themeSrc) {
     Copy-Item (Join-Path $themeSrc '*.xaml') $themeDst -Force
 }
 
-$s = Get-Content $settingsPath -Raw | ConvertFrom-Json
+$s = Get-Content $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 $mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
 
@@ -91,7 +91,7 @@ New-Item -ItemType Directory -Force $appliedDir | Out-Null
 
 $snapPath = Join-Path $repo 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
-    $snapRaw = Get-Content -LiteralPath $snapPath -Raw
+    $snapRaw = Get-Content -LiteralPath $snapPath -Raw -Encoding UTF8
     $snap = $snapRaw | ConvertFrom-Json
     foreach ($p in $snap.PSObject.Properties) {
         $s | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
@@ -105,11 +105,11 @@ if (Test-Path -LiteralPath $pluginSnapDir) {
     $appliedPluginDir = Join-Path $appliedDir 'plugins'
     New-Item -ItemType Directory -Force $appliedPluginDir | Out-Null
     foreach ($snapFile in Get-ChildItem -LiteralPath $pluginSnapDir -Filter '*.json') {
-        $raw = Get-Content -LiteralPath $snapFile.FullName -Raw
+        $raw = Get-Content -LiteralPath $snapFile.FullName -Raw -Encoding UTF8
         $liveDir = Join-Path $env:APPDATA ('FlowLauncher\Settings\Plugins\{0}' -f $snapFile.BaseName)
         $livePath = Join-Path $liveDir 'Settings.json'
         if (Test-Path -LiteralPath $livePath) {
-            $live = Get-Content -LiteralPath $livePath -Raw | ConvertFrom-Json
+            $live = Get-Content -LiteralPath $livePath -Raw -Encoding UTF8 | ConvertFrom-Json
             foreach ($p in ($raw | ConvertFrom-Json).PSObject.Properties) {
                 $live | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
             }
