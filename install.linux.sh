@@ -750,7 +750,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     watchdog_local_win="${dotfiles_win}\\winget\\wslhost-watchdog.ps1"
     powershell.exe -NoProfile -Command "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$watchdog_local_win\"'
-      \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30) -RepetitionDuration ([TimeSpan]::MaxValue)
+      \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30) -RepetitionDuration (New-TimeSpan -Days 3650)
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
       Register-ScheduledTask -TaskName 'wslhost-watchdog' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
