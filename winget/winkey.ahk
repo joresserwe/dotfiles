@@ -77,7 +77,7 @@ SetTimer(CheckReloadSignal, 500)
 ; A liveness probe would have to inject a keystroke, and injected input resets
 ; the system idle timer — powering a blanked display back on and keeping the
 ; native display timeout from ever elapsing.
-SetTimer(() => InstallKeybdHook(true, true), 60000)
+SetTimer(() => GameForeground() || InstallKeybdHook(true, true), 60000)
 
 ; --- Windows taskbar suppression ---------------------------------
 ; Hide Shell_TrayWnd (primary) + Shell_SecondaryTrayWnd (per extra monitor)
@@ -469,6 +469,22 @@ IME_GetConversionMode(hWnd) {
         return SendMessage(0x283, 0x1, 0, , ime, , , , 50)
     catch
         return -1
+}
+
+; A fullscreen game's message pump is frame-bound, so the 50ms WM_IME_CONTROL
+; timeout above gets hit tick after tick — and while the send blocks, this
+; thread's WH_KEYBOARD_LL callback can't run and Windows delays every
+; keystroke system-wide (observed 2026-07-29 in LoL: rapid keypresses lagged
+; up to ~50ms whenever the game held focus).
+GameForeground(hwnd := 0) {
+    static exes := ["League of Legends.exe"]
+    try exe := WinGetProcessName(hwnd ? "ahk_id " hwnd : "A")
+    catch
+        return false
+    for g in exes
+        if (exe = g)
+            return true
+    return false
 }
 
 MonitorImeState() {
