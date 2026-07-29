@@ -318,7 +318,11 @@
                       key={win.id}
                       className={`win ${win.hasFocus ? 'focused' : ''} ${win.state?.type === 'minimized' ? 'minimized' : ''}`}
                       title={win.title || win.processName}
-                      onClick={() => out.glazewm.runCommand(`focus --container-id ${win.id}`)}
+                      onClick={async () => {
+                        if (win.state?.type === 'minimized')
+                          await out.glazewm.runCommand('toggle-minimized', win.id);
+                        out.glazewm.runCommand(`focus --container-id ${win.id}`);
+                      }}
                     >
                       {out.glazewm.displayedWorkspace.hasFocus && i < JUMP_HINTS.length && (
                         <span className="hint">{JUMP_HINTS[i]}</span>
