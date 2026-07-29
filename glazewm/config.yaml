@@ -116,6 +116,7 @@ window_rules:
       - window_process: { equals: 'League of Legends' }
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AccordD64' }
+      - window_process: { equals: 'CloudWidget' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
