@@ -14,6 +14,13 @@ Remove-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Polic
 Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' `
   -Name 'DisabledHotkeys' -Value 'DUH' -Type String -Force
 
+$policiesExplorer = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer'
+if (-not (Test-Path $policiesExplorer)) {
+  New-Item -Path $policiesExplorer -Force | Out-Null
+}
+Set-ItemProperty -Path $policiesExplorer `
+  -Name 'NoWinKeys' -Value 1 -Type DWord -Force
+
 # LowLevelHooksTimeout — raise from the Windows default (300ms) to 10s so
 # Windows doesn't silently remove AHK's WH_KEYBOARD_LL hook if the callback
 # doesn't respond during a busy cold boot. Without this, hook-based hotkeys

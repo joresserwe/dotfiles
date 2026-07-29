@@ -282,6 +282,7 @@ CycleOnMonitor(dir) {
 }
 ; F13 combos (physical Win+U/D/F after the kernel remap). `~F13 &` keeps F13
 ; flowing to glazewm's hook — see the F13 comment block above.
+#HotIf !VmActive()
 ~F13 & u::(MarkHotkey("WinU"), CycleOnMonitor(1))
 ~F13 & d::(MarkHotkey("WinD"), CycleOnMonitor(-1))
 ; Win+F was glazewm's wm-cycle-focus, but that needs a focused window as
@@ -289,6 +290,7 @@ CycleOnMonitor(dir) {
 ; Routing it through CycleOnMonitor removes the anchor requirement and
 ; also covers unmanaged windows like Win+U/D already do.
 ~F13 & f::CycleOnMonitor(1)
+#HotIf
 
 ; --- Directional focus takeover (floating / minimized / empty workspace) --
 ; glazewm's `focus --direction` is a no-op when the focused container is a
@@ -365,7 +367,7 @@ FloatKey(dir, dx, dy) {
     if !FloatNav(dx, dy)
         RunWait(gw ' command focus --workspace-in-direction ' dir, , 'Hide')
 }
-#HotIf FileExist(A_Temp "\glazewm-float-focus.flag")
+#HotIf FileExist(A_Temp "\glazewm-float-focus.flag") && !VmActive()
 ~F13 & h::FloatKey("left", -1, 0)
 ~F13 & j::FloatKey("down", 0, 1)
 ~F13 & k::FloatKey("up", 0, -1)
@@ -390,6 +392,7 @@ FloatKey(dir, dx, dy) {
 ; is dispatched here too: f13+shift+z = restore most-recently-minimized via
 ; restore-window.ps1 (low-frequency, spawn cost acceptable there).
 global curActiveHwnd := 0, prevActiveHwnd := 0
+#HotIf !VmActive()
 ~F13 & z:: {
     global prevActiveHwnd
     if GetKeyState("Shift", "P") {
@@ -404,6 +407,7 @@ global curActiveHwnd := 0, prevActiveHwnd := 0
     if (prevActiveHwnd && WinExist("ahk_id " prevActiveHwnd))
         WinActivate("ahk_id " prevActiveHwnd)
 }
+#HotIf
 
 ; --- Window jump (Win+<hint letter>) ---------------------------------------
 ; zebar's bar shows a hint letter next to each window on the focused
@@ -430,6 +434,7 @@ JumpToWindow(idx) {
         WinActivate("ahk_id " hwnd)
     }
 }
+#HotIf !VmActive()
 ~F13 & a::JumpToWindow(1)
 ~F13 & s::JumpToWindow(2)
 ~F13 & x::JumpToWindow(3)
@@ -440,6 +445,26 @@ JumpToWindow(idx) {
 ~F13 & e::JumpToWindow(8)
 ~F13 & g::JumpToWindow(9)
 ~F13 & r::(MarkHotkey("RunDlg"), ComObject("Shell.Application").FileRun())
+#HotIf
+
+VmActive() => WinActive("ahk_exe AccordD64.exe")
+
+global vmWinHeld := false
+#HotIf VmActive()
+*F13:: {
+    global vmWinHeld
+    MarkHotkey("VmWin")
+    vmWinHeld := true
+    Send("{Blind}{LWin down}")
+}
+#HotIf
+~*F13 up:: {
+    global vmWinHeld
+    if vmWinHeld {
+        vmWinHeld := false
+        Send("{Blind}{LWin up}")
+    }
+}
 
 ; --- IME state monitor for Zebar --------------------------------------
 ; Writes "KO" or "EN" to zebar/mac-bar/ime-state.txt whenever the foreground
