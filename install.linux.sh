@@ -338,6 +338,32 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     echo "  distro from it, and re-run install.linux.sh." >&2
     exit 1
   fi
+
+  # powershell.exe exits 0 even when Register-ScheduledTask is rejected (an
+  # out-of-range -RepetitionDuration fails with 0x80041318 and prints nothing to
+  # stdout), so the 'REGISTERED' marker under $ErrorActionPreference='Stop' is
+  # the only reliable success signal.
+  register_task() {
+    local name="$1" body="$2" out line
+    REGISTER_TASK_ERROR=""
+    out="$(powershell.exe -NoProfile -Command "
+      try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
+      \$ErrorActionPreference = 'Stop'
+      $body
+      if (-not (Get-ScheduledTask -TaskName '$name' -ErrorAction SilentlyContinue)) { throw 'task absent after Register-ScheduledTask' }
+      'REGISTERED'
+    " 2>&1 || true)"
+    out="${out//$'\r'/}"
+    [[ "$out" == *REGISTERED* ]] && return 0
+    while IFS= read -r line; do
+      [[ -z "${line//[[:space:]]/}" ]] && continue
+      REGISTER_TASK_ERROR="$line"
+      break
+    done <<<"$out"
+    REGISTER_TASK_ERROR="${REGISTER_TASK_ERROR:-no error output}"
+    return 1
+  }
+
   log_step "winget: install packages from winget/packages.txt"
   while IFS= read -r line; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
@@ -645,14 +671,17 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     # MUST be local (not UNC) — at logon WSL VM isn't up yet so UNC is dead;
     # the mirror satisfies that.
     snapshot_local_win="${dotfiles_win}\\glazewm\\cold-boot-snapshot.ps1"
-    powershell.exe -NoProfile -Command "
+    if register_task 'winkey-cold-boot-snapshot' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$snapshot_local_win\"'
       \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
       Register-ScheduledTask -TaskName 'winkey-cold-boot-snapshot' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
-    " >/dev/null 2>&1
-    log_done "Scheduled Task 'winkey-cold-boot-snapshot' registered (AtLogon → $snapshot_local_win)"
+    "; then
+      log_done "Scheduled Task 'winkey-cold-boot-snapshot' registered (AtLogon → $snapshot_local_win)"
+    else
+      log_manual "Scheduled Task 'winkey-cold-boot-snapshot' NOT registered: $REGISTER_TASK_ERROR"
+    fi
 
     # Primary AHK launcher at logon: Scheduled Task (AtLogon, no delay,
     # RunLevel=Highest). This REPLACES the Startup-folder .lnk — see the
@@ -668,14 +697,17 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     # initial HideShellTaskbars() no-ops — harmless, the TaskbarCreated
     # OnMessage hook re-hides on Explorer's later WM_TASKBARCREATED broadcast.
     reload_local_win="${dotfiles_win}\\glazewm\\reload-ahk.ps1"
-    powershell.exe -NoProfile -Command "
+    if register_task 'winkey-cold-boot-autofix' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$reload_local_win\"'
       \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
       Register-ScheduledTask -TaskName 'winkey-cold-boot-autofix' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
-    " >/dev/null 2>&1
-    log_done "Scheduled Task 'winkey-cold-boot-autofix' registered (AtLogon, Highest → $reload_local_win)"
+    "; then
+      log_done "Scheduled Task 'winkey-cold-boot-autofix' registered (AtLogon, Highest → $reload_local_win)"
+    else
+      log_manual "Scheduled Task 'winkey-cold-boot-autofix' NOT registered: $REGISTER_TASK_ERROR"
+    fi
   else
     log_skip "winkey: could not resolve %APPDATA% or %USERPROFILE%"
   fi
@@ -706,14 +738,17 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     #   (requireAdministrator manifest vs Task Scheduler exec); Start-Process
     #   from the Highest-RunLevel PowerShell parent satisfies it cleanly.
     glazewm_autostart_win="${dotfiles_win}\\glazewm\\autostart.ps1"
-    powershell.exe -NoProfile -Command "
+    if register_task 'winkey-glazewm-autostart' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$glazewm_autostart_win\"'
       \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
       Register-ScheduledTask -TaskName 'winkey-glazewm-autostart' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
-    " >/dev/null 2>&1
-    log_done "Scheduled Task 'winkey-glazewm-autostart' registered (AtLogon, Highest → $glazewm_autostart_win)"
+    "; then
+      log_done "Scheduled Task 'winkey-glazewm-autostart' registered (AtLogon, Highest → $glazewm_autostart_win)"
+    else
+      log_manual "Scheduled Task 'winkey-glazewm-autostart' NOT registered: $REGISTER_TASK_ERROR"
+    fi
 
     # Restart a running glazewm through the task: a pre-existing instance
     # carries the env it was born with, so the setx'd vars above
@@ -750,15 +785,18 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
 
   if [[ -n "${dotfiles_win:-}" && -n "${run_hidden_win:-}" ]]; then
     watchdog_local_win="${dotfiles_win}\\winget\\wslhost-watchdog.ps1"
-    powershell.exe -NoProfile -Command "
+    if register_task 'wslhost-watchdog' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$watchdog_local_win\"'
       # Task Scheduler rejects [TimeSpan]::MaxValue as out of range (0x80041318), hence the bounded span.
       \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30) -RepetitionDuration (New-TimeSpan -Days 3650)
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
       Register-ScheduledTask -TaskName 'wslhost-watchdog' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
-    " >/dev/null 2>&1
-    log_done "Scheduled Task 'wslhost-watchdog' registered (every 30 min -> $watchdog_local_win)"
+    "; then
+      log_done "Scheduled Task 'wslhost-watchdog' registered (every 30 min -> $watchdog_local_win)"
+    else
+      log_manual "Scheduled Task 'wslhost-watchdog' NOT registered: $REGISTER_TASK_ERROR"
+    fi
   else
     log_skip "wslhost-watchdog: dotfiles mirror not resolved"
   fi
