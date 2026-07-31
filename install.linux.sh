@@ -128,6 +128,8 @@ done
 # every sudo run unless the sudoers admin_flag option is disabled.
 if [ -f /etc/sudoers.d/no-admin-flag ]; then
   log_skip "sudo admin_flag already disabled"
+elif sudo --version 2>/dev/null | grep -qi 'sudo-rs'; then
+  log_skip "sudo-rs has no admin_flag option — nothing to disable"
 else
   tmpf="$(mktemp)"
   printf 'Defaults !admin_flag\n' > "$tmpf"
