@@ -161,7 +161,7 @@ It covers exactly what `install.linux.sh` cannot, since that script runs inside 
 1. **WSL platform** — enables the `Microsoft-Windows-Subsystem-Linux` and `VirtualMachinePlatform` features, installs the WSL Store package via winget, and queues the Ubuntu distro. A reboot is required afterwards.
 2. **Fonts** — installs the terminal font fallback chain into per-user Windows Fonts (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`), always fetching the latest release:
    - **0xProto Nerd Font** — primary (Latin + Nerd Font glyphs), from [nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases).
-   - **Sarasa Mono K** — CJK fallback for Korean, from [be5invis/Sarasa-Gothic releases](https://github.com/be5invis/Sarasa-Gothic/releases). License: SIL OFL-1.1.
+   - **Sarasa Term K** — CJK fallback for Korean, from [be5invis/Sarasa-Gothic releases](https://github.com/be5invis/Sarasa-Gothic/releases). License: SIL OFL-1.1.
    - **codicon** — covers VS Code PUA glyphs emitted by Claude Code's TUI, from [@vscode/codicons](https://unpkg.com/@vscode/codicons/dist/codicon.ttf).
 
    Idempotent: already-installed families are skipped; pass `-RefreshFonts` to force an update.

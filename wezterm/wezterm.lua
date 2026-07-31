@@ -97,14 +97,14 @@ local C = {
 -- standard Nerd Font codicon range (EA60-EC1E) — e.g. U+EC21 sparkle-filled
 -- emitted by Claude Code's TUI. Install codicon.ttf from
 -- https://unpkg.com/@vscode/codicons/dist/codicon.ttf
--- Sarasa Mono K (be5invis/Sarasa-Gothic, SIL OFL-1.1) covers Hangul with
+-- Sarasa Term K (be5invis/Sarasa-Gothic, SIL OFL-1.1) covers Hangul with
 -- cells that divide the 0xProto Latin cell at a clean 2:1 ratio, so Korean
 -- never drifts out of column alignment. Missing on macOS — font_with_fallback
 -- silently skips entries that aren't installed, so the same config works on
 -- both platforms (macOS falls through to its built-in CJK system fallback).
 config.font = wezterm.font_with_fallback({
 	"0xProto Nerd Font",
-	"Sarasa Mono K",
+	"Sarasa Term K",
 	"codicon",
 })
 

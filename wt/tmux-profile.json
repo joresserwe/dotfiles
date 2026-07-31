@@ -5,7 +5,7 @@
         "commandline": "C:\\windows\\system32\\wsl.exe -d Ubuntu --cd ~ -e .local/bin/tmux-main",
         "colorScheme": "Catppuccin Mocha",
         "font": {
-            "face": "0xProto Nerd Font, Sarasa Mono K, codicon",
+            "face": "0xProto Nerd Font, Sarasa Term K, codicon",
             "size": 12.5
         },
         "padding": "8",
@@ -23,7 +23,7 @@
             "colorScheme": "Catppuccin Mocha Dim"
         },
         "font": {
-            "face": "0xProto Nerd Font, Sarasa Mono K, codicon",
+            "face": "0xProto Nerd Font, Sarasa Term K, codicon",
             "size": 12.5
         }
     },

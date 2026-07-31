@@ -106,16 +106,16 @@ $fontNames = @{
   '0xProtoNerdFontPropo-Regular.ttf' = '0xProto Nerd Font Propo'
   '0xProtoNerdFontPropo-Bold.ttf'    = '0xProto Nerd Font Propo Bold'
   '0xProtoNerdFontPropo-Italic.ttf'  = '0xProto Nerd Font Propo Italic'
-  'SarasaMonoK-Regular.ttf'          = 'Sarasa Mono K'
-  'SarasaMonoK-Bold.ttf'             = 'Sarasa Mono K Bold'
-  'SarasaMonoK-BoldItalic.ttf'       = 'Sarasa Mono K Bold Italic'
-  'SarasaMonoK-Italic.ttf'           = 'Sarasa Mono K Italic'
-  'SarasaMonoK-Light.ttf'            = 'Sarasa Mono K Light'
-  'SarasaMonoK-LightItalic.ttf'      = 'Sarasa Mono K Light Italic'
-  'SarasaMonoK-ExtraLight.ttf'       = 'Sarasa Mono K ExtraLight'
-  'SarasaMonoK-ExtraLightItalic.ttf' = 'Sarasa Mono K ExtraLight Italic'
-  'SarasaMonoK-SemiBold.ttf'         = 'Sarasa Mono K SemiBold'
-  'SarasaMonoK-SemiBoldItalic.ttf'   = 'Sarasa Mono K SemiBold Italic'
+  'SarasaTermK-Regular.ttf'          = 'Sarasa Term K'
+  'SarasaTermK-Bold.ttf'             = 'Sarasa Term K Bold'
+  'SarasaTermK-BoldItalic.ttf'       = 'Sarasa Term K Bold Italic'
+  'SarasaTermK-Italic.ttf'           = 'Sarasa Term K Italic'
+  'SarasaTermK-Light.ttf'            = 'Sarasa Term K Light'
+  'SarasaTermK-LightItalic.ttf'      = 'Sarasa Term K Light Italic'
+  'SarasaTermK-ExtraLight.ttf'       = 'Sarasa Term K ExtraLight'
+  'SarasaTermK-ExtraLightItalic.ttf' = 'Sarasa Term K ExtraLight Italic'
+  'SarasaTermK-SemiBold.ttf'         = 'Sarasa Term K SemiBold'
+  'SarasaTermK-SemiBoldItalic.ttf'   = 'Sarasa Term K SemiBold Italic'
   'codicon.ttf'                      = 'codicon'
 }
 
@@ -148,28 +148,28 @@ if (Test-FontInstalled '0xProto Nerd Font') {
   Log-Done 'fonts: 0xProto Nerd Font'
 }
 
-# Sarasa Mono K — CJK fallback. Asset names embed the version, so resolve the
+# Sarasa Term K — CJK fallback. Asset names embed the version, so resolve the
 # latest via the GitHub API. Ships as .7z only; 7zr.exe is the standalone
 # console extractor (no install).
-if (Test-FontInstalled 'Sarasa Mono K') {
-  Log-Skip 'fonts: Sarasa Mono K'
+if (Test-FontInstalled 'Sarasa Term K') {
+  Log-Skip 'fonts: Sarasa Term K'
 } else {
-  Log-Step 'fonts: Sarasa Mono K (latest)'
+  Log-Step 'fonts: Sarasa Term K (latest)'
   $asset = (Invoke-RestMethod 'https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest').assets |
-    Where-Object { $_.name -like 'SarasaMonoK-TTF-*' -and $_.name -notlike '*Unhinted*' } |
+    Where-Object { $_.name -like 'SarasaTermK-TTF-*' -and $_.name -notlike '*Unhinted*' } |
     Select-Object -First 1
-  if (-not $asset) { throw 'Sarasa-Gothic latest release has no SarasaMonoK-TTF asset' }
-  Invoke-WebRequest $asset.browser_download_url -OutFile "$tmp\SarasaMonoK.7z"
+  if (-not $asset) { throw 'Sarasa-Gothic latest release has no SarasaTermK-TTF asset' }
+  Invoke-WebRequest $asset.browser_download_url -OutFile "$tmp\SarasaTermK.7z"
   # 7-zip.org fails behind some TLS-inspecting proxies.
   try {
     Invoke-WebRequest 'https://github.com/ip7z/7zip/releases/latest/download/7zr.exe' -OutFile "$tmp\7zr.exe"
   } catch {
     Invoke-WebRequest 'https://www.7-zip.org/a/7zr.exe' -OutFile "$tmp\7zr.exe"
   }
-  & "$tmp\7zr.exe" x "$tmp\SarasaMonoK.7z" -o"$tmp\sarasa" -y | Out-Null
+  & "$tmp\7zr.exe" x "$tmp\SarasaTermK.7z" -o"$tmp\sarasa" -y | Out-Null
   if ($LASTEXITCODE -ne 0) { throw "7zr extraction failed (exit $LASTEXITCODE)" }
   Get-ChildItem "$tmp\sarasa" -Filter *.ttf | ForEach-Object { Install-Ttf $_ }
-  Log-Done 'fonts: Sarasa Mono K'
+  Log-Done 'fonts: Sarasa Term K'
 }
 
 # codicon — VS Code PUA glyphs used by Claude Code's TUI.
