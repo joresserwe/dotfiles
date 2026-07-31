@@ -448,9 +448,12 @@ JumpToWindow(idx) {
 #HotIf
 
 VmActive() => WinActive("ahk_exe AccordD64.exe")
+RawF13() => FileExist(A_Temp "\vm-raw-f13.flag")
+
+try FileDelete(A_Temp "\vm-raw-f13.flag")
 
 global vmWinHeld := false
-#HotIf VmActive()
+#HotIf VmActive() && !RawF13()
 *F13:: {
     global vmWinHeld
     MarkHotkey("VmWin")
@@ -464,6 +467,30 @@ global vmWinHeld := false
         vmWinHeld := false
         Send("{Blind}{LWin up}")
     }
+}
+
+#HotIf VmActive()
+^!F12:: {
+    MarkHotkey("VmRawToggle")
+    flag := A_Temp "\vm-raw-f13.flag"
+    if FileExist(flag)
+        FileDelete(flag)
+    else
+        FileAppend("", flag)
+    SyncGlazePause()
+    ToolTip("VM raw F13: " (RawF13() ? "ON" : "OFF"))
+    SetTimer(() => ToolTip(), -1500)
+}
+#HotIf
+
+global glazePausedByUs := false
+SyncGlazePause() {
+    global glazePausedByUs
+    want := (VmActive() && RawF13()) ? 1 : 0
+    if (want = glazePausedByUs)
+        return
+    glazePausedByUs := want
+    Run('"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe" command wm-toggle-pause', , 'Hide')
 }
 
 ; --- IME state monitor for Zebar --------------------------------------
@@ -533,6 +560,7 @@ MonitorImeState() {
             }
         }
     }
+    SyncGlazePause()
     mode := IME_GetConversionMode(hwnd)
     if mode = -1  ; UIPI-blocked this tick; leave lastImeState as-is
         return
