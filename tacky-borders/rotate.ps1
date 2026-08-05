@@ -34,6 +34,20 @@ $pick = $themes[$seed % $themes.Count]
 # opens the file).
 $tmp = "$live.tmp"
 Copy-Item -Force $pick.FullName $tmp
+
+# GPU-less hosts (the --light profile) fall back to WARP for the V2 backend,
+# where the 60fps animation loop burns a full core while a border is drawn.
+# Theme files are UTF-8 with BOM; the rewrite preserves it.
+$mirror = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
+$profile_file = Join-Path $mirror '.dotfiles-profile'
+$profile_name = if (Test-Path -LiteralPath $profile_file) {
+  "$(Get-Content -LiteralPath $profile_file -Raw)".Trim()
+} else { '' }
+if ($profile_name -eq 'light') {
+  $static = [IO.File]::ReadAllText($tmp) `
+    -replace '(?m)^([ \t]*enabled:[ \t]*)True[ \t]*(?=\r?$)', '${1}False'
+  [IO.File]::WriteAllText($tmp, $static, (New-Object System.Text.UTF8Encoding($true)))
+}
 if (Test-Path $live) {
   # [NullString]::Value: PowerShell binds $null to "" for string parameters,
   # and File.Replace throws "The path is not of a legal form" on an empty

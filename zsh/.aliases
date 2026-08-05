@@ -281,6 +281,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
     local dst; dst="$(_tacky_live_config)"
     [[ -f "$dst" ]] && grep -oE '^# Theme:[[:space:]]*[A-Za-z0-9_-]+' "$dst" | head -1 | awk '{print $3}'
   }
+  _tacky_static() {
+    [[ "$(cat "$XDG_STATE_HOME/dotfiles/profile" 2>/dev/null)" == light ]] || return 0
+    sed -i 's/^\([[:blank:]]*enabled:[[:blank:]]*\)True[[:blank:]]*$/\1False/' "$1"
+  }
   _tacky_restart() {
     powershell.exe -NoProfile -Command "Start-ScheduledTask -TaskName 'tacky-borders' -ErrorAction SilentlyContinue" >/dev/null 2>&1
   }
@@ -313,7 +317,8 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
       printf 'available: %s\n' "$(ls "$themes_dir" 2>/dev/null | sed 's/\.yaml$//' | paste -sd, -)" >&2
       return 1
     fi
-    cp "$src" "$dst" && _tacky_restart && printf 'tacky-borders: switched to %s\n' "$1"
+    cp "$src" "$dst" && _tacky_static "$dst" \
+      && _tacky_restart && printf 'tacky-borders: switched to %s\n' "$1"
   }
   # Automatic daily theme rotation driven by a Scheduled Task (AtLogOn +
   # Daily 00:05). `tacky-rotate` (no args) = now.

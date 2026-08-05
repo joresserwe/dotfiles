@@ -38,6 +38,7 @@ case "$profile" in
   light|full)
     printf 'window.DOTFILES_PROFILE = "%s";\n' "$profile" \
       > "$mirror/zebar/mac-bar/profile.js"
+    printf '%s' "$profile" > "$mirror/.dotfiles-profile"
     ;;
 esac
 
