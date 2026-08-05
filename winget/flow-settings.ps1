@@ -51,6 +51,11 @@ public static class FlowClose {
 
 $repo = Split-Path $PSScriptRoot -Parent
 
+function Expand-PortablePath([string]$Json) {
+    $winHome = $env:USERPROFILE.Replace('\', '\\')
+    $Json.Replace('%USERPROFILE%', $winHome).Replace('%userprofile%', $winHome.ToLower())
+}
+
 $plugins = @(
     [PSCustomObject]@{
         Name    = 'Volume Controller'
@@ -92,7 +97,7 @@ New-Item -ItemType Directory -Force $appliedDir | Out-Null
 $snapPath = Join-Path $repo 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
     $snapRaw = Get-Content -LiteralPath $snapPath -Raw -Encoding UTF8
-    $snap = $snapRaw | ConvertFrom-Json
+    $snap = (Expand-PortablePath $snapRaw) | ConvertFrom-Json
     foreach ($p in $snap.PSObject.Properties) {
         $s | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
     }
@@ -106,17 +111,18 @@ if (Test-Path -LiteralPath $pluginSnapDir) {
     New-Item -ItemType Directory -Force $appliedPluginDir | Out-Null
     foreach ($snapFile in Get-ChildItem -LiteralPath $pluginSnapDir -Filter '*.json') {
         $raw = Get-Content -LiteralPath $snapFile.FullName -Raw -Encoding UTF8
+        $expanded = Expand-PortablePath $raw
         $liveDir = Join-Path $env:APPDATA ('FlowLauncher\Settings\Plugins\{0}' -f $snapFile.BaseName)
         $livePath = Join-Path $liveDir 'Settings.json'
         if (Test-Path -LiteralPath $livePath) {
             $live = Get-Content -LiteralPath $livePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            foreach ($p in ($raw | ConvertFrom-Json).PSObject.Properties) {
+            foreach ($p in ($expanded | ConvertFrom-Json).PSObject.Properties) {
                 $live | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
             }
             $live | ConvertTo-Json -Depth 15 | Out-File $livePath -Encoding UTF8
         } else {
             New-Item -ItemType Directory -Force $liveDir | Out-Null
-            [IO.File]::WriteAllText($livePath, $raw, (New-Object System.Text.UTF8Encoding($false)))
+            [IO.File]::WriteAllText($livePath, $expanded, (New-Object System.Text.UTF8Encoding($false)))
         }
         [IO.File]::WriteAllText((Join-Path $appliedPluginDir $snapFile.Name), $raw,
             (New-Object System.Text.UTF8Encoding($false)))

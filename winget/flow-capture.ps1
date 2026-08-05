@@ -8,11 +8,18 @@ $ErrorActionPreference = 'Continue'
 if (-not $RepoPath) { $RepoPath = [Environment]::GetEnvironmentVariable('DOTFILES_UNC', 'User') }
 if (-not $RepoPath -or -not (Test-Path -LiteralPath $RepoPath)) { exit 0 }
 
+function ConvertTo-PortablePath([string]$Json) {
+    $winHome = $env:USERPROFILE.Replace('\', '\\')
+    $Json = $Json.Replace($winHome, '%USERPROFILE%')
+    [regex]::Replace($Json, [regex]::Escape($winHome), '%userprofile%',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+}
+
 function Capture-Snapshot([string]$LivePath, [string[]]$Excluded, [string]$SnapName) {
     if (-not (Test-Path -LiteralPath $LivePath)) { return }
     $s = Get-Content -LiteralPath $LivePath -Raw -Encoding UTF8 | ConvertFrom-Json
     foreach ($k in $Excluded) { $s.PSObject.Properties.Remove($k) }
-    $filtered = $s | ConvertTo-Json -Depth 15
+    $filtered = ConvertTo-PortablePath ($s | ConvertTo-Json -Depth 15)
 
     $appliedPath = Join-Path $MirrorPath ('flow.applied\{0}' -f $SnapName)
     if ((Test-Path -LiteralPath $appliedPath) -and

@@ -4,10 +4,10 @@
                        ],
     "DisabledProgramSources":  [
                                    {
-                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu",
+                                       "Location":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu",
                                        "Name":  "Ubuntu",
                                        "Enabled":  false,
-                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\ubuntu.lnk"
+                                       "UniqueIdentifier":  "%userprofile%\\appdata\\roaming\\microsoft\\windows\\start menu\\ubuntu.lnk"
                                    },
                                    {
                                        "Location":  "C:\\Program Files\\WindowsApps\\MicrosoftCorporationII.WindowsSubsystemForLinux_2.7.10.0_x64__8wekyb3d8bbwe",
@@ -64,16 +64,16 @@
                                        "UniqueIdentifier":  "c:\\program files\\internet explorer\\iexplore.exe"
                                    },
                                    {
-                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility",
+                                       "Location":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility",
                                        "Name":  "Magnify",
                                        "Enabled":  false,
-                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\accessibility\\magnify.lnk"
+                                       "UniqueIdentifier":  "%userprofile%\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\accessibility\\magnify.lnk"
                                    },
                                    {
-                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\R2beat",
+                                       "Location":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\R2beat",
                                        "Name":  "Uninstall",
                                        "Enabled":  false,
-                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\r2beat\\uninstall.lnk"
+                                       "UniqueIdentifier":  "%userprofile%\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\r2beat\\uninstall.lnk"
                                    },
                                    {
                                        "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
@@ -82,10 +82,10 @@
                                        "UniqueIdentifier":  "c:\\programdata\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell ise (x86).lnk"
                                    },
                                    {
-                                       "Location":  "C:\\Users\\kartr\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
+                                       "Location":  "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell",
                                        "Name":  "Windows PowerShell (x86)",
                                        "Enabled":  false,
-                                       "UniqueIdentifier":  "c:\\users\\kartr\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell (x86).lnk"
+                                       "UniqueIdentifier":  "%userprofile%\\appdata\\roaming\\microsoft\\windows\\start menu\\programs\\windows powershell\\windows powershell (x86).lnk"
                                    },
                                    {
                                        "Location":  "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\팟플레이어",
