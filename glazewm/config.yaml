@@ -124,7 +124,7 @@ window_rules:
       - window_process: { equals: 'Flow.Launcher' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'KakaoTalk' }
-      - window_process: { regex: '(?i)mtalk' }
+      - window_process: { equals: 'mtalk' }
       - window_process: { equals: 'Listary' }
       # Webex (new desktop app) — main window and meeting windows both live
       # in CiscoCollabHost.exe; keep them out of the tile layout permanently.
