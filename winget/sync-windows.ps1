@@ -38,6 +38,13 @@ robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:
 $tackyCfg = Join-Path $dst 'tacky-borders\config.yaml'
 if (-not (Test-Path $tackyCfg)) {
   Copy-Item (Join-Path $dst 'tacky-borders\themes\violet-pink.yaml') $tackyCfg -ErrorAction SilentlyContinue
+  $profile_file = Join-Path $dst '.dotfiles-profile'
+  if ((Test-Path -LiteralPath $tackyCfg) -and (Test-Path -LiteralPath $profile_file) -and
+      ("$(Get-Content -LiteralPath $profile_file -Raw)".Trim() -eq 'light')) {
+    $static = [IO.File]::ReadAllText($tackyCfg) `
+      -replace '(?m)^([ \t]*enabled:[ \t]*)True[ \t]*(?=\r?$)', '${1}False'
+    [IO.File]::WriteAllText($tackyCfg, $static, (New-Object System.Text.UTF8Encoding($true)))
+  }
 }
 
 # ShareX settings flow the OPPOSITE direction to everything above: the live

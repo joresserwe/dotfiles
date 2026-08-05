@@ -50,6 +50,10 @@ rsync -rlt --delete --exclude 'config.yaml' \
 if [ ! -f "$mirror/tacky-borders/config.yaml" ]; then
   cp "$DOTFILES_PATH/tacky-borders/themes/violet-pink.yaml" \
      "$mirror/tacky-borders/config.yaml" || status=1
+  if [ "$profile" = light ]; then
+    sed -i 's/^\([[:blank:]]*enabled:[[:blank:]]*\)True[[:blank:]]*$/\1False/' \
+      "$mirror/tacky-borders/config.yaml" || status=1
+  fi
 fi
 
 {
