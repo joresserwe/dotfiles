@@ -282,7 +282,7 @@ CycleOnMonitor(dir) {
 }
 ; F13 combos (physical Win+U/D/F after the kernel remap). `~F13 &` keeps F13
 ; flowing to glazewm's hook — see the F13 comment block above.
-#HotIf !VmActive()
+#HotIf !VmActive() && !HyperHeld()
 ~F13 & u::(MarkHotkey("WinU"), CycleOnMonitor(1))
 ~F13 & d::(MarkHotkey("WinD"), CycleOnMonitor(-1))
 ; Win+F was glazewm's wm-cycle-focus, but that needs a focused window as
@@ -367,7 +367,7 @@ FloatKey(dir, dx, dy) {
     if !FloatNav(dx, dy)
         RunWait(gw ' command focus --workspace-in-direction ' dir, , 'Hide')
 }
-#HotIf FileExist(A_Temp "\glazewm-float-focus.flag") && !VmActive()
+#HotIf FileExist(A_Temp "\glazewm-float-focus.flag") && !VmActive() && !HyperHeld()
 ~F13 & h::FloatKey("left", -1, 0)
 ~F13 & j::FloatKey("down", 0, 1)
 ~F13 & k::FloatKey("up", 0, -1)
@@ -392,7 +392,7 @@ FloatKey(dir, dx, dy) {
 ; is dispatched here too: f13+shift+z = restore most-recently-minimized via
 ; restore-window.ps1 (low-frequency, spawn cost acceptable there).
 global curActiveHwnd := 0, prevActiveHwnd := 0
-#HotIf !VmActive()
+#HotIf !VmActive() && !HyperHeld()
 ~F13 & z:: {
     global prevActiveHwnd
     if GetKeyState("Shift", "P") {
@@ -434,7 +434,7 @@ JumpToWindow(idx) {
         WinActivate("ahk_id " hwnd)
     }
 }
-#HotIf !VmActive()
+#HotIf !VmActive() && !HyperHeld()
 ~F13 & a::JumpToWindow(1)
 ~F13 & s::JumpToWindow(2)
 ~F13 & x::JumpToWindow(3)
@@ -449,6 +449,7 @@ JumpToWindow(idx) {
 
 VmActive() => WinActive("ahk_exe AccordD64.exe")
 RawF13() => FileExist(A_Temp "\vm-raw-f13.flag")
+HyperHeld() => GetKeyState("Ctrl") || GetKeyState("Alt")
 
 try FileDelete(A_Temp "\vm-raw-f13.flag")
 
