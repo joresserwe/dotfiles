@@ -27,6 +27,11 @@ case "$OSTYPE" in
   linux*)
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
     export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
+    # brew's curl/openssl read $HOMEBREW_PREFIX/etc/ca-certificates/cert.pem,
+    # which never sees roots added via update-ca-certificates (e.g. a
+    # TLS-intercepting corp proxy) — point OpenSSL at the system bundle.
+    [ -f /etc/ssl/certs/ca-certificates.crt ] \
+      && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
     ;;
 esac
 [ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"

@@ -80,6 +80,17 @@ dest="/usr/local/share/ca-certificates/proxy-root-$hash.crt"
 sudo install -m 0644 "$last" "$dest"
 sudo update-ca-certificates
 
+# Homebrew's curl ignores the system store and reads its own bundle, so a
+# root registered above still fails verification through brew's curl —
+# append it there too (regenerated on ca-certificates formula upgrades;
+# SSL_CERT_FILE in .zshenv covers interactive shells regardless).
+brew_bundle="/home/linuxbrew/.linuxbrew/etc/ca-certificates/cert.pem"
+marker="proxy-root-$hash"
+if [ -f "$brew_bundle" ] && ! grep -q "^# $marker\$" "$brew_bundle"; then
+  { printf '\n# %s\n' "$marker"; cat "$last"; } | sudo tee -a "$brew_bundle" >/dev/null
+  echo "Appended root to Homebrew bundle: $brew_bundle"
+fi
+
 rc=0
 curl -fsS --max-time 15 -o /dev/null "$URL" || rc=$?
 if [ "$rc" -eq 0 ]; then

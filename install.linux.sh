@@ -75,6 +75,9 @@ sudo apt-get update -y
 # shellcheck disable=SC2046
 sudo apt-get install -y $(grep -vE '^\s*#|^\s*$' "$DOTFILES_PATH/apt/packages.txt")
 
+[ -f /etc/ssl/certs/ca-certificates.crt ] \
+  && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
 log_step "TLS preflight: probe https://formulae.brew.sh"
 tls_rc=0
 curl -fsS --max-time 15 -o /dev/null https://formulae.brew.sh || tls_rc=$?
