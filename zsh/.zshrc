@@ -24,7 +24,6 @@ plugins=(
 [ -f "$ZSH/oh-my-zsh.sh" ] && . "$ZSH/oh-my-zsh.sh"
 [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && . "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-# p10k
 [ -f "$ZDOTDIR/.p10k.zsh" ] && . "$ZDOTDIR/.p10k.zsh"
 
 # brew completions (compinit already handled by oh-my-zsh; must run before carapace)
@@ -48,14 +47,11 @@ if command -v carapace &>/dev/null; then
   source "$_carapace_cache"
 fi
 
-# mise (replaces fnm + pyenv)
 # eval "$(mise activate zsh)"
 export PATH="$HOME/.local/share/mise/shims:$PATH"
 
-# zoxide
 eval "$(zoxide init zsh)"
 
-# atuin
 eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 
 # K8S
@@ -63,14 +59,11 @@ eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 # . ~/.minikube/.minikube-completion
 # export KUBE_EDITOR="nvim"
 
-# sdkman
 [ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ] && . "$SDKMAN_DIR/bin/sdkman-init.sh"
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && . "$HOME/.config/envman/load.sh"
 
-
-# aliases
 [ -f "$XDG_CONFIG_HOME/zsh/.aliases" ] && . "$XDG_CONFIG_HOME/zsh/.aliases"
 
 # wezterm shell integration (OSC 7/133/1337: cwd tracking, prompt zones, user vars)

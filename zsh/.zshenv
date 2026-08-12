@@ -4,7 +4,6 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# Dotfiles
 export DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 
 # Nested shells (tmux panes inherit ZDOTDIR) re-source this file via
@@ -12,14 +11,12 @@ export DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 # (install.sh) also sources this file and has no typeset -U.
 [ -n "${ZSH_VERSION:-}" ] && typeset -U path fpath
 
-# zsh
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export ZSH="$ZDOTDIR/oh-my-zsh"
 
 # NOTE: HISTFILE is set in .zshrc — macOS /etc/zshrc runs after .zshenv
 # and overrides it, so the export must happen later in .zshrc.
 
-# OS-specific: XDG_RUNTIME_DIR and Homebrew prefix
 case "$OSTYPE" in
   darwin*)
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
@@ -41,7 +38,6 @@ case "$OSTYPE" in
 esac
 [ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
 
-# use vim as the editor
 # vim (< 9.1.0327) has no XDG support: EXINIT points it at the XDG vimrc.
 # Unlike VIMINIT, EXINIT is read only when no vimrc/init is found, so nvim
 # (which has init.lua) never sees it.
@@ -49,12 +45,10 @@ export MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc"
 export EXINIT='source $MYVIMRC'
 export EDITOR=nvim
 
-# mise (replaces fnm + pyenv; manages node, python, go, ruby, etc.)
 export MISE_DATA_DIR="$XDG_DATA_HOME/mise"
 export MISE_CONFIG_DIR="$XDG_CONFIG_HOME/mise"
 export MISE_CACHE_DIR="$XDG_CACHE_HOME/mise"
 
-# npm
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 export PNPM_HOME="$XDG_DATA_HOME/pnpm"
@@ -63,10 +57,8 @@ export PNPM_HOME="$XDG_DATA_HOME/pnpm"
 # ~/.local/bin note below).
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-# sdkman
 export SDKMAN_DIR="$XDG_DATA_HOME/sdkman"
 
-# go
 export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$GOPATH/pkg/mod"
 export PATH="$PATH:$GOPATH/bin"
@@ -86,15 +78,11 @@ export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
 # var and fall back to ~/.python_history)
 export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
 
-
-# wget
 export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
 
-# fzf
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 
-# nvim
 export PATH="/opt/nvim/bin:$PATH"
 
 # pipx / native tool installs (claude, win32yank, xdg-open shim, ...)
@@ -104,7 +92,6 @@ export PATH="/opt/nvim/bin:$PATH"
 # file op. ~/.local/bin must win inside WSL.
 export PATH="$HOME/.local/bin:$PATH"
 
-# claude code
 export CLAUDE_CONFIG_DIR="$XDG_DATA_HOME/claude"
 
 # codex — ignores XDG, defaults to ~/.codex unless CODEX_HOME is set
