@@ -2,7 +2,7 @@
 # Run `wsl --shutdown` after changing this file to apply the new settings.
 # memory is a hard cap, not a reservation — tune per machine.
 [wsl2]
-networkingMode=mirrored
+# networkingMode=mirrored — broken on this VDI (no interfaces, DNS dies); keep NAT
 memory=12GB
 
 [experimental]
