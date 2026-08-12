@@ -791,12 +791,12 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     if register_task 'wslhost-watchdog' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$watchdog_local_win\"'
       # Task Scheduler rejects [TimeSpan]::MaxValue as out of range (0x80041318), hence the bounded span.
-      \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30) -RepetitionDuration (New-TimeSpan -Days 3650)
+      \$trg = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
       \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
       Register-ScheduledTask -TaskName 'wslhost-watchdog' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
     "; then
-      log_done "Scheduled Task 'wslhost-watchdog' registered (every 30 min -> $watchdog_local_win)"
+      log_done "Scheduled Task 'wslhost-watchdog' registered (every 5 min -> $watchdog_local_win)"
     else
       log_manual "Scheduled Task 'wslhost-watchdog' NOT registered: $REGISTER_TASK_ERROR"
     fi
