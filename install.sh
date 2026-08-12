@@ -202,6 +202,7 @@ echo "Linking config files..."
 
 # zsh
 create_link "$DOTFILES_PATH/zsh/.zshenv" ~/.zshenv
+create_link "$DOTFILES_PATH/zsh/.zshenv" "$XDG_CONFIG_HOME/zsh/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshrc" "$XDG_CONFIG_HOME/zsh/.zshrc"
 create_link "$DOTFILES_PATH/zsh/.aliases" "$XDG_CONFIG_HOME/zsh/.aliases"
 if [ -L "$XDG_CONFIG_HOME/zsh/zfunc" ] && [ ! -e "$XDG_CONFIG_HOME/zsh/zfunc" ]; then

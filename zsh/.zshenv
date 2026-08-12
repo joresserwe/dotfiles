@@ -7,6 +7,11 @@ export XDG_STATE_HOME="$HOME/.local/state"
 # Dotfiles
 export DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
 
+# Nested shells (tmux panes inherit ZDOTDIR) re-source this file via
+# $ZDOTDIR/.zshenv; -U dedupes the repeated PATH prepends. Guarded: bash
+# (install.sh) also sources this file and has no typeset -U.
+[ -n "${ZSH_VERSION:-}" ] && typeset -U path fpath
+
 # zsh
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export ZSH="$ZDOTDIR/oh-my-zsh"
