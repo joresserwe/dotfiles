@@ -23,6 +23,14 @@ fi
 mkdir -p "$mirror"
 
 status=0
+# .wslconfig lives at %USERPROFILE%, outside the Windows-local dotfiles
+# mirror. Keep it synchronized here so memory reclaim and sparse-VHD settings
+# do not silently drift. WSL applies changes after the next `wsl --shutdown`.
+wslconfig_target="$(dirname "$mirror")/.wslconfig"
+if ! cmp -s "$DOTFILES_PATH/wsl/wslconfig" "$wslconfig_target"; then
+  cp "$DOTFILES_PATH/wsl/wslconfig" "$wslconfig_target" || status=1
+fi
+
 # rsync without perms/owner flags — drvfs rejects chmod/chown metadata.
 for d in glazewm winget claude surfingkeys; do
   rsync -rlt --delete "$DOTFILES_PATH/$d/" "$mirror/$d/" || status=1

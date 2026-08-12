@@ -9,7 +9,7 @@ grep -qi microsoft /proc/version 2>/dev/null || exit 0
 mkdir -p "$XDG_STATE_HOME/dotfiles"
 
 watch_dirs=()
-for d in glazewm zebar winget claude surfingkeys tacky-borders; do
+for d in glazewm zebar winget claude surfingkeys tacky-borders wsl; do
   watch_dirs+=("$DOTFILES_PATH/$d")
 done
 watch_dirs+=("$XDG_STATE_HOME/dotfiles")
