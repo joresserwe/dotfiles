@@ -58,7 +58,10 @@ export MISE_CACHE_DIR="$XDG_CACHE_HOME/mise"
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 export PNPM_HOME="$XDG_DATA_HOME/pnpm"
-export PATH="$PATH:$PNPM_HOME"
+# $PNPM_HOME/bin too: pnpm >=10 places the global bin dir there. Prepend so
+# WSL-native binaries beat Windows interop copies under /mnt/c (see the
+# ~/.local/bin note below).
+export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
 # sdkman
 export SDKMAN_DIR="$XDG_DATA_HOME/sdkman"
