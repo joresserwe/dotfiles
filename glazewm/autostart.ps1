@@ -29,23 +29,40 @@ $log = Join-Path $env:TEMP 'glazewm-autostart.log'
 # Windows, so the retries below span ~4 minutes total.
 $backoff = 5, 15, 30, 60, 120
 
+# A crashed glazewm can pass both liveness probes below while WER drains its
+# crash dump: the process object stays alive (HasExited reads $false) and
+# Get-Process still lists the pid (observed 2026-08-12, 0xc0000409 at logon).
+# Hence the crash-event probe and the $deadPids exclusion.
+$deadPids = @()
+
 for ($i = 1; $i -le $backoff.Count + 1; $i++) {
-  if (Get-Process glazewm -ErrorAction SilentlyContinue) {
+  if (Get-Process glazewm -ErrorAction SilentlyContinue |
+      Where-Object { $deadPids -notcontains $_.Id }) {
     "$(Get-Date -Format 'HH:mm:ss.fff') already running — exit" | Add-Content $log
     exit 0
   }
   "$(Get-Date -Format 'HH:mm:ss.fff') attempt $i" | Add-Content $log
+  $launched = Get-Date
   $p = Start-Process $exe -WindowStyle Hidden -PassThru
   Start-Sleep -Seconds 8
-  if ($p -and -not $p.HasExited) {
+  $crash = Get-WinEvent -FilterHashtable @{
+    LogName = 'Application'; ProviderName = 'Application Error'; Id = 1000
+    StartTime = $launched
+  } -ErrorAction SilentlyContinue | Where-Object {
+    $_.Message -match 'glazewm\.exe' -and
+    $_.Message -match ('0x0*{0:x}\b' -f $p.Id)
+  }
+  if ($p -and -not $p.HasExited -and -not $crash) {
     "$(Get-Date -Format 'HH:mm:ss.fff') attempt $i OK (pid $($p.Id))" | Add-Content $log
     exit 0
   }
+  $deadPids += $p.Id
   # (glazewm.exe is a windows-subsystem binary: the Rust panic never reaches
   # stderr, so there is nothing to capture — netstat at death time is the
   # useful diagnostic.)
+  $exitInfo = if ($p.HasExited) { $p.ExitCode } else { 'WER-held' }
   $tw = (netstat -ano | Select-String ':6123.*TIME_WAIT').Count
-  "$(Get-Date -Format 'HH:mm:ss.fff') attempt $i died exit=$($p.ExitCode) (6123 TIME_WAIT pairs: $tw)" | Add-Content $log
+  "$(Get-Date -Format 'HH:mm:ss.fff') attempt $i died exit=$exitInfo crashEvent=$([bool]$crash) (6123 TIME_WAIT pairs: $tw)" | Add-Content $log
   if ($i -le $backoff.Count) { Start-Sleep -Seconds $backoff[$i - 1] }
 }
 "$(Get-Date -Format 'HH:mm:ss.fff') giving up after $($backoff.Count + 1) attempts" | Add-Content $log
