@@ -67,7 +67,7 @@ window_behavior:
   initial_state: 'tiling'
   state_defaults:
     floating:
-      centered: true
+      centered: false
       shown_on_top: false
     fullscreen:
       # maximized: false — use manual SetWindowPos instead of Windows native
@@ -127,7 +127,6 @@ window_rules:
       - window_process: { equals: 'Flow.Launcher' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'KakaoTalk' }
-      - window_process: { equals: 'mtalk' }
       - window_process: { equals: 'Listary' }
       # Webex (new desktop app) — main window and meeting windows both live
       # in CiscoCollabHost.exe; keep them out of the tile layout permanently.
@@ -144,6 +143,10 @@ window_rules:
       - window_process: { regex: '(?i)AutoHotkey' }
       - window_process: { equals: 'tacky-borders' }
       - window_process: { equals: 'steamwebhelper' }
+
+  - commands: ['set-floating --centered']
+    match:
+      - window_process: { equals: 'mtalk' }
 
 # ---------------------------------------------------------------------------
 # Binding Modes (resize / move — mirrors AeroSpace modes)
