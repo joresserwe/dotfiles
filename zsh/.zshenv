@@ -99,6 +99,9 @@ export PATH="$HOME/.local/bin:$PATH"
 # claude code
 export CLAUDE_CONFIG_DIR="$XDG_DATA_HOME/claude"
 
+# codex — ignores XDG, defaults to ~/.codex unless CODEX_HOME is set
+export CODEX_HOME="$XDG_DATA_HOME/codex"
+
 # remove less history
 export LESSHISTFILE=-
 

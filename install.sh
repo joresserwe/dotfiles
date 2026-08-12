@@ -68,7 +68,8 @@ ensure_dir \
 	"$XDG_STATE_HOME" \
 	"$XDG_RUNTIME_DIR" \
 	"$XDG_STATE_HOME/atuin/logs" \
-	"$XDG_STATE_HOME/zsh"
+	"$XDG_STATE_HOME/zsh" \
+	"$XDG_DATA_HOME/codex"
 chmod 700 "$XDG_RUNTIME_DIR" # XDG basedir spec requires mode 700 on the runtime dir
 
 # -----------------------------------------------------------------------------------------------
@@ -96,7 +97,7 @@ export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
 # `install -g` when it's not in PATH.
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-for package in yarn npm-check-updates mcp-hub; do
+for package in yarn npm-check-updates mcp-hub @openai/codex; do
 	if pnpm list -g --depth=0 2>/dev/null | grep "$package" >/dev/null; then
 		echo "$package is already installed."
 	else
@@ -248,6 +249,12 @@ create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezte
 create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart-split"
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
+
+# -----------------------------------------------------------------------------------------------
+
+echo "Configuring Codex..."
+ensure_dir "$XDG_DATA_HOME/codex"
+create_link "$DOTFILES_PATH/codex/config.toml" "$XDG_DATA_HOME/codex/config.toml"
 
 # -----------------------------------------------------------------------------------------------
 
