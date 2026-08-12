@@ -6,6 +6,9 @@ rendering_backend: V2
 
 window_rules:
   - match: Process
+    name: "mtalk"
+    enabled: False
+  - match: Process
     name: "zebar"
     enabled: False
   - match: Process
