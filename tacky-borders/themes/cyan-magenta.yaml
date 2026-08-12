@@ -26,6 +26,12 @@ window_rules:
     name: "Riot Client"
     enabled: False
   - match: Process
+    name: "VLauncher"
+    enabled: False
+  - match: Class
+    name: "R2Beat"
+    enabled: False
+  - match: Process
     name: "ShareX"
     enabled: False
   - match: Title
