@@ -69,6 +69,8 @@ brew "uv"
 brew "resvg"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
+# File archiver with a high compression ratio (yazi extract opener)
+brew "sevenzip"
 # Ping with a real-time graph
 brew "gping"
 # TCP connect to the given IP/port combo
