@@ -1,3 +1,10 @@
+# The default C.UTF-8 locale decodes UTF-8 but ships no per-character width
+# table, so ZLE treats CJK/wide glyphs as 1 cell while the terminal renders 2
+# — the cursor desyncs and Hangul appears to shift left/right on arrow keys.
+# A real UTF-8 locale carries the width data. en_US.UTF-8 must be generated:
+# sudo locale-gen en_US.UTF-8
+export LANG="en_US.UTF-8"
+
 # XDG(https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
