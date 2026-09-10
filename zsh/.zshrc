@@ -46,8 +46,12 @@ if command -v carapace &>/dev/null; then
   source "$_carapace_cache"
 fi
 
-# eval "$(mise activate zsh)"
-export PATH="$HOME/.local/share/mise/shims:$PATH"
+# trash has no native carapace spec, so carapace bridges it: every Tab spawns
+# captive shells (seconds-long stall on bridge-cache rebuild) and still yields
+# nothing, since trash-cli's shtab _trash completes no files. Complete plain
+# files instead. Ordering: must come after the carapace source, or its compdef
+# for trash wins.
+command -v trash &>/dev/null && compdef _files trash
 
 eval "$(zoxide init zsh)"
 
