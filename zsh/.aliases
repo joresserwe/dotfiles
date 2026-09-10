@@ -55,6 +55,15 @@ alias ping="ping_or_tcping"
 # lazygit
 alias lg="lazygit"
 
+# Codex: cloud-managed new-thread defaults currently select Luna/medium.
+# Command-line values take precedence, so keep interactive launches on Sol/high.
+codex() {
+  command codex \
+    --model gpt-5.6-sol \
+    --config 'model_reasoning_effort="high"' \
+    "$@"
+}
+
 # kiro — launch kiro-cli on the V3 agent engine. Under WSL, only Kiro gets
 # the authenticated headless X11 clipboard; exporting DISPLAY for all tmux
 # panes makes Claude prefer this clipboard over its Windows-native fallback.

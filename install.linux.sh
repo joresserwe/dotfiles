@@ -1056,7 +1056,7 @@ export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
 # `install -g` when it's not in PATH.
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-for pkg in yarn npm-check-updates mcp-hub @openai/codex; do
+for pkg in yarn npm-check-updates mcp-hub; do
   if pnpm list -g --depth=0 2>/dev/null | grep -q "$pkg"; then
     log_skip "pnpm global: $pkg"
   else
@@ -1108,8 +1108,19 @@ log_done "Phase 4 complete (run 'nvim --headless \"+Lazy! sync\" +qa' to pre-ins
 # ============================================================================
 log_step "Phase 5: Codex + Claude Code"
 
+log_step "Installing/updating Codex CLI (standalone installer)"
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+log_done "codex CLI installed: $HOME/.local/bin/codex"
+
+if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
+  pnpm remove -g @openai/codex
+  log_done "removed legacy pnpm Codex installation"
+fi
+
 ensure_dir "$XDG_DATA_HOME/codex"
 create_link "$DOTFILES_PATH/codex/config.toml" "$XDG_DATA_HOME/codex/config.toml"
+# Keep Codex's fallback path in sync for launches that do not inherit CODEX_HOME.
+create_link "$DOTFILES_PATH/codex/config.toml" "$HOME/.codex/config.toml"
 
 # Claude Code CLI — native installer, lands in ~/.local/bin/claude (same
 # convention as win32yank; .zshenv already puts ~/.local/bin on PATH) and

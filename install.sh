@@ -97,7 +97,7 @@ export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
 # `install -g` when it's not in PATH.
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-for package in yarn npm-check-updates mcp-hub @openai/codex; do
+for package in yarn npm-check-updates mcp-hub; do
 	if pnpm list -g --depth=0 2>/dev/null | grep "$package" >/dev/null; then
 		echo "$package is already installed."
 	else
@@ -253,9 +253,18 @@ create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 
 # -----------------------------------------------------------------------------------------------
 
+echo "Installing / updating Codex CLI (standalone)..."
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
+	echo "Removing legacy pnpm Codex installation..."
+	pnpm remove -g @openai/codex
+fi
+
 echo "Configuring Codex..."
 ensure_dir "$XDG_DATA_HOME/codex"
 create_link "$DOTFILES_PATH/codex/config.toml" "$XDG_DATA_HOME/codex/config.toml"
+# Keep Codex's fallback path in sync for launches that do not inherit CODEX_HOME.
+create_link "$DOTFILES_PATH/codex/config.toml" "$HOME/.codex/config.toml"
 
 # -----------------------------------------------------------------------------------------------
 

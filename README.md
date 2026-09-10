@@ -146,7 +146,7 @@ The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powe
 | **2** | `brew bundle` (Linux subset) + tmux/git/atuin/yazi configs |
 | **3** | mise + node LTS + global pnpm packages |
 | **4** | AstroNvim clone |
-| **5** | Claude Code symlinks |
+| **5** | Codex standalone installer + Claude Code symlinks |
 
 ### Windows-side setup
 
