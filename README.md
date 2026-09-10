@@ -40,7 +40,7 @@
 ## Highlights
 
 - **One-command bootstrap** &mdash; `install.sh` handles Homebrew, packages, symlinks, and macOS defaults
-- **ARM64 / Intel** auto-detection for Homebrew paths
+- **Apple Silicon Homebrew** at `/opt/homebrew`
 - **Fuzzy finders everywhere** &mdash; `ff` files &middot; `f/` grep &middot; `fz` dirs &middot; `fh` history &middot; `fa` aliases
 - **Wezterm AI menu** &mdash; Claude Code, Codex, Gemini CLI via `C-a + A`
 - **Catppuccin Mocha** unified across terminal, editor, and tools
@@ -55,7 +55,7 @@ The script will:
 
 1. Create XDG directories
 2. Install Homebrew & all packages from `Brewfile`
-3. Set up Node.js (fnm + pnpm global packages)
+3. Set up Node.js (mise + pnpm global packages)
 4. Clone oh-my-zsh, powerlevel10k, AstroNvim
 5. Apply symlinks & macOS defaults
 

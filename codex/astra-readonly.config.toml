@@ -1,0 +1,7 @@
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+approval_policy = "never"
+sandbox_mode = "read-only"
+
+[agents]
+enabled = false

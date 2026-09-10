@@ -9,17 +9,12 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
 
-DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
+DOTFILES_PATH="${DOTFILES_PATH:-$XDG_CONFIG_HOME/.dotfiles}"
 
 # -----------------------------------------------------------------------------------------------
 
 echo "Installing Homebrew..."
-# Apple Silicon: /opt/homebrew, Intel: /usr/local
-if [[ "$(uname -m)" == "arm64" ]]; then
-	brew_path=/opt/homebrew/bin
-else
-	brew_path=/usr/local/bin
-fi
+brew_path=/opt/homebrew/bin
 if [[ ":$PATH:" != *":$brew_path:"* ]]; then
 	export PATH="$PATH:$brew_path"
 fi
@@ -80,6 +75,10 @@ source "$DOTFILES_PATH/zsh/.zshenv"
 # -----------------------------------------------------------------------------------------------
 
 echo "brew install..."
+# Homebrew >=6 requires explicit trust for non-official formulae before bundle
+# evaluates their taps. Trust only the two formulae this Brewfile installs.
+brew trust --formula arl/arl/gitmux 2>/dev/null || true
+brew trust --formula felixkratz/formulae/borders 2>/dev/null || true
 brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
@@ -261,10 +260,7 @@ if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
 fi
 
 echo "Configuring Codex..."
-ensure_dir "$XDG_DATA_HOME/codex"
-create_link "$DOTFILES_PATH/codex/config.toml" "$XDG_DATA_HOME/codex/config.toml"
-# Keep Codex's fallback path in sync for launches that do not inherit CODEX_HOME.
-create_link "$DOTFILES_PATH/codex/config.toml" "$HOME/.codex/config.toml"
+bash "$DOTFILES_PATH/codex/install.sh"
 
 # -----------------------------------------------------------------------------------------------
 

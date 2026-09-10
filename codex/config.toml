@@ -1,16 +1,36 @@
-model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model = "gpt-5.6-luna"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+model_reasoning_effort = "xhigh"
+model_verbosity = "low"
+tool_output_token_limit = 6000
+file_opener = "none"
 
-# Claude-inspired, compact one-line footer:
-# model + effort | project | git branch | context left | rate limits
 [tui]
 animations = false
+notifications = true
+theme = "catppuccin-mocha"
+terminal_title = ["spinner", "project"]
 status_line = [
   "model-with-reasoning",
-  "project-name",
   "git-branch",
   "context-remaining",
   "five-hour-limit",
   "weekly-limit",
+  "used-tokens",
 ]
 status_line_use_colors = true
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "xhigh"
+
+[[hooks.PostToolUse]]
+matcher = "^apply_patch$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "python3 \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/codex/hooks/comment-check.py\""
+timeout = 5

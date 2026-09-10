@@ -17,7 +17,7 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
 
-DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
+DOTFILES_PATH="${DOTFILES_PATH:-$XDG_CONFIG_HOME/.dotfiles}"
 
 # ----- Library -------------------------------------------------------------
 if [ ! -f "$DOTFILES_PATH/lib/common.sh" ]; then
@@ -76,16 +76,34 @@ sudo apt-get update -y
 # shellcheck disable=SC2046
 sudo apt-get install -y $(grep -vE '^\s*#|^\s*$' "$DOTFILES_PATH/apt/packages.txt")
 
-log_step "earlyoom: configure and enable"
-# systemd EnvironmentFile does no shell-style quote stripping — quoted regex
-# args would reach earlyoom with literal quotes, so keep them space-free and
-# bare. The regexes match comm names, truncated to 15 chars.
-sudo tee /etc/default/earlyoom >/dev/null <<'EOF'
+log_step "locale: ensure en_US.UTF-8"
+if command -v locale-gen >/dev/null 2>&1; then
+  if locale -a 2>/dev/null | grep -Eqi '^en_US\.utf-?8$'; then
+    log_skip "locale en_US.UTF-8 already generated"
+  else
+    sudo sed -i -E 's/^[#[:space:]]*en_US\.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/' /etc/locale.gen
+    sudo locale-gen en_US.UTF-8
+    log_done "locale generated: en_US.UTF-8"
+  fi
+else
+  echo "ERROR: locale-gen is unavailable after installing locales." >&2
+  exit 1
+fi
+
+if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+  log_step "earlyoom: configure and enable"
+  # systemd EnvironmentFile does no shell-style quote stripping — quoted regex
+  # args would reach earlyoom with literal quotes, so keep them space-free and
+  # bare. The regexes match comm names, truncated to 15 chars.
+  sudo tee /etc/default/earlyoom >/dev/null <<'EOF'
 EARLYOOM_ARGS="-m 6,3 -r 3600 --avoid ^(init|systemd.*|sshd|tmux.*|zsh|claude|codex|node)$ --prefer ^(chrome|chromium|headless_shell|python[0-9.]*|java)$"
 EOF
-sudo systemctl enable earlyoom >/dev/null 2>&1 || true
-sudo systemctl restart earlyoom
-log_done "earlyoom active (SIGTERM at 6% free, SIGKILL at 3%)"
+  sudo systemctl enable earlyoom >/dev/null 2>&1 || true
+  sudo systemctl restart earlyoom
+  log_done "earlyoom active (SIGTERM at 6% free, SIGKILL at 3%)"
+else
+  log_skip "earlyoom: systemd not running"
+fi
 
 [ -f /etc/ssl/certs/ca-certificates.crt ] \
   && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
@@ -102,14 +120,34 @@ else
   exit "$tls_rc"
 fi
 
-if ! command -v brew >/dev/null 2>&1 && [ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+BREW_BIN="$(command -v brew 2>/dev/null || true)"
+if [ -z "$BREW_BIN" ] && [ -n "${HOMEBREW_PREFIX:-}" ] && [ -x "$HOMEBREW_PREFIX/bin/brew" ]; then
+  BREW_BIN="$HOMEBREW_PREFIX/bin/brew"
+fi
+if [ -z "$BREW_BIN" ] && [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  BREW_BIN=/home/linuxbrew/.linuxbrew/bin/brew
+fi
+if [ -z "$BREW_BIN" ]; then
   log_step "Installing Homebrew on Linux"
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 else
   log_skip "Homebrew already installed"
 fi
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-brew analytics off
+if [ -z "$BREW_BIN" ]; then
+  BREW_BIN="$(command -v brew 2>/dev/null || true)"
+fi
+if [ -z "$BREW_BIN" ] && [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  BREW_BIN=/home/linuxbrew/.linuxbrew/bin/brew
+fi
+if [ -z "$BREW_BIN" ]; then
+  echo "ERROR: Homebrew installation completed but brew was not found." >&2
+  exit 1
+fi
+HOMEBREW_PREFIX="$("$BREW_BIN" --prefix)"
+export HOMEBREW_PREFIX
+eval "$("$BREW_BIN" shellenv)"
+BREW_BIN="$(command -v brew)"
+"$BREW_BIN" analytics off
 
 log_done "Phase 0 complete"
 
@@ -241,8 +279,9 @@ create_link "$DOTFILES_PATH/tmux/gitmux.conf"       "$XDG_CONFIG_HOME/tmux/gitmu
 create_link "$DOTFILES_PATH/tmux/smart-split.sh"    "$XDG_CONFIG_HOME/tmux/smart-split.sh"
 create_link "$DOTFILES_PATH/tmux/pane-dim.sh"       "$XDG_CONFIG_HOME/tmux/pane-dim.sh"
 
-TPM_INSTALL="/home/linuxbrew/.linuxbrew/opt/tpm/share/tpm/bin/install_plugins"
-if [ -x "$TPM_INSTALL" ]; then
+TPM_PREFIX="$(brew --prefix tpm 2>/dev/null || true)"
+TPM_INSTALL="${TPM_PREFIX:+$TPM_PREFIX/share/tpm/bin/install_plugins}"
+if [ -n "$TPM_INSTALL" ] && [ -x "$TPM_INSTALL" ]; then
   log_step "tmux: installing tpm plugins"
   "$TPM_INSTALL" >/dev/null 2>&1 || true
   log_done "tmux plugins"
@@ -1117,10 +1156,7 @@ if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
   log_done "removed legacy pnpm Codex installation"
 fi
 
-ensure_dir "$XDG_DATA_HOME/codex"
-create_link "$DOTFILES_PATH/codex/config.toml" "$XDG_DATA_HOME/codex/config.toml"
-# Keep Codex's fallback path in sync for launches that do not inherit CODEX_HOME.
-create_link "$DOTFILES_PATH/codex/config.toml" "$HOME/.codex/config.toml"
+bash "$DOTFILES_PATH/codex/install.sh"
 
 # Claude Code CLI — native installer, lands in ~/.local/bin/claude (same
 # convention as win32yank; .zshenv already puts ~/.local/bin on PATH) and

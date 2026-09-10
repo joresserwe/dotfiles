@@ -6,16 +6,16 @@
 export LANG="en_US.UTF-8"
 
 # XDG(https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_STATE_HOME="$HOME/.local/state"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-export DOTFILES_PATH="$XDG_CONFIG_HOME/.dotfiles"
+export DOTFILES_PATH="${DOTFILES_PATH:-$XDG_CONFIG_HOME/.dotfiles}"
 
 # Nested shells (tmux panes inherit ZDOTDIR) re-source this file via
-# $ZDOTDIR/.zshenv; -U dedupes the repeated PATH prepends. Guarded: bash
-# (install.sh) also sources this file and has no typeset -U.
+# $ZDOTDIR/.zshenv; -U dedupes the repeated PATH prepends. Guarded for shells
+# that do not provide zsh's typeset builtin.
 [ -n "${ZSH_VERSION:-}" ] && typeset -U path fpath
 
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
@@ -27,11 +27,7 @@ export ZSH="$ZDOTDIR/oh-my-zsh"
 case "$OSTYPE" in
   darwin*)
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$HOME/Library/Caches/Runtime}"
-    if [ -x /opt/homebrew/bin/brew ]; then
-      export HOMEBREW_PREFIX="/opt/homebrew"
-    else
-      export HOMEBREW_PREFIX="/usr/local"
-    fi
+    export HOMEBREW_PREFIX="/opt/homebrew"
     ;;
   linux*)
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
