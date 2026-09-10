@@ -21,10 +21,11 @@
 | **Shell** | `zsh` `oh-my-zsh` `powerlevel10k` `fzf` `ripgrep` `fd` `zoxide` `atuin` `eza` `bat` |
 | **Terminal** | macOS: `wezterm` &mdash; workspace switcher, session resurrect, AI tools menu &middot; WinOS: `Windows Terminal` (focus mode) + `tmux` |
 | **Editor** | `neovim` (AstroNvim) &middot; `ideavim` |
-| **Window Manager** | `aerospace` &mdash; gradient borders, auto-float rules |
-| **Keyboard** | `karabiner` &mdash; Right Option &rarr; Hyper, Caps Lock &rarr; Ctrl |
-| **Dev** | `git` `lazygit` `fnm` `pnpm` `pyenv` `claude code` |
-| **Utility** | `raycast` `wallpaperkiller` |
+| **File Manager** | `yazi` &mdash; smart-enter, archive extract/compress, WSL `winopen` openers |
+| **Window Manager** | macOS: `aerospace` &mdash; gradient borders, auto-float rules &middot; WinOS: `glazewm` + `zebar` + `tacky-borders` |
+| **Keyboard** | macOS: `karabiner` &mdash; Right Option &rarr; Hyper, Caps Lock &rarr; Ctrl &middot; WinOS: `AutoHotkey` (`winkey.ahk`) &mdash; Hyper layer, window jump hints |
+| **Dev** | `git` `lazygit` `mise` `pnpm` `claude code` `codex` |
+| **Utility** | macOS: `raycast` `wallpaperkiller` &middot; WinOS: `Flow Launcher` `ShareX` |
 | **Browser** | `surfingkeys` &mdash; keyboard-driven web surfing, config loaded from raw URL |
 
 <details>
@@ -32,7 +33,6 @@
 
 | Tool | Note |
 |:--|:--|
-| `yazi` | File manager, not currently used |
 | `yabai` / `skhd` | Replaced by aerospace |
 
 </details>
@@ -92,15 +92,16 @@ ln -sf ~/.config/.dotfiles/claude/settings.json ~/.local/share/claude/settings.j
 ln -sf ~/.config/.dotfiles/claude/CLAUDE.md ~/.local/share/claude/CLAUDE.md
 ln -sf ~/.config/.dotfiles/claude/skills ~/.local/share/claude/skills
 
-# tmux (inactive)
+# tmux
 ln -sf ~/.config/.dotfiles/tmux/tmux.conf ~/.config/tmux/tmux.conf
 ln -sf ~/.config/.dotfiles/tmux/tmux.mapping.conf ~/.config/tmux/tmux.mapping.conf
 ln -sf ~/.config/.dotfiles/tmux/gitmux.conf ~/.config/tmux/gitmux.conf
 
-# yazi (inactive)
+# yazi
 ln -sf ~/.config/.dotfiles/yazi/yazi.toml ~/.config/yazi/yazi.toml
 ln -sf ~/.config/.dotfiles/yazi/theme.toml ~/.config/yazi/theme.toml
 ln -sf ~/.config/.dotfiles/yazi/keymap.toml ~/.config/yazi/keymap.toml
+ln -sf ~/.config/.dotfiles/yazi/init.lua ~/.config/yazi/init.lua
 ```
 
 </details>
