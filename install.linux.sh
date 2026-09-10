@@ -464,6 +464,12 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     dotfiles_win="${win_userprofile_raw}\\.dotfiles"
     mkdir -p "$dotfiles_win_wsl"
     printf '%s' "$dotfiles_win_wsl" > "$XDG_STATE_HOME/dotfiles/mirror-path"
+    if [[ ! -f "$XDG_STATE_HOME/dotfiles/wslconfig.local" ]]; then
+      cp "$DOTFILES_PATH/wsl/wslconfig.local.example" "$XDG_STATE_HOME/dotfiles/wslconfig.local"
+      log_done "wslconfig.local seeded (uncomment memory/swap to size this machine)"
+    else
+      log_skip "wslconfig.local exists"
+    fi
     bash "$DOTFILES_PATH/wsl/sync-mirror.sh" \
       || log_skip "mirror sync reported errors (locked files?) — non-fatal"
     cmd.exe /c setx DOTFILES_WIN "$dotfiles_win" >/dev/null 2>&1

@@ -1,10 +1,14 @@
 # Synced to %USERPROFILE%\.wslconfig by wsl/sync-mirror.sh.
 # Run `wsl --shutdown` after changing this file to apply the new settings.
-# memory is a hard cap, not a reservation — tune per machine.
+# Machine-local keys (memory, swap, ...) go in
+# $XDG_STATE_HOME/dotfiles/wslconfig.local (template: wslconfig.local.example,
+# seeded by install.linux.sh) — sync-mirror.sh injects them under [wsl2];
+# this file carries only settings valid on every machine.
 [wsl2]
 # networkingMode=mirrored — broken on this VDI (no interfaces, DNS dies); keep NAT
-memory=12GB
+# WSLg weston segfault-loops in rdp-backend.so on this VDI, writing a ~112MB
+# crash dump to %TEMP%\wsl-crashes every ~2 minutes until C: fills up
+guiApplications=false
 
 [experimental]
 autoMemoryReclaim=gradual
-sparseVhd=true

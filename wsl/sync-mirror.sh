@@ -24,12 +24,24 @@ mkdir -p "$mirror"
 
 status=0
 # .wslconfig lives at %USERPROFILE%, outside the Windows-local dotfiles
-# mirror. Keep it synchronized here so memory reclaim and sparse-VHD settings
-# do not silently drift. WSL applies changes after the next `wsl --shutdown`.
+# mirror. Keep it synchronized here so its settings do not silently drift.
+# WSL applies changes after the next `wsl --shutdown`.
+# wslconfig.local: bare key=value lines only — a section header in the
+# fragment would divert the injected keys out of [wsl2].
 wslconfig_target="$(dirname "$mirror")/.wslconfig"
-if ! cmp -s "$DOTFILES_PATH/wsl/wslconfig" "$wslconfig_target"; then
-  cp "$DOTFILES_PATH/wsl/wslconfig" "$wslconfig_target" || status=1
+wslconfig_local="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/wslconfig.local"
+wslconfig_tmp="$(mktemp)"
+if [ -f "$wslconfig_local" ]; then
+  awk -v frag="$wslconfig_local" \
+    '{print} /^\[wsl2\]$/ {while ((getline line < frag) > 0) print line}' \
+    "$DOTFILES_PATH/wsl/wslconfig" >"$wslconfig_tmp"
+else
+  cp "$DOTFILES_PATH/wsl/wslconfig" "$wslconfig_tmp"
 fi
+if ! cmp -s "$wslconfig_tmp" "$wslconfig_target"; then
+  cp "$wslconfig_tmp" "$wslconfig_target" || status=1
+fi
+rm -f "$wslconfig_tmp"
 
 # rsync without perms/owner flags — drvfs rejects chmod/chown metadata.
 for d in glazewm winget claude surfingkeys; do

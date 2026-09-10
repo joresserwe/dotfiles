@@ -1,0 +1,12 @@
+# Seeded to $XDG_STATE_HOME/dotfiles/wslconfig.local by install.linux.sh when
+# that file is absent; local edits are never overwritten and never committed —
+# these values are per-machine. sync-mirror.sh injects every line below into
+# the [wsl2] section of %USERPROFILE%\.wslconfig.
+# Bare key=value lines only — a section header here would divert the injected
+# keys out of [wsl2].
+#
+# Unset keys fall back to WSL defaults: memory = 50% of host RAM,
+# swap = 25% of WSL memory. Uncomment and size to this machine:
+#memory=16GB
+# swap.vhdx grows on C: (%TEMP%) up to the cap — keep C: headroom
+#swap=8GB
