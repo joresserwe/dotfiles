@@ -25,7 +25,7 @@ if (-not $focused) {
   $wtExe = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\wt.exe'
   Start-Process -FilePath $wtExe -ArgumentList @(
     '-w', 'new', '-f',
-    'nt', '-p', 'Terminal',
+    'nt', '-p', 'Terminal', '--title', 'memo-pad',
     'wsl.exe', '-d', 'Ubuntu', '--cd', '~', '-e', '.local/bin/memo-run'
   )
 }
