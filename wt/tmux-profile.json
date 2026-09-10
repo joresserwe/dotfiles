@@ -31,7 +31,8 @@
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "f13" },
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "shift+f13" },
         { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+f13" },
-        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+shift+f13" }
+        { "command": { "action": "adjustOpacity", "relative": true, "opacity": 0 }, "keys": "ctrl+alt+shift+f13" },
+        { "command": { "action": "sendInput", "input": "\u001b\r" }, "keys": "shift+enter" }
     ],
     "schemes": [
         {
