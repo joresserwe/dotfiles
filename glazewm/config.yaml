@@ -120,6 +120,14 @@ window_rules:
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AccordD64' }
       - window_process: { equals: 'CloudWidget' }
+      # Explorer confirmation/progress dialogs (delete confirm, replace/move
+      # confirm, name-collision, copy/move progress). These are the `explorer`
+      # process but use the standard Win32 dialog class #32770 (or the copy
+      # engine's OperationStatusWindow) rather than CabinetWClass. Left to
+      # GlazeWM they get tiled into the next cell, warping the dialog and
+      # burying its buttons — so unmanage them entirely (not even floating).
+      - window_process: { equals: 'explorer' }
+        window_class: { regex: '#32770|OperationStatusWindow' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
@@ -134,6 +142,8 @@ window_rules:
       - window_process: { regex: 'SystemSettings|mmc' }
       - window_process: { equals: 'explorer' }
         window_class: { equals: 'CabinetWClass' }
+      - window_process: { equals: 'EXCEL' }
+        window_class: { equals: 'bosa_sdm_XL9' }
       - window_process: { regex: 'idea64|pycharm64' }
       # AutoHotkey error/info dialogs (e.g. winkey.ahk runtime errors) and
       # tacky-borders' "already running" warning MessageBox. Without this,
