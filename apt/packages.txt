@@ -2,6 +2,9 @@ bubblewrap
 build-essential
 ca-certificates
 curl
+# earlyoom: a kernel global OOM takes every WSL session down with it
+# (observed 2026-08-17 ×2); args + service enable live in Phase 0
+earlyoom
 file
 git
 inotify-tools

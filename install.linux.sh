@@ -76,6 +76,17 @@ sudo apt-get update -y
 # shellcheck disable=SC2046
 sudo apt-get install -y $(grep -vE '^\s*#|^\s*$' "$DOTFILES_PATH/apt/packages.txt")
 
+log_step "earlyoom: configure and enable"
+# systemd EnvironmentFile does no shell-style quote stripping — quoted regex
+# args would reach earlyoom with literal quotes, so keep them space-free and
+# bare. The regexes match comm names, truncated to 15 chars.
+sudo tee /etc/default/earlyoom >/dev/null <<'EOF'
+EARLYOOM_ARGS="-m 6,3 -r 3600 --avoid ^(init|systemd.*|sshd|tmux.*|zsh|claude|codex|node)$ --prefer ^(chrome|chromium|headless_shell|python[0-9.]*|java)$"
+EOF
+sudo systemctl enable earlyoom >/dev/null 2>&1 || true
+sudo systemctl restart earlyoom
+log_done "earlyoom active (SIGTERM at 6% free, SIGKILL at 3%)"
+
 [ -f /etc/ssl/certs/ca-certificates.crt ] \
   && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
@@ -420,6 +431,22 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   powershell.exe -NoProfile -ExecutionPolicy Bypass \
     -File "$(wslpath -w "$DOTFILES_PATH/winget/flow-settings.ps1")" >/dev/null 2>&1 || true
   log_done "Flow Launcher: curated settings"
+
+  # systemd-detect-virt classifies WSL as a container, so the stock fstrim
+  # units' ConditionVirtualization=!container blocks every trim run unless
+  # both units are overridden.
+  if [ -d /run/systemd/system ]; then
+    sudo mkdir -p /etc/systemd/system/fstrim.service.d /etc/systemd/system/fstrim.timer.d
+    printf '[Unit]\nConditionVirtualization=\n' \
+      | sudo tee /etc/systemd/system/fstrim.service.d/wsl.conf >/dev/null
+    printf '[Unit]\nConditionVirtualization=\n\n[Timer]\nOnCalendar=\nOnCalendar=daily\n' \
+      | sudo tee /etc/systemd/system/fstrim.timer.d/wsl.conf >/dev/null
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now fstrim.timer >/dev/null 2>&1 || true
+    log_done "fstrim: WSL container-condition override + daily timer"
+  else
+    log_skip "fstrim: systemd not running (set systemd=true in /etc/wsl.conf)"
+  fi
 
   # --- Windows-local dotfiles mirror ----------------------------------------
   # Every Windows-side consumer reads from %USERPROFILE%\.dotfiles (exposed
@@ -821,6 +848,35 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     fi
   else
     log_skip "wslhost-watchdog: dotfiles mirror not resolved"
+  fi
+
+  # RunLevel Highest task registration is access-denied from a Medium shell;
+  # the script self-elevates via -Register.
+  if [[ -n "${dotfiles_win:-}" ]]; then
+    autocompact_local_win="${dotfiles_win}\\winget\\wsl-autocompact.ps1"
+    autocompact_registered() {
+      powershell.exe -NoProfile -Command \
+        "[bool](Get-ScheduledTask -TaskName 'wsl-autocompact' -ErrorAction SilentlyContinue)" 2>/dev/null \
+        | tr -d '\r' | grep -qi '^true$'
+    }
+    if autocompact_registered; then
+      log_skip "Scheduled Task 'wsl-autocompact'"
+    else
+      log_step "wsl-autocompact: approve the UAC prompt to register the task"
+      powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \
+        "& '$autocompact_local_win' -Register" </dev/null >/dev/null 2>&1 || true
+      for _ in $(seq 1 30); do
+        autocompact_registered && break
+        sleep 2
+      done
+      if autocompact_registered; then
+        log_done "Scheduled Task 'wsl-autocompact' registered (daily 04:30/06:30, compacts vhdx while WSL is off)"
+      else
+        log_manual "Scheduled Task 'wsl-autocompact' NOT registered — run: powershell -ExecutionPolicy Bypass -File $autocompact_local_win -Register (approve UAC)"
+      fi
+    fi
+  else
+    log_skip "wsl-autocompact: dotfiles mirror not resolved"
   fi
 
   # tacky-borders (Windows side): custom window borders with adjustable
