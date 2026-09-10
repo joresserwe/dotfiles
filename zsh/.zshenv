@@ -57,8 +57,6 @@ export PNPM_HOME="$XDG_DATA_HOME/pnpm"
 # ~/.local/bin note below).
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-export SDKMAN_DIR="$XDG_DATA_HOME/sdkman"
-
 export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$GOPATH/pkg/mod"
 export PATH="$PATH:$GOPATH/bin"

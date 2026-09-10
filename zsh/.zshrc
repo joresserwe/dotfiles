@@ -14,7 +14,6 @@ plugins=(
 	zsh-autosuggestions
 
 	sprunge
-	sdk
 )
 
 # User-generated completions (install.linux.sh writes trash-cli's here).
@@ -58,8 +57,6 @@ eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 # . <(kubectl completion zsh)
 # . ~/.minikube/.minikube-completion
 # export KUBE_EDITOR="nvim"
-
-[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ] && . "$SDKMAN_DIR/bin/sdkman-init.sh"
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && . "$HOME/.config/envman/load.sh"
