@@ -2,4 +2,11 @@
 # wsl.exe -e does not honor quoted arguments — passing
 # zsh -lic "tmux new -A -s main" from a Windows Terminal profile word-splits
 # and runs a bare `tmux`, landing in a new unnamed session.
+#
+# Keep the private image clipboard scoped to Kiro's shell wrapper. Exporting
+# DISPLAY here would make Claude prefer Kiro's stale X11 selection over its
+# native Windows clipboard fallback.
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user start kiro-clipboard-xvfb.service >/dev/null 2>&1 || true
+fi
 exec /usr/bin/zsh -lic 'tmux new -A -s main'

@@ -55,6 +55,29 @@ alias ping="ping_or_tcping"
 # lazygit
 alias lg="lazygit"
 
+# kiro — launch kiro-cli on the V3 agent engine. Under WSL, only Kiro gets
+# the authenticated headless X11 clipboard; exporting DISPLAY for all tmux
+# panes makes Claude prefer this clipboard over its Windows-native fallback.
+kiro-cli() {
+  if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+    systemctl --user start kiro-clipboard-xvfb.service >/dev/null 2>&1 || {
+      print -u2 'kiro-cli: failed to start the image clipboard service'
+      return 1
+    }
+    DISPLAY=:99 \
+      XAUTHORITY="${XDG_RUNTIME_DIR:-/run/user/$UID}/kiro-clipboard.Xauthority" \
+      command kiro-cli "$@"
+  else
+    command kiro-cli "$@"
+  fi
+}
+kiro() {
+  kiro-cli --v3 "$@"
+}
+kirod() {
+  kiro-cli --v3 chat --trust-all-tools "$@"
+}
+
 # bottom — btm sees only WSL-side processes; btmw runs the Windows build
 # via interop to monitor Windows processes (Task Manager replacement)
 case "$OSTYPE" in

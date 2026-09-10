@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# Mirror a Windows clipboard image into Kiro's private X11 clipboard.
+# With a tmux pane ID, trigger Kiro's Ctrl+V image-paste action afterwards.
+set -euo pipefail
+
+pane="${1:-}"
+xclip_pid=""
+
+cleanup() {
+  if [[ -n "$xclip_pid" ]] && kill -0 "$xclip_pid" 2>/dev/null; then
+    kill "$xclip_pid" 2>/dev/null || true
+    wait "$xclip_pid" 2>/dev/null || true
+  fi
+  xclip_pid=""
+}
+trap cleanup EXIT INT TERM
+
+fail() {
+  local code="$1"
+  shift
+  printf 'kiro-image-paste: %s\n' "$*" >&2
+  if [[ -n "$pane" && -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
+    tmux display-message -t "$pane" "Kiro image paste: $*" 2>/dev/null || true
+  fi
+  exit "$code"
+}
+
+[[ -n "${WSL_DISTRO_NAME:-}" ]] || fail 1 "WSL is required"
+command -v flock >/dev/null 2>&1 || fail 1 "flock is not installed"
+command -v xclip >/dev/null 2>&1 || fail 1 "xclip is not installed; rerun install.linux.sh"
+
+powershell="$(command -v powershell.exe 2>/dev/null || true)"
+if [[ -z "$powershell" ]]; then
+  powershell='/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+fi
+[[ -x "$powershell" ]] || fail 1 "Windows PowerShell interop is unavailable"
+
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+export DISPLAY=:99
+export XAUTHORITY="$runtime_dir/kiro-clipboard.Xauthority"
+[[ -r "$XAUTHORITY" ]] || fail 1 "private Xauthority is unavailable; restart kiro-clipboard-xvfb.service"
+
+# Serialize capture, publication, paste, and owner cleanup across tmux panes.
+exec 9>"$runtime_dir/kiro-image-paste.lock"
+flock -w 5 9 || fail 1 "another Kiro image paste is still running"
+
+rc=0
+png_base64="$("$powershell" -Sta -NoProfile -NonInteractive -Command '
+  $ErrorActionPreference = "Stop"
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+
+  $image = $null
+  for ($attempt = 0; $attempt -lt 15; $attempt++) {
+    try {
+      $image = [System.Windows.Forms.Clipboard]::GetImage()
+    } catch [System.Runtime.InteropServices.ExternalException] {
+      # ShareX may still own the clipboard while finalizing the capture.
+    }
+    if ($null -ne $image) { break }
+    # CopyImageToClipboard runs after ShareX finishes its capture pipeline, so
+    # an immediate Alt+V can briefly observe the previous text clipboard.
+    Start-Sleep -Milliseconds 100
+  }
+  if ($null -eq $image) { exit 2 }
+
+  $stream = [System.IO.MemoryStream]::new()
+  try {
+    $image.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+    [Console]::Out.Write([Convert]::ToBase64String($stream.ToArray()))
+  } finally {
+    $stream.Dispose()
+    $image.Dispose()
+  }
+')" || rc=$?
+
+case "$rc" in
+  0) ;;
+  2) fail 2 "Windows clipboard does not contain an image" ;;
+  *) fail "$rc" "failed to read the Windows clipboard (PowerShell exit $rc)" ;;
+esac
+
+png_base64="${png_base64//$'\r'/}"
+png_base64="${png_base64//$'\n'/}"
+[[ -n "$png_base64" ]] || fail 1 "Windows clipboard image conversion returned no PNG data"
+printf '%s' "$png_base64" | base64 --decode >/dev/null \
+  || fail 1 "Windows clipboard returned invalid PNG encoding"
+
+# Foreground mode gives this script ownership of the xclip process, allowing
+# it to erase the X selection by terminating the owner after Kiro consumes it.
+xclip -quiet -selection clipboard -target image/png -in \
+  < <(printf '%s' "$png_base64" | base64 --decode) \
+  >/dev/null 2>&1 &
+xclip_pid=$!
+sleep 0.1
+kill -0 "$xclip_pid" 2>/dev/null \
+  || fail 1 "could not publish image/png to the private X11 display"
+
+if [[ -n "$pane" ]]; then
+  [[ -n "${TMUX:-}" ]] || fail 1 "a tmux pane was supplied outside tmux"
+  # Windows Terminal consumes physical Ctrl+V. Sending it from tmux reaches
+  # Kiro directly while the authenticated xclip owner is serving image/png.
+  tmux send-keys -t "$pane" C-v \
+    || fail 1 "could not send Kiro's image-paste key to pane $pane"
+  sleep 2
+else
+  # Manual diagnostics get a short window to query TARGETS/image/png.
+  sleep 5
+fi
+
+cleanup
+trap - EXIT INT TERM

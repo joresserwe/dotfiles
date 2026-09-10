@@ -9,6 +9,11 @@ inotify-tools
 # -dev because the runtime package name is release-versioned (libicu78 on 26.04)
 libicu-dev
 procps
+# Headless X11 clipboard used by Kiro image paste while WSLg is disabled.
+# Versions are pinned to the Ubuntu 24.04 packages used by this setup.
+xauth=1:1.1.2-1build1
+xclip=0.13-3
+xvfb=2:21.1.12-1ubuntu1.6
 # rsync: install.linux.sh mirrors Windows-consumed subtrees to %USERPROFILE%\.dotfiles
 rsync
 # trash-cli: XDG trash for the `del` alias (macOS side uses macos-trash from

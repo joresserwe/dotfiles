@@ -172,4 +172,24 @@ After the reboot, `wsl --install -d Ubuntu` creates the Linux user; then run `in
 Still manual:
 
 1. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
-2. **Clipboard** — works out of the box: tmux uses `set-clipboard on` (OSC 52) and the `_dotfiles_copy` shell helper falls back to `clip.exe` if no Wayland/X clipboard tool is present.
+2. **Text clipboard** — tmux uses `set-clipboard on` (OSC 52), and the `_dotfiles_copy` shell helper falls back to `clip.exe` when no Wayland/X clipboard is available.
+
+### Kiro image paste in WSL
+
+WSLg is intentionally disabled on this setup because its `weston` process crash-looped and filled the Windows system drive with dumps. The installer therefore provides a separate image-only bridge that does not depend on WSLg:
+
+```text
+Windows clipboard → PowerShell (STA) → PNG → xclip/Xvfb :99 → Kiro
+```
+
+`xvfb`, `xauth`, and `xclip` are installed in Phase 0, and the user service `kiro-clipboard-xvfb.service` owns an authenticated headless display. The shell's `kiro-cli` wrapper scopes `DISPLAY=:99` and its private Xauthority cookie to Kiro only; Claude and Codex never inherit that display. Inside a Kiro pane, `Alt+V` reads the current Windows clipboard image into memory, publishes it as `image/png`, and sends Kiro its image-paste `Ctrl+V` action. The X selection owner is terminated after Kiro consumes it, so screenshots are not retained. In every non-Kiro pane, `Alt+V` is forwarded unchanged.
+
+After the first install, restart Kiro through `kiro`, `kirod`, or the interactive `kiro-cli` wrapper. Existing Kiro processes cannot gain the scoped clipboard environment retroactively.
+
+Diagnostics:
+
+```bash
+systemctl --user status kiro-clipboard-xvfb.service
+DISPLAY=:99 XAUTHORITY="$XDG_RUNTIME_DIR/kiro-clipboard.Xauthority" \
+  xclip -selection clipboard -target TARGETS -out
+```

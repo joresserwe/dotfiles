@@ -274,14 +274,31 @@ create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 
-# xdg-open shim (WSL-only): wslu/wslview is gone from Ubuntu 26.04 archives,
-# so yazi's `open` opener routes through cmd.exe to the Windows default app.
+# xdg-open and Kiro image clipboard bridge (WSL-only). WSLg is disabled on
+# this machine, so Kiro reads image/png from a dedicated headless X11 display.
 if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$DOTFILES_PATH/wsl/xdg-open" "$HOME/.local/bin/xdg-open"
-  log_done "xdg-open shim -> wsl/xdg-open"
+  create_link "$DOTFILES_PATH/bin/kiro-image-paste" "$HOME/.local/bin/kiro-image-paste"
+  log_done "WSL helpers: xdg-open + Kiro image paste"
+
+  if [ -d /run/systemd/system ]; then
+    ensure_dir "$XDG_CONFIG_HOME/systemd/user"
+    create_link "$DOTFILES_PATH/wsl/kiro-clipboard-xvfb.service" \
+      "$XDG_CONFIG_HOME/systemd/user/kiro-clipboard-xvfb.service"
+    systemctl --user daemon-reload || true
+    systemctl --user enable kiro-clipboard-xvfb.service >/dev/null 2>&1 || true
+    if systemctl --user restart kiro-clipboard-xvfb.service >/dev/null 2>&1; then
+      log_done "Kiro image clipboard: authenticated headless X11 enabled on :99"
+    else
+      echo "ERROR: Kiro image clipboard service failed to restart." >&2
+      exit 1
+    fi
+  else
+    log_skip "Kiro image clipboard: systemd not running"
+  fi
 else
-  log_skip "xdg-open shim: not running under WSL"
+  log_skip "WSL helpers: not running under WSL"
 fi
 
 # win32yank (WSL-only): clipboard tool for WSL. Preferred over clip.exe
