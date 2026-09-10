@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = 'Continue'
 
+. (Join-Path $PSScriptRoot 'flow-allowlist.ps1')
+
 if (-not $RepoPath) { $RepoPath = [Environment]::GetEnvironmentVariable('DOTFILES_UNC', 'User') }
 if (-not $RepoPath -or -not (Test-Path -LiteralPath $RepoPath)) { exit 0 }
 
@@ -19,6 +21,15 @@ function Capture-Snapshot([string]$LivePath, [string[]]$Excluded, [string]$SnapN
     if (-not (Test-Path -LiteralPath $LivePath)) { return }
     $s = Get-Content -LiteralPath $LivePath -Raw -Encoding UTF8 | ConvertFrom-Json
     foreach ($k in $Excluded) { $s.PSObject.Properties.Remove($k) }
+    if ($SnapName -eq 'Settings.snapshot.json') {
+        $s = Get-FlowSettingsSnapshotObject $s
+    } elseif ($SnapName.StartsWith('plugins\')) {
+        $pluginName = [IO.Path]::GetFileNameWithoutExtension($SnapName)
+        $s = Get-FlowPluginSnapshotObject $s $pluginName
+        if ($null -eq $s) { return }
+    } else {
+        return
+    }
     $filtered = ConvertTo-PortablePath ($s | ConvertTo-Json -Depth 15)
 
     $appliedPath = Join-Path $MirrorPath ('flow.applied\{0}' -f $SnapName)

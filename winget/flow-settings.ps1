@@ -1,3 +1,5 @@
+. (Join-Path $PSScriptRoot 'flow-allowlist.ps1')
+
 $flow = Join-Path $env:LOCALAPPDATA 'FlowLauncher\Flow.Launcher.exe'
 if (-not (Test-Path $flow)) { exit 0 }
 
@@ -98,10 +100,10 @@ $snapPath = Join-Path $repo 'flowlauncher\Settings.snapshot.json'
 if (Test-Path -LiteralPath $snapPath) {
     $snapRaw = Get-Content -LiteralPath $snapPath -Raw -Encoding UTF8
     $snap = (Expand-PortablePath $snapRaw) | ConvertFrom-Json
-    foreach ($p in $snap.PSObject.Properties) {
-        $s | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
-    }
-    [IO.File]::WriteAllText((Join-Path $appliedDir 'Settings.snapshot.json'), $snapRaw,
+    Set-FlowSettingsFromSnapshot $s $snap | Out-Null
+    $safeSnap = Get-FlowSettingsSnapshotObject $snap
+    $safeSnapRaw = $safeSnap | ConvertTo-Json -Depth 15
+    [IO.File]::WriteAllText((Join-Path $appliedDir 'Settings.snapshot.json'), $safeSnapRaw,
         (New-Object System.Text.UTF8Encoding($false)))
 }
 
@@ -110,21 +112,23 @@ if (Test-Path -LiteralPath $pluginSnapDir) {
     $appliedPluginDir = Join-Path $appliedDir 'plugins'
     New-Item -ItemType Directory -Force $appliedPluginDir | Out-Null
     foreach ($snapFile in Get-ChildItem -LiteralPath $pluginSnapDir -Filter '*.json') {
+        if (-not $script:FlowPluginAllowedFields.ContainsKey($snapFile.BaseName)) { continue }
         $raw = Get-Content -LiteralPath $snapFile.FullName -Raw -Encoding UTF8
         $expanded = Expand-PortablePath $raw
+        $safe = Get-FlowPluginSnapshotObject (($expanded | ConvertFrom-Json)) $snapFile.BaseName
+        if ($null -eq $safe) { continue }
         $liveDir = Join-Path $env:APPDATA ('FlowLauncher\Settings\Plugins\{0}' -f $snapFile.BaseName)
         $livePath = Join-Path $liveDir 'Settings.json'
         if (Test-Path -LiteralPath $livePath) {
             $live = Get-Content -LiteralPath $livePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            foreach ($p in ($expanded | ConvertFrom-Json).PSObject.Properties) {
-                $live | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
-            }
+            Set-FlowPluginSnapshotProperties $live $safe $snapFile.BaseName
             $live | ConvertTo-Json -Depth 15 | Out-File $livePath -Encoding UTF8
         } else {
             New-Item -ItemType Directory -Force $liveDir | Out-Null
-            [IO.File]::WriteAllText($livePath, $expanded, (New-Object System.Text.UTF8Encoding($false)))
+            $safe | ConvertTo-Json -Depth 15 | Out-File $livePath -Encoding UTF8
         }
-        [IO.File]::WriteAllText((Join-Path $appliedPluginDir $snapFile.Name), $raw,
+        $safeRaw = $safe | ConvertTo-Json -Depth 15
+        [IO.File]::WriteAllText((Join-Path $appliedPluginDir $snapFile.Name), $safeRaw,
             (New-Object System.Text.UTF8Encoding($false)))
     }
 }
