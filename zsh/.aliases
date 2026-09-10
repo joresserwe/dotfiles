@@ -421,4 +421,3 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
       && echo 'chrome-debug: Chrome started with CDP on 9222 (dedicated chrome-cdp-profile)'
   }
 fi
-
