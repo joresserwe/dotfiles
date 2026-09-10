@@ -32,7 +32,7 @@ done
 
 # The git tree needs autogen/autoconf to build; release tarballs ship configure.
 echo "building"
-YACC=byacc LDFLAGS="$rpath" ./configure --enable-utf8proc --prefix="$HOME/.local" \
+YACC=byacc LDFLAGS="$rpath" ./configure --enable-utf8proc --enable-sixel --prefix="$HOME/.local" \
   >configure.log 2>&1 || { tail -n 30 configure.log >&2; exit 1; }
 make -j"$(nproc)" >build.log 2>&1 || { tail -n 30 build.log >&2; exit 1; }
 
