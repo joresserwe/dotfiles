@@ -39,8 +39,14 @@ case "$OSTYPE" in
     # brew's curl/openssl read $HOMEBREW_PREFIX/etc/ca-certificates/cert.pem,
     # which never sees roots added via update-ca-certificates (e.g. a
     # TLS-intercepting corp proxy) — point OpenSSL at the system bundle.
-    [ -f /etc/ssl/certs/ca-certificates.crt ] \
-      && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+    if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+      export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+      # Node bundles its own CA store and ignores SSL_CERT_FILE, so behind a
+      # TLS-intercepting corp proxy (LG CNS) node-based tools — notably the
+      # kiro-cli v3/KAS TUI — fail with "self-signed certificate in
+      # certificate chain". Point node at the same system bundle.
+      export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+    fi
     ;;
 esac
 [ -x "$HOMEBREW_PREFIX/bin/brew" ] && eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
