@@ -173,7 +173,7 @@ After the reboot, `wsl --install -d Ubuntu` creates the Linux user; then run `in
 Still manual:
 
 1. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
-2. **Text clipboard** — tmux uses `set-clipboard on` (OSC 52), and the `_dotfiles_copy` shell helper falls back to `clip.exe` when no Wayland/X clipboard is available.
+2. **Text clipboard** — tmux uses `set-clipboard on` (OSC 52), and the `_dotfiles_copy` shell helper falls back to `win32yank.exe`, then `clip.exe`, when no Wayland/X clipboard is available.
 
 ### Kiro image paste in WSL
 
