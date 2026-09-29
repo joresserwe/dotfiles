@@ -37,6 +37,8 @@ docs/superpowers/
 # Claude Code project-local settings (machine-local permission grants)
 .claude/settings.local.json
 
+claude/skills/synced/
+
 # tacky-borders rotating-state config (seeded from themes/violet-pink.yaml at
 # install, written by rotate.ps1 / tacky-theme). See install.linux.sh.
 tacky-borders/config.yaml
