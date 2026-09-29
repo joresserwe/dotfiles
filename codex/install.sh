@@ -9,6 +9,8 @@ xdg_data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 default_codex_home="$HOME/.codex"
 xdg_codex_home="$xdg_data_home/codex"
 managed_config="$repo_root/codex/config.toml"
+codex_homes=("$default_codex_home" "$xdg_codex_home")
+legacy_skills=(commit implement review shared-skills)
 
 die() {
   printf 'ERROR: %s\n' "$*" >&2
@@ -286,8 +288,8 @@ PY
 [ -f "$repo_root/codex/AGENTS.md" ] || die "missing AGENTS file"
 [ -x "$(command -v python3 2>/dev/null || true)" ] || die "python3 is required to merge Codex TOML safely"
 
-for codex_home in "$default_codex_home" "$xdg_codex_home"; do
-  mkdir -p "$codex_home" "$codex_home/agents"
+for codex_home in "${codex_homes[@]}"; do
+  mkdir -p "$codex_home" "$codex_home/agents" "$codex_home/skills"
   sync_config "$codex_home/config.toml"
   link_file "$repo_root/codex/AGENTS.md" "$codex_home/AGENTS.md"
   for profile in luna terra sol astra-readonly; do
@@ -302,7 +304,40 @@ done
 for skill_dir in "$repo_root"/codex/skills/*; do
   [ -d "$skill_dir" ] || continue
   skill_name="$(basename "$skill_dir")"
-  link_skill "$skill_dir" "$HOME/.agents/skills/$skill_name"
+  [ "$skill_name" = .system ] && continue
+  for codex_home in "${codex_homes[@]}"; do
+    link_skill "$skill_dir" "$codex_home/skills/$skill_name"
+  done
 done
+
+for skill_name in "${legacy_skills[@]}"; do
+  skill_dir="$repo_root/codex/skills/$skill_name"
+  for codex_home in "${codex_homes[@]}"; do
+    native_target="$codex_home/skills/$skill_name"
+    [ -L "$native_target" ] && same_link_target "$skill_dir" "$native_target" \
+      || die "native skill link is not managed: $native_target"
+  done
+
+  legacy_target="$HOME/.agents/skills/$skill_name"
+  if [ -L "$legacy_target" ]; then
+    if same_link_target "$skill_dir" "$legacy_target"; then
+      rm "$legacy_target"
+      log "removed legacy skill link $legacy_target"
+    else
+      log "preserved unrelated skill link $legacy_target"
+    fi
+  elif [ -e "$legacy_target" ]; then
+    log "preserved unrelated skill entry $legacy_target"
+  fi
+done
+
+legacy_skills_dir="$HOME/.agents/skills"
+if [ -d "$legacy_skills_dir" ] && [ ! -L "$legacy_skills_dir" ]; then
+  rmdir "$legacy_skills_dir" 2>/dev/null || true
+fi
+legacy_root="$HOME/.agents"
+if [ -d "$legacy_root" ] && [ ! -L "$legacy_root" ]; then
+  rmdir "$legacy_root" 2>/dev/null || true
+fi
 
 log "setup complete"
