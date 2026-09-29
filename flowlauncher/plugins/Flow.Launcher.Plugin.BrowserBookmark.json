@@ -1,7 +1,7 @@
 {
-  "OpenInNewBrowserWindow": true,
-  "EnableFavicons": false,
-  "LoadChromeBookmark": false,
-  "LoadFirefoxBookmark": false,
-  "LoadEdgeBookmark": false
+    "EnableFavicons":  false,
+    "LoadChromeBookmark":  false,
+    "LoadEdgeBookmark":  false,
+    "LoadFirefoxBookmark":  false,
+    "OpenInNewBrowserWindow":  true
 }

@@ -1,4 +1,4 @@
 {
-    "ShowWindowTitle":  true,
-    "PutVisibleWindowProcessesTop":  false
+    "PutVisibleWindowProcessesTop":  false,
+    "ShowWindowTitle":  true
 }

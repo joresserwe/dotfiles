@@ -1,4 +1,4 @@
 {
-    "WarnFromUnknownSource":  true,
-    "AutoRestartAfterChanging":  false
+    "AutoRestartAfterChanging":  false,
+    "WarnFromUnknownSource":  true
 }

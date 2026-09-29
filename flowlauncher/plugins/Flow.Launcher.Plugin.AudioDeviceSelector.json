@@ -1,5 +1,5 @@
 {
-    "DisplayFriendlyName":  true,
+    "DisplayDeviceDescription":  false,
     "DisplayDeviceName":  false,
-    "DisplayDeviceDescription":  false
+    "DisplayFriendlyName":  true
 }

@@ -1,6 +1,6 @@
 {
-  "OpenInNewBrowserWindow": true,
-  "OpenInPrivateMode": false,
-  "PrivateModeArgument": "",
-  "AlwaysOpenWithHttps": false
+    "AlwaysOpenWithHttps":  false,
+    "OpenInNewBrowserWindow":  true,
+    "OpenInPrivateMode":  false,
+    "PrivateModeArgument":  ""
 }

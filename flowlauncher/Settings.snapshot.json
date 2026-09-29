@@ -1,246 +1,246 @@
 {
-  "Hotkey": "Alt + Space",
-  "OpenResultModifiers": "Alt",
-  "ColorScheme": "System",
-  "ShowOpenResultHotkey": true,
-  "WindowSize": 880,
-  "PreviewHotkey": "F1",
-  "AutoCompleteHotkey": "Ctrl + Tab",
-  "AutoCompleteHotkey2": "",
-  "SelectNextItemHotkey": "Tab",
-  "SelectNextItemHotkey2": "Ctrl+J",
-  "SelectPrevItemHotkey": "Shift + Tab",
-  "SelectPrevItemHotkey2": "Ctrl+K",
-  "SelectNextPageHotkey": "PageUp",
-  "SelectPrevPageHotkey": "PageDown",
-  "OpenContextMenuHotkey": "Ctrl+O",
-  "SettingWindowHotkey": "Ctrl+I",
-  "OpenHistoryHotkey": "Ctrl+H",
-  "CycleHistoryUpHotkey": "Alt + Up",
-  "CycleHistoryDownHotkey": "Alt + Down",
-  "DialogJumpHotkey": "Alt + G",
-  "Language": "ko",
-  "Theme": "OnsetGlaze-Max",
-  "UseDropShadowEffect": true,
-  "BackdropType": 1,
-  "WindowHeightSize": 42,
-  "ItemHeightSize": 58,
-  "QueryBoxFontSize": 16,
-  "ResultItemFontSize": 16,
-  "ResultSubItemFontSize": 13,
-  "QueryBoxFont": "Noto Sans KR",
-  "QueryBoxFontStyle": null,
-  "QueryBoxFontWeight": null,
-  "QueryBoxFontStretch": null,
-  "ResultFont": "Noto Sans KR",
-  "ResultFontStyle": null,
-  "ResultFontWeight": null,
-  "ResultFontStretch": null,
-  "ResultSubFont": "Noto Sans KR",
-  "ResultSubFontStyle": null,
-  "ResultSubFontWeight": null,
-  "ResultSubFontStretch": null,
-  "UseGlyphIcons": true,
-  "UseAnimation": true,
-  "UseSound": false,
-  "SoundVolume": 50,
-  "ShowBadges": false,
-  "ShowBadgesGlobalOnly": false,
-  "SettingWindowFont": "Malgun Gothic",
-  "UseClock": true,
-  "UseDate": false,
-  "TimeFormat": "hh:mm tt",
-  "DateFormat": "MM'/'dd ddd",
-  "ShowPlaceholder": true,
-  "PlaceholderText": "",
-  "ShowHomePage": true,
-  "ShowHistoryResultsForHomePage": false,
-  "MaxHistoryResultsToShowForHomePage": 5,
-  "AutoRestartAfterChanging": false,
-  "ShowUnknownSourceWarning": true,
-  "AutoUpdatePlugins": true,
-  "EnableDialogJump": true,
-  "AutoDialogJump": false,
-  "ShowDialogJumpWindow": false,
-  "DialogJumpWindowPosition": "UnderDialog",
-  "DialogJumpResultBehaviour": "LeftClick",
-  "DialogJumpFileResultBehaviour": "FullPath",
-  "LogLevel": "INFO",
-  "ShouldUsePinyin": false,
-  "UseDoublePinyin": false,
-  "DoublePinyinSchema": "XiaoHe",
-  "AlwaysPreview": false,
-  "AlwaysStartEn": false,
-  "QuerySearchPrecision": "Regular",
-  "AutoUpdates": true,
-  "KeepMaxResults": false,
-  "MaxResultsToShow": 5,
-  "DontPromptUpdateMsg": false,
-  "EnableUpdateLog": false,
-  "StartFlowLauncherOnSystemStartup": true,
-  "UseLogonTaskForStartup": true,
-  "HideOnStartup": true,
-  "HideNotifyIcon": true,
-  "LeaveCmdOpen": false,
-  "HideWhenDeactivated": true,
-  "ShowTaskbarWhenInvoked": false,
-  "ShowAtTopmost": false,
-  "SearchQueryResultsWithDelay": false,
-  "SearchDelayTime": 150,
-  "SearchWindowScreen": "Cursor",
-  "SearchWindowAlign": "Center",
-  "IgnoreHotkeysOnFullscreen": false,
-  "LastQueryMode": "Selected",
-  "AnimationSpeed": "Medium",
-  "CustomAnimationLength": 360,
-  "PluginSettings": {
-    "Plugins": {
-      "0ECADE17459B49F587BF81DC3A125110": {
-        "ActionKeywords": [
-          "b"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "CEA0FDFC6D3B4085823D60DC76F28855": {
-        "ActionKeywords": [
-          "*"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "572be03c74c642baae319fc283e561a8": {
-        "ActionKeywords": [
-          "*",
-          "doc:",
-          "*",
-          "*",
-          "*"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": true,
-        "HomeDisabled": false
-      },
-      "6A122269676E40EB86EB543B945932B9": {
-        "ActionKeywords": [
-          "?"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "9f8f9b14-2518-4907-b211-35ab6290dee7": {
-        "ActionKeywords": [
-          "pm"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "b64d0a79-329a-48b0-b53f-d658318a1bf6": {
-        "ActionKeywords": [
-          "kill"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "791FC278BA414111B8D1886DFE447410": {
-        "ActionKeywords": [
-          "*"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "D409510CD0D2481F853690A07E6DC426": {
-        "ActionKeywords": [
-          ">"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "CEA08895D2544B019B2E9C5009600DF4": {
-        "ActionKeywords": [
-          "*"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "0308FD86DE0A4DEE8D62B9B535370992": {
-        "ActionKeywords": [
-          "*"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "565B73353DBF4806919830B9202EE3BF": {
-        "ActionKeywords": [
-          "*",
-          "maps",
-          "github",
-          "gmail",
-          "drive",
-          "image",
-          "youtube",
-          "translate"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": 450,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "5043CETYU6A748679OPA02D27D99677A": {
-        "ActionKeywords": [
-          "s"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "F03364BE-101B-4988-B555-528B961E6A86": {
-        "ActionKeywords": [
-          "myips"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "0F43C966617C4817B1BEC29DCC8E5A69": {
-        "ActionKeywords": [
-          "env"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      },
-      "88EEE8BB-E5F5-43B1-8FA7-6F3BE228111A": {
-        "ActionKeywords": [
-          "vol"
-        ],
-        "Priority": 0,
-        "SearchDelayTime": null,
-        "Disabled": false,
-        "HomeDisabled": false
-      }
-    }
-  }
+    "AlwaysPreview":  false,
+    "AlwaysStartEn":  false,
+    "AnimationSpeed":  "Medium",
+    "AutoCompleteHotkey":  "Ctrl + Tab",
+    "AutoCompleteHotkey2":  "",
+    "AutoDialogJump":  false,
+    "AutoRestartAfterChanging":  false,
+    "AutoUpdatePlugins":  true,
+    "AutoUpdates":  true,
+    "BackdropType":  1,
+    "ColorScheme":  "System",
+    "CustomAnimationLength":  360,
+    "CycleHistoryDownHotkey":  "Alt + Down",
+    "CycleHistoryUpHotkey":  "Alt + Up",
+    "DateFormat":  "MM\u0027/\u0027dd ddd",
+    "DialogJumpFileResultBehaviour":  "FullPath",
+    "DialogJumpHotkey":  "Alt + G",
+    "DialogJumpResultBehaviour":  "LeftClick",
+    "DialogJumpWindowPosition":  "UnderDialog",
+    "DontPromptUpdateMsg":  false,
+    "DoublePinyinSchema":  "XiaoHe",
+    "EnableDialogJump":  true,
+    "EnableUpdateLog":  false,
+    "HideNotifyIcon":  true,
+    "HideOnStartup":  true,
+    "HideWhenDeactivated":  true,
+    "Hotkey":  "Alt + Space",
+    "IgnoreHotkeysOnFullscreen":  false,
+    "ItemHeightSize":  58,
+    "KeepMaxResults":  false,
+    "Language":  "ko",
+    "LastQueryMode":  "Selected",
+    "LeaveCmdOpen":  false,
+    "LogLevel":  "INFO",
+    "MaxHistoryResultsToShowForHomePage":  5,
+    "MaxResultsToShow":  5,
+    "OpenContextMenuHotkey":  "Ctrl+O",
+    "OpenHistoryHotkey":  "Ctrl+H",
+    "OpenResultModifiers":  "Alt",
+    "PlaceholderText":  "",
+    "PreviewHotkey":  "F1",
+    "QueryBoxFont":  "Noto Sans KR",
+    "QueryBoxFontSize":  16,
+    "QueryBoxFontStretch":  null,
+    "QueryBoxFontStyle":  null,
+    "QueryBoxFontWeight":  null,
+    "QuerySearchPrecision":  "Regular",
+    "ResultFont":  "Noto Sans KR",
+    "ResultFontStretch":  null,
+    "ResultFontStyle":  null,
+    "ResultFontWeight":  null,
+    "ResultItemFontSize":  16,
+    "ResultSubFont":  "Noto Sans KR",
+    "ResultSubFontStretch":  null,
+    "ResultSubFontStyle":  null,
+    "ResultSubFontWeight":  null,
+    "ResultSubItemFontSize":  13,
+    "SearchDelayTime":  150,
+    "SearchQueryResultsWithDelay":  false,
+    "SearchWindowAlign":  "Center",
+    "SearchWindowScreen":  "Cursor",
+    "SelectNextItemHotkey":  "Tab",
+    "SelectNextItemHotkey2":  "Ctrl+J",
+    "SelectNextPageHotkey":  "PageUp",
+    "SelectPrevItemHotkey":  "Shift + Tab",
+    "SelectPrevItemHotkey2":  "Ctrl+K",
+    "SelectPrevPageHotkey":  "PageDown",
+    "SettingWindowFont":  "Malgun Gothic",
+    "SettingWindowHotkey":  "Ctrl+I",
+    "ShouldUsePinyin":  false,
+    "ShowAtTopmost":  false,
+    "ShowBadges":  false,
+    "ShowBadgesGlobalOnly":  false,
+    "ShowDialogJumpWindow":  false,
+    "ShowHistoryResultsForHomePage":  false,
+    "ShowHomePage":  true,
+    "ShowOpenResultHotkey":  true,
+    "ShowPlaceholder":  true,
+    "ShowTaskbarWhenInvoked":  false,
+    "ShowUnknownSourceWarning":  true,
+    "SoundVolume":  50,
+    "StartFlowLauncherOnSystemStartup":  true,
+    "Theme":  "OnsetGlaze-Max",
+    "TimeFormat":  "hh:mm tt",
+    "UseAnimation":  true,
+    "UseClock":  true,
+    "UseDate":  false,
+    "UseDoublePinyin":  false,
+    "UseDropShadowEffect":  true,
+    "UseGlyphIcons":  true,
+    "UseLogonTaskForStartup":  true,
+    "UseSound":  false,
+    "WindowHeightSize":  42,
+    "WindowSize":  880,
+    "PluginSettings":  {
+                           "Plugins":  {
+                                           "0ECADE17459B49F587BF81DC3A125110":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "b"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "CEA0FDFC6D3B4085823D60DC76F28855":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "572be03c74c642baae319fc283e561a8":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*",
+                                                                                                           "doc:",
+                                                                                                           "*",
+                                                                                                           "*",
+                                                                                                           "*"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  true,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "6A122269676E40EB86EB543B945932B9":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "?"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "9f8f9b14-2518-4907-b211-35ab6290dee7":  {
+                                                                                        "ActionKeywords":  [
+                                                                                                               "pm"
+                                                                                                           ],
+                                                                                        "Priority":  0,
+                                                                                        "SearchDelayTime":  null,
+                                                                                        "Disabled":  false,
+                                                                                        "HomeDisabled":  false
+                                                                                    },
+                                           "b64d0a79-329a-48b0-b53f-d658318a1bf6":  {
+                                                                                        "ActionKeywords":  [
+                                                                                                               "kill"
+                                                                                                           ],
+                                                                                        "Priority":  0,
+                                                                                        "SearchDelayTime":  null,
+                                                                                        "Disabled":  false,
+                                                                                        "HomeDisabled":  false
+                                                                                    },
+                                           "791FC278BA414111B8D1886DFE447410":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "D409510CD0D2481F853690A07E6DC426":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "\u003e"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "CEA08895D2544B019B2E9C5009600DF4":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "0308FD86DE0A4DEE8D62B9B535370992":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "565B73353DBF4806919830B9202EE3BF":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "*",
+                                                                                                           "maps",
+                                                                                                           "github",
+                                                                                                           "gmail",
+                                                                                                           "drive",
+                                                                                                           "image",
+                                                                                                           "youtube",
+                                                                                                           "translate"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  450,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "5043CETYU6A748679OPA02D27D99677A":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "s"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "F03364BE-101B-4988-B555-528B961E6A86":  {
+                                                                                        "ActionKeywords":  [
+                                                                                                               "myips"
+                                                                                                           ],
+                                                                                        "Priority":  0,
+                                                                                        "SearchDelayTime":  null,
+                                                                                        "Disabled":  false,
+                                                                                        "HomeDisabled":  false
+                                                                                    },
+                                           "0F43C966617C4817B1BEC29DCC8E5A69":  {
+                                                                                    "ActionKeywords":  [
+                                                                                                           "env"
+                                                                                                       ],
+                                                                                    "Priority":  0,
+                                                                                    "SearchDelayTime":  null,
+                                                                                    "Disabled":  false,
+                                                                                    "HomeDisabled":  false
+                                                                                },
+                                           "88EEE8BB-E5F5-43B1-8FA7-6F3BE228111A":  {
+                                                                                        "ActionKeywords":  [
+                                                                                                               "vol"
+                                                                                                           ],
+                                                                                        "Priority":  0,
+                                                                                        "SearchDelayTime":  null,
+                                                                                        "Disabled":  false,
+                                                                                        "HomeDisabled":  false
+                                                                                    }
+                                       }
+                       }
 }

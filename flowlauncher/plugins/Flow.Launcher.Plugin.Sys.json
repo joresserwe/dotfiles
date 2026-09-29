@@ -1,4 +1,5 @@
 {
+    "SkipPowerActionConfirmation":  false,
     "Commands":  [
                      {
                          "Key":  "Shutdown",
@@ -84,6 +85,5 @@
                          "Key":  "Set Flow Launcher Theme",
                          "Keyword":  "Set Flow Launcher Theme"
                      }
-                 ],
-    "SkipPowerActionConfirmation":  false
+                 ]
 }

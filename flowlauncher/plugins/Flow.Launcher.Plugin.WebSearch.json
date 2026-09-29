@@ -1,4 +1,7 @@
 {
+    "EnableSuggestion":  false,
+    "MaxSuggestions":  1,
+    "Suggestion":  "Google",
     "SearchSources":  [
                           {
                               "Title":  "Google",
@@ -72,8 +75,5 @@
                               "IsPrivateMode":  false,
                               "Enabled":  true
                           }
-                      ],
-    "EnableSuggestion":  false,
-    "MaxSuggestions":  1,
-    "Suggestion":  "Google"
+                      ]
 }

@@ -1,24 +1,28 @@
 {
-  "CustomSuffixes": [],
-  "CustomProtocols": [],
-  "BuiltinSuffixesStatus": {
-    "exe": true,
-    "appref-ms": true,
-    "lnk": true
-  },
-  "BuiltinProtocolsStatus": {
-    "steam": true,
-    "epic": true,
-    "http": false
-  },
-  "UseCustomSuffixes": false,
-  "UseCustomProtocols": false,
-  "EnableStartMenuSource": true,
-  "EnableDescription": false,
-  "HideAppsPath": true,
-  "HideUninstallers": true,
-  "EnableRegistrySource": true,
-  "EnablePathSource": false,
-  "EnableUWP": true,
-  "HideDuplicatedWindowsApp": true
+    "BuiltinProtocolsStatus":  {
+                                   "steam":  true,
+                                   "epic":  true,
+                                   "http":  false
+                               },
+    "BuiltinSuffixesStatus":  {
+                                  "exe":  true,
+                                  "appref-ms":  true,
+                                  "lnk":  true
+                              },
+    "CustomProtocols":  [
+
+                        ],
+    "CustomSuffixes":  [
+
+                       ],
+    "EnableDescription":  false,
+    "EnablePathSource":  false,
+    "EnableRegistrySource":  true,
+    "EnableStartMenuSource":  true,
+    "EnableUWP":  true,
+    "HideAppsPath":  true,
+    "HideDuplicatedWindowsApp":  true,
+    "HideUninstallers":  true,
+    "UseCustomProtocols":  false,
+    "UseCustomSuffixes":  false
 }
