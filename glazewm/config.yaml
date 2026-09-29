@@ -111,6 +111,9 @@ window_rules:
   - commands: ['ignore']
     match:
       - window_process: { equals: 'zebar' }
+      - window_process: { equals: 'chrome' }
+        window_class: { equals: 'Chrome_WidgetWin_1' }
+        window_title: { equals: '실시간 자막' }
       - window_title: { regex: '[Pp]icture.in.[Pp]icture|PIP 모드' }
       - window_process: { regex: 'LeagueClientUx|RiotClientUx|Riot Client' }
       - window_process: { equals: 'League of Legends' }

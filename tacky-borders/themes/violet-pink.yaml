@@ -6,6 +6,9 @@ watch_config_changes: True
 rendering_backend: V2
 
 window_rules:
+  - match: Title
+    name: "실시간 자막"
+    enabled: False
   - match: Process
     name: "mtalk"
     enabled: False
