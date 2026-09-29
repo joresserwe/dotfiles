@@ -38,33 +38,32 @@ Write commit messages as a **single line** starting with an **imperative English
 
 **Example:**
 ```
-Update rainbow-delimiters settings to prevent highlighting of HTML tags in React
-Add manage=off rule to yabairc
-Fix LSP config of TypeScript
+Fix Flow Launcher snapshot reads to decode as UTF-8
+Update PATH lookup for pnpm 10 global binaries
+Prevent GlazeWM from managing PotPlayer's shadow window
 Make 's' key toggleable in which-key settings
 Set colorscheme to tokyonight and remove unused files
 ```
 
 ## Verb Selection
 
-Applies to the user's own repositories. Choose the verb that best describes the **nature** of the change, not just "what files changed":
+Applies to the user's own repositories. Check the rows top to bottom and use the **first** one that describes the change's main purpose — not just "what files changed":
 
 | Verb | When to use |
 |---|---|
-| Add | New code, functionality, tests, documents |
-| Fix | Correcting broken or incorrect behavior, typos, naming |
-| Update | Version bumps, dependency updates, resource revisions |
-| Remove | Deleting unnecessary code or files |
-| Make | Changing existing behavior |
-| Use | Switching to a specific tool, library, or approach |
-| Prevent | Blocking or working around undesired behavior |
-| Set | Minor value changes (config values, flags) |
-| Ensure | Guaranteeing a certain behavior or state |
-| Refactor | Restructuring or simplifying code without changing behavior |
-| Move | Relocating code within the project |
-| Rename | Changing names of variables, files, functions |
+| Fix | Correcting something that was wrong when written (bug, typo, wrong value or fact) |
+| Update | Bringing something that went stale up to date (versions, dependencies, code or docs that no longer match the current state) |
+| Prevent | Blocking undesired behavior that comes from outside the repo (another app, the OS, a tool) |
+| Use | Switching to a different tool, library, or approach |
+| Add | New code, features, files, tests, or documents |
+| Remove | Deleting code, files, or features |
+| Rename | Only renaming (variables, files, functions) |
+| Move | Only relocating code or files |
+| Set | Only changing values (config values, flags, options) |
+| Refactor | Restructuring or simplifying without changing behavior |
+| Make | Any other change to existing code, config, or docs |
 
-If none fit, pick the closest. Off-table verbs require explicit justification — state which table rows you considered and why each failed. "Reads naturally" is not sufficient reason.
+Make is the catch-all last row, so every change has a table verb — never use an off-table verb.
 
 ## Commit Workflow
 
@@ -74,7 +73,7 @@ If none fit, pick the closest. Off-table verbs require explicit justification �
 4. Present the commit plan to the user for review before executing:
    - State which convention is in effect and why (`joresserwe/dotfiles → 개인 규칙` / `acme/api → 레포 규칙`)
    - List each proposed commit with its message and included files
-   - **Annotate each proposed message inline.** Own repos: `verb → table row text` (e.g., `Move → "Relocating code within the project"`) or `verb → OFF-TABLE: <why every table verb fails>`. Other repos: the observed convention and its evidence. Presenting messages without this annotation violates the skill.
+   - **Annotate each proposed message inline.** Own repos: `verb → table row text` (e.g., `Move → "Only relocating code or files"`). Other repos: the observed convention and its evidence. Presenting messages without this annotation violates the skill.
    - Flag anything unusual (debug code, unintended changes, sensitive files)
 5. After approval, execute commits in order
 

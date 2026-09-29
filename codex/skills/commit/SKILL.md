@@ -23,22 +23,23 @@ For another repository, inspect enforced rules first (`CONTRIBUTING.md`, `.gitme
 
 Use one English line under 72 characters: a capitalized imperative verb followed by a concise summary. Do not use conventional prefixes (`feat:`, `fix:`, and similar), a body, or trailers unless the user asks.
 
+Check the rows top to bottom and use the first one that describes the change's main purpose.
+
 | Verb | Use for |
 | --- | --- |
-| Add | New code, functionality, tests, or documents |
-| Fix | Broken behavior, typos, or naming |
-| Update | Version, dependency, or resource revisions |
-| Remove | Unnecessary code or files |
-| Make | Behavior changes |
-| Use | Switching tools or approaches |
-| Prevent | Avoiding undesired behavior |
-| Set | Minor config values or flags |
-| Ensure | Guaranteeing a state or behavior |
-| Refactor | Structure changes without behavior changes |
-| Move | Relocating code |
-| Rename | Renaming code or files |
+| Fix | Correcting something that was wrong when written (bug, typo, wrong value or fact) |
+| Update | Bringing something that went stale up to date (versions, dependencies, code or docs that no longer match the current state) |
+| Prevent | Blocking undesired behavior that comes from outside the repo (another app, the OS, a tool) |
+| Use | Switching to a different tool, library, or approach |
+| Add | New code, features, files, tests, or documents |
+| Remove | Deleting code, files, or features |
+| Rename | Only renaming (variables, files, functions) |
+| Move | Only relocating code or files |
+| Set | Only changing values (config values, flags, options) |
+| Refactor | Restructuring or simplifying without changing behavior |
+| Make | Any other change to existing code, config, or docs |
 
-Use the verb that describes the change's nature. If none fits, explain the off-table choice and why the table verbs do not fit in the Korean plan.
+Make is the catch-all last row, so every change has a table verb; never use an off-table verb.
 
 ## Workflow
 
