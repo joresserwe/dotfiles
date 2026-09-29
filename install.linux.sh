@@ -322,6 +322,7 @@ create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/paste.ps1" "$XDG_CONFIG_
 
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
+create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 

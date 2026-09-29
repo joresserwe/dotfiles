@@ -250,6 +250,7 @@ create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezte
 create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart-split"
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
+create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
 
 # -----------------------------------------------------------------------------------------------
 

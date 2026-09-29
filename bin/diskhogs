@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: diskhogs [-p PERCENT] [PATH...]
+
+Show the folders and files that take at least PERCENT (default 2) of each
+PATH's disk usage, largest first, as a tree.
+
+Default PATH: Windows C: and / on WSL, /System/Volumes/Data on macOS,
+/ elsewhere. /mnt/<drive> paths are scanned with the Windows-native
+gdu.exe when it is available.
+EOF
+}
+
+percent=2
+while getopts 'p:h' opt; do
+  case "$opt" in
+    p) percent="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    *) usage >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [ $# -eq 0 ]; then
+  if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    set -- /mnt/c /
+  elif [ -d /System/Volumes/Data ]; then
+    set -- /System/Volumes/Data
+  else
+    set -- /
+  fi
+fi
+
+human() {
+  awk -v b="$1" 'BEGIN {
+    split("B K M G T P", u, " ")
+    i = 1
+    while (b >= 1024 && i < 6) { b /= 1024; i++ }
+    fmt = (b >= 10 || i == 1) ? "%.0f%s" : "%.1f%s"
+    printf fmt, b, u[i]
+  }'
+}
+
+scan() {
+  local target="$1" drive rest
+  if [[ "$target" =~ ^/mnt/([a-zA-Z])(/.*)?$ ]]; then
+    if command -v gdu.exe >/dev/null 2>&1; then
+      drive="$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:lower:]' '[:upper:]')"
+      rest="${BASH_REMATCH[2]:-/}"
+      gdu.exe -n -p -c --no-prefix --depth 10 "$drive:${rest//\//\\}" 2>/dev/null | tr -d '\r'
+      return
+    fi
+    echo "gdu.exe not found — scanning $target over 9P, this is slow" >&2
+  fi
+  gdu-go -n -p -c --no-prefix --no-cross --depth 10 "$target" 2>/dev/null
+}
+
+render() {
+  awk -v percent="$percent" -v root="$1" '
+    function human(b,   u, i) {
+      split("B K M G T P", u, " ")
+      i = 1
+      while (b >= 1024 && i < 6) { b /= 1024; i++ }
+      return sprintf((b >= 10 || i == 1) ? "%.0f%s" : "%.1f%s", b, u[i])
+    }
+    function depth(p,   t) {
+      t = p
+      sub(/\/$/, "", t)
+      return gsub(/\//, "/", t)
+    }
+    {
+      line = $0
+      sub(/^ +/, "", line)
+      size = substr(line, 1, index(line, " ") - 1) + 0
+      path = substr(line, index(line, " ") + 1)
+      gsub(/\\/, "/", path)
+      if (NR == 1) {
+        total = size
+        base = depth(path)
+        limit = total * percent / 100
+        next
+      }
+      if (size < limit) next
+      n++
+      d[n] = depth(path) - base
+      sz[n] = size
+      name = path
+      sub(/.*\//, "", name)
+      nm[n] = name
+    }
+    END {
+      if (total == 0) exit 1
+      printf "%6s %4s  %s\n", human(total), "100%", root
+      for (i = 1; i <= n; i++) {
+        last = 1
+        for (j = i + 1; j <= n && d[j] >= d[i]; j++) {
+          if (d[j] == d[i]) { last = 0; break }
+        }
+        prefix = ""
+        for (k = 1; k < d[i]; k++) prefix = prefix (open[k] ? "│  " : "   ")
+        open[d[i]] = !last
+        printf "%6s %3.0f%%  %s%s%s\n", human(sz[i]), 100 * sz[i] / total, prefix, (last ? "└─ " : "├─ "), nm[i]
+      }
+    }
+  '
+}
+
+command -v gdu-go >/dev/null 2>&1 || { echo "ERROR: gdu-go not found (brew install gdu)" >&2; exit 1; }
+
+first=1
+for arg in "$@"; do
+  target="$(cd "$arg" && pwd)"
+  [ "$first" -eq 1 ] || echo
+  first=0
+  read -r _ size used avail _ < <(df -Pk "$target" | awk 'NR == 2')
+  printf '== %s — %s used of %s, %s free\n' "$target" \
+    "$(human $((used * 1024)))" "$(human $((size * 1024)))" "$(human $((avail * 1024)))"
+  scan "$target" | render "$target" || echo "   (nothing readable under $target)"
+done
