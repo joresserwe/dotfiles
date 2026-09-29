@@ -143,7 +143,7 @@ When updating configuration:
 
 ## Gotchas
 
-- All comments and docs in dotfiles must be English (not Korean).
+- All code and config comments in dotfiles must be English (not Korean).
 - **OS isolation rule (critical).** Goal: identical dev experience across macOS and WinOS, with zero risk of one OS's edits breaking the other.
   - **WinOS-only** task → macOS configs are immutable (`install.sh`, macOS-only Brewfile entries, `OS.mac?`/`darwin*` branches).
   - **macOS-only** task → WinOS configs are immutable (`install.linux.sh`, Linux phases, apt, `linux-gnu` branches).
