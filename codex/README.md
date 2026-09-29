@@ -1,8 +1,8 @@
 # Codex 설정
 
-기본 작업 모델은 `gpt-5.6-luna` + `xhigh`다. 분석·계획·조사는 `gpt-5.6-terra` + `xhigh`, 어려운 진단·아키텍처·리뷰는 `gpt-5.6-sol` + `high`를 사용한다. Astra는 사용자가 명시한 자문용 읽기 전용 작업에서만 `-p astra-readonly`로 선택한다.
+기본 모델은 `gpt-6-astra` + `xhigh`다. Astra가 문제 정의·분석·계획·조사·설계·중요 판단과 맥락 의존적이거나 복잡한 구현·검증을 직접 수행하고 최종 결과를 책임진다. 변경 위치·방법·기대 결과가 확정된 단순·기계적 수정과 좁은 검증에만 `gpt-5.6-luna` + `xhigh`를 비용 절감이 있을 때 선택하며, 질문·대상·기대 산출물이 명확한 독립 읽기 전용 분석·조사에는 `gpt-5.6-sol` + `high`를 사용한다. `gpt-5.6-terra`는 사용자가 명시적으로 요청한 경우에만 사용한다.
 
-기본 TUI는 Catppuccin Mocha 테마와 `model-with-reasoning`, 브랜치, 남은 컨텍스트, 사용량 한도를 간결한 footer에 표시한다. 이 지침과 프로필은 라우팅 의도를 제공하며, 선택한 프로필 밖의 모델·도구 권한을 운영체제 수준에서 강제한다고 약속하지 않는다. Astra CLI 보호는 `astra-readonly` 프로필의 `read-only` sandbox, `approval_policy = "never"`, `agents.enabled = false`에 한정된다.
+기본 TUI는 Catppuccin Mocha 테마와 `model-with-reasoning`, `context-remaining`, `used-tokens`, 브랜치, `five-hour-limit`, `weekly-limit`을 간결한 footer에 표시한다. 자동 위임 기본은 `gpt-5.6-sol` + `high`이며, 단순 수정에는 `gpt-5.6-luna` + `xhigh`를 명시적으로 선택하고 Terra는 명시 요청용으로만 사용한다. 기본 설정의 sandbox·approval을 운영체제 수준에서 바꾸지 않으며, `astra-readonly`는 명시 선택하는 별도 read-only 프로필이다. 직접 쓰기 방지는 이 프로필의 `read-only` sandbox, `approval_policy = "never"`, `agents.enabled = false`에서만 추가로 적용된다.
 
 프로필을 직접 실행할 때는 다음처럼 쓴다.
 
