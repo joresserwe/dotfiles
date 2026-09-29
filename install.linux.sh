@@ -316,6 +316,7 @@ create_link "$DOTFILES_PATH/yazi/theme.toml"  "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
 create_link "$DOTFILES_PATH/yazi/init.lua"    "$XDG_CONFIG_HOME/yazi/init.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/svg-code.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/svg-code.yazi/main.lua"
+create_link "$DOTFILES_PATH/yazi/plugins/gdu-size.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/gdu-size.yazi/main.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/win-paste.yazi/main.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/paste.ps1" "$XDG_CONFIG_HOME/yazi/plugins/win-paste.yazi/paste.ps1"
 
@@ -460,6 +461,16 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       fi
     fi
   done < "$DOTFILES_PATH/winget/packages.txt"
+
+  win_localappdata_raw="$(cmd.exe /c 'echo %LOCALAPPDATA%' 2>/dev/null | tr -d '\r')"
+  if [[ -n "$win_localappdata_raw" ]]; then
+    gdu_win=("$(wslpath "$win_localappdata_raw")"/Microsoft/WinGet/Packages/dundee.gdu_*/gdu_windows_amd64.exe)
+    if [[ -f "${gdu_win[0]}" ]]; then
+      create_link "${gdu_win[0]}" "$HOME/.local/bin/gdu.exe"
+    else
+      log_skip "gdu.exe: dundee.gdu not found under WinGet/Packages"
+    fi
+  fi
 
   log_step "ShareX: Start Menu capture shortcuts"
   powershell.exe -NoProfile -ExecutionPolicy Bypass \

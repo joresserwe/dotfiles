@@ -2,6 +2,8 @@ require("full-border"):setup()
 
 require("git"):setup()
 
+require("gdu-size"):setup()
+
 local bookmarks = {}
 
 local function dir_exists(path)

@@ -222,6 +222,7 @@ create_link "$DOTFILES_PATH/yazi/theme.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"
 create_link "$DOTFILES_PATH/yazi/keymap.toml" "$XDG_CONFIG_HOME/yazi/keymap.toml"
 create_link "$DOTFILES_PATH/yazi/init.lua" "$XDG_CONFIG_HOME/yazi/init.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/svg-code.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/svg-code.yazi/main.lua"
+create_link "$DOTFILES_PATH/yazi/plugins/gdu-size.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/gdu-size.yazi/main.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/main.lua" "$XDG_CONFIG_HOME/yazi/plugins/win-paste.yazi/main.lua"
 create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/paste.ps1" "$XDG_CONFIG_HOME/yazi/plugins/win-paste.yazi/paste.ps1"
 for pkg in \

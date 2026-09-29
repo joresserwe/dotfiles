@@ -18,3 +18,5 @@ Clement.bottom
 
 # Screenshot capture tool
 ShareX.ShareX
+
+dundee.gdu
