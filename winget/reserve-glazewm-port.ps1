@@ -1,4 +1,4 @@
-# Reserve TCP port 6123 (GlazeWM's IPC port) as a persistent excluded port so
+# Reserve TCP ports 6123 (GlazeWM IPC) and 6124 (Zebar's asset server) so
 # the Hyper-V Host Network Service's dynamic exclusion range (which WSL2
 # depends on) won't randomly claim it at boot. Must run elevated.
 #
@@ -8,37 +8,61 @@
 # reload all go dead as a result. Fix persists across reboots — winnat
 # reads the persistent exclusion list during range allocation.
 #
-# Invoke this ONE time (manually with UAC, or via install.linux.sh's
-# -Verb RunAs call). Idempotent — safe to re-run.
+# Zebar 3.3.1 keeps its windows alive when port 6124 fails to bind, leaving
+# a white network-error page even after Hyper+C (observed 2026-09-18).
 
-$ErrorActionPreference = 'Continue'
-$port = 6123
+param([switch]$RestartWinNat)
 
-Write-Host "[1/4] try a plain persistent reservation first..."
+$ErrorActionPreference = 'Stop'
+$ports = @(6123, 6124)
+
+function Get-UnreservedPorts {
+  # store=persistent returned no rows even with an administered 6123 range
+  # on 2026-09-18; active ranges marked '*' distinguish it from Hyper-V's.
+  $lines = netsh int ipv4 show excludedportrange protocol=tcp store=active
+  if ($LASTEXITCODE -ne 0) { throw 'Could not read administered TCP reservations.' }
+  $ranges = @($lines | ForEach-Object {
+    if ($_ -match '^\s*(\d+)\s+(\d+)\s*\*\s*$') {
+      [pscustomobject]@{ Start = [int]$Matches[1]; End = [int]$Matches[2] }
+    }
+  })
+  $ports | Where-Object {
+    $port = $_
+    -not ($ranges | Where-Object { $_.Start -le $port -and $_.End -ge $port })
+  }
+}
+
+Write-Host 'Checking GlazeWM and Zebar TCP reservations...'
 # Succeeds whenever $port isn't currently inside an active dynamic range —
 # no service cycling needed, and the persistent store is respected on every
 # subsequent boot regardless.
-netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
+foreach ($port in @(Get-UnreservedPorts)) {
+  netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
+}
 
-$reserved = (netsh int ipv4 show excludedportrange tcp store=persistent | Out-String) -match "\b$port\b"
-
-if (-not $reserved) {
-  Write-Host "[2/4] port currently claimed — cycling winnat to release dynamic ranges..."
+$pending = @(Get-UnreservedPorts)
+if ($pending.Count -gt 0) {
+  if (-not $RestartWinNat) {
+    throw "TCP $($pending -join ', ') could not be reserved. In an elevated Windows PowerShell, run wsl --shutdown, then rerun this script with -RestartWinNat."
+  }
+  Write-Host 'Cycling winnat to release dynamic ranges...'
   # winnat only. Do NOT stop hns: it wedges in StopPending on some machines
   # (observed 2026-07-15) and `net stop` additionally blocks on an
   # interactive dependent-services Y/N prompt. winnat alone owns the dynamic
   # TCP allocations; restarting it re-reads the persistent exclusion list.
   # Run with WSL shut down (`wsl --shutdown`) so winnat releases cleanly.
-  Stop-Service winnat -Force -ErrorAction SilentlyContinue
-  netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
-  Write-Host "[3/4] start winnat back (re-allocates ranges respecting the new exclusion)..."
-  Start-Service winnat -ErrorAction SilentlyContinue
+  try {
+    Stop-Service winnat -Force
+    foreach ($port in $pending) {
+      netsh int ipv4 add excludedportrange protocol=tcp startport=$port numberofports=1 store=persistent 2>&1 | Out-Host
+    }
+  } finally {
+    Start-Service winnat
+  }
 }
 
-Write-Host "[4/4] verify..."
-$lines = netsh int ipv4 show excludedportrange tcp store=persistent | Out-String
-if ($lines -match "\b$port\b") {
-  Write-Host "  OK: $port is now in the excluded list"
-} else {
-  Write-Host "  WARN: could not confirm $port reservation — check manually"
+$pending = @(Get-UnreservedPorts)
+if ($pending.Count -gt 0) {
+  throw "Could not confirm administered TCP reservations for $($pending -join ', ')."
 }
+Write-Host 'OK: TCP 6123 (GlazeWM) and 6124 (Zebar) are protected from dynamic port exclusions.'

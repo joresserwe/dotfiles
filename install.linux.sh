@@ -872,18 +872,16 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_done "glazewm restarted via task (fresh env: DOTFILES_WIN et al.)"
     fi
 
-    # GlazeWM binds TCP 6123 for IPC; Hyper-V/WSL's per-boot dynamic port
-    # exclusion range can claim it first, and glazewm then aborts at logon
-    # (0xc0000409 — observed on the 2026-07-15 cold boot). Add a persistent
-    # winnat exclusion. Plain `netsh add` succeeds when 6123 isn't currently
-    # inside an active dynamic range; if it fails, run
-    # winget/reserve-glazewm-port.ps1 elevated AFTER `wsl --shutdown` (it
-    # stops winnat/hns, which hangs while WSL is up).
-    if netsh.exe int ipv4 add excludedportrange protocol=tcp startport=6123 numberofports=1 store=persistent </dev/null >/dev/null 2>&1; then
-      log_done "TCP 6123 persistently reserved for GlazeWM IPC"
-    else
-      log_skip "TCP 6123 reservation: already reserved or range busy — if glazewm crashes at logon, run winget/reserve-glazewm-port.ps1 elevated after wsl --shutdown"
-    fi
+    # Hyper-V's dynamic exclusions can block GlazeWM IPC (6123, abort at
+    # logon) and Zebar's asset server (6124, white bar). When already claimed,
+    # winnat must release the range with WSL shut down before reserving it.
+    for glzr_port in 6123 6124; do
+      if netsh.exe int ipv4 add excludedportrange protocol=tcp startport="$glzr_port" numberofports=1 store=persistent </dev/null >/dev/null 2>&1; then
+        log_done "TCP $glzr_port persistently reserved for GlazeWM/Zebar"
+      else
+        log_skip "TCP $glzr_port reservation: already reserved or range busy — if GlazeWM/Zebar fails, run winget/reserve-glazewm-port.ps1 -RestartWinNat elevated after wsl --shutdown"
+      fi
+    done
   else
     log_skip "GlazeWM task: glazewm.exe missing or startup_dir unset"
   fi
