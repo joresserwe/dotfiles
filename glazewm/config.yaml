@@ -123,6 +123,8 @@ window_rules:
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AccordD64' }
       - window_process: { equals: 'CloudWidget' }
+      - window_process: { equals: 'PotPlayer64' }
+        window_class: { equals: 'PotShadowWnd' }
       # Explorer confirmation/progress dialogs (delete confirm, replace/move
       # confirm, name-collision, copy/move progress). These are the `explorer`
       # process but use the standard Win32 dialog class #32770 (or the copy
