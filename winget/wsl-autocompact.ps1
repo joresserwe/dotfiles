@@ -42,28 +42,27 @@ if (-not (Test-Path $vhd)) { Write-Log "abort: vhdx not found: $vhd"; exit 1 }
 $before = (Get-Item $vhd).Length
 $statusPath = Join-Path $env:TEMP 'wsl-autocompact.status'
 $floor = 0L
-if (Test-Path $statusPath) { $floor = [long](Get-Content $statusPath -First 1) }
-if ($floor -gt 0 -and ($before - $floor) -lt 3GB) {
-  Write-Log ("skip: {0:N1} GB, grown <3 GB since last compact" -f ($before / 1GB))
+$stale = $true
+if (Test-Path $statusPath) {
+  $floor = [long](Get-Content $statusPath -First 1)
+  $stale = (Get-Item $statusPath).LastWriteTime -lt (Get-Date).AddDays(-7)
+}
+if (-not $stale -and ($before - $floor) -lt 3GB) {
+  Write-Log ("skip: {0:N1} GB, grown <3 GB since last compact (<7 days ago)" -f ($before / 1GB))
   exit 0
 }
 
-$dp = @"
-select vdisk file="$vhd"
-attach vdisk readonly
-compact vdisk
-detach vdisk
-"@
-$tmp = New-TemporaryFile
-Set-Content -Path $tmp -Value $dp -Encoding ascii
-$out = diskpart /s $tmp 2>&1
-$rc = $LASTEXITCODE
-Remove-Item $tmp
-if ($rc -ne 0) { Write-Log ("diskpart rc={0}: {1}" -f $rc, (($out | Select-Object -Last 3) -join ' | ')) }
-
-$after = (Get-Item $vhd).Length
-Set-Content -Path $statusPath -Value $after
-Write-Log ("compacted {0:N1} -> {1:N1} GB" -f ($before / 1GB), ($after / 1GB))
+$after = $before
+$sw = [Diagnostics.Stopwatch]::StartNew()
+try {
+  Add-Type -Path (Join-Path $PSScriptRoot 'wsl-vhd-compact.cs')
+  [WslVhd]::Compact($vhd)
+  $after = (Get-Item $vhd).Length
+  Set-Content -Path $statusPath -Value $after
+  Write-Log ("compacted {0:N1} -> {1:N1} GB in {2:N0}s" -f ($before / 1GB), ($after / 1GB), $sw.Elapsed.TotalSeconds)
+} catch {
+  Write-Log ("compact failed after {0:N0}s: {1}" -f $sw.Elapsed.TotalSeconds, $_.Exception.GetBaseException().Message)
+}
 
 $free = (Get-PSDrive C).Free
 Write-Log ("C: free {0:N1} GB" -f ($free / 1GB))
