@@ -29,6 +29,7 @@ alias et="$EDITOR $XDG_CONFIG_HOME/tmux/tmux.conf"
 # Preview (macOS Preview.app)
 case "$OSTYPE" in
   darwin*) alias preview="open -a Preview" ;;
+  linux*) alias open="xdg-open" ;;
 esac
 
 # vim
