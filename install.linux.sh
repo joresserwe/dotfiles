@@ -488,13 +488,13 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   # both units are overridden.
   if [ -d /run/systemd/system ]; then
     sudo mkdir -p /etc/systemd/system/fstrim.service.d /etc/systemd/system/fstrim.timer.d
-    printf '[Unit]\nConditionVirtualization=\n' \
+    printf '[Unit]\nConditionVirtualization=\n\n[Service]\nExecStart=\nExecStart=/sbin/fstrim --verbose /\n' \
       | sudo tee /etc/systemd/system/fstrim.service.d/wsl.conf >/dev/null
     printf '[Unit]\nConditionVirtualization=\n\n[Timer]\nOnCalendar=\nOnCalendar=daily\n' \
       | sudo tee /etc/systemd/system/fstrim.timer.d/wsl.conf >/dev/null
     sudo systemctl daemon-reload
     sudo systemctl enable --now fstrim.timer >/dev/null 2>&1 || true
-    log_done "fstrim: WSL container-condition override + daily timer"
+    log_done "fstrim: WSL override (container condition, / target) + daily timer"
   else
     log_skip "fstrim: systemd not running (set systemd=true in /etc/wsl.conf)"
   fi
