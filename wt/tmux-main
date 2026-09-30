@@ -9,4 +9,4 @@
 if command -v systemctl >/dev/null 2>&1; then
   systemctl --user start kiro-clipboard-xvfb.service >/dev/null 2>&1 || true
 fi
-exec /usr/bin/zsh -lic 'tmux new -A -s main'
+exec /usr/bin/zsh -lic 'tmux set-environment -g WSL_INTEROP "$WSL_INTEROP" 2>/dev/null; tmux new -A -s main'

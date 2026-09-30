@@ -3,6 +3,7 @@
         "guid": "{7c4e5a10-93a4-4d3b-b1a9-571e33c2a6d1}",
         "name": "Terminal",
         "commandline": "C:\\windows\\system32\\wsl.exe -d Ubuntu --cd ~ -e .local/bin/tmux-main",
+        "elevate": true,
         "colorScheme": "Catppuccin Mocha",
         "font": {
             "face": "0xProto Nerd Font, Sarasa Term K, codicon",

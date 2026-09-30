@@ -85,5 +85,14 @@ if [[ -f "$DOTFILES_PATH/wezterm/wezterm.sh" ]] \
   precmd_functions+=(__wezterm_git_status_precmd)
 fi
 
+if [[ -n "${WSL_DISTRO_NAME:-}" && -n "${TMUX:-}" ]]; then
+  __wsl_interop_preexec() {
+    local v
+    v="$(command tmux show-environment -g WSL_INTEROP 2>/dev/null)" || return
+    [[ "$v" == WSL_INTEROP=* ]] && export WSL_INTEROP="${v#WSL_INTEROP=}"
+  }
+  preexec_functions+=(__wsl_interop_preexec)
+fi
+
 #neofetch
 

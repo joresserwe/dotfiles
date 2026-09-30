@@ -561,9 +561,21 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_skip "Windows Terminal: settings.json not found"
     fi
 
+    terminal_vbs_win="${dotfiles_win}\\winget\\open-terminal.vbs"
+    if register_task 'wsl-terminal' "
+      \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$terminal_vbs_win\"'
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances Parallel -ExecutionTimeLimit (New-TimeSpan -Minutes 1)
+      \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
+      Register-ScheduledTask -TaskName 'wsl-terminal' -Action \$act -Settings \$set -Principal \$prn -Force | Out-Null
+    "; then
+      log_done "Scheduled Task 'wsl-terminal' registered (on demand, Highest -> $terminal_vbs_win)"
+    else
+      log_manual "Scheduled Task 'wsl-terminal' NOT registered: $REGISTER_TASK_ERROR"
+    fi
+
     powershell.exe -NoProfile -ExecutionPolicy Bypass \
       -File "$(wslpath -w "$DOTFILES_PATH/winget/wsl-terminal-shortcut.ps1")" >/dev/null 2>&1 || true
-    log_done "Start Menu: WSL-Terminal (launcher-indexable -> wt -f -p Terminal)"
+    log_done "Start Menu: WSL-Terminal (launcher-indexable -> task wsl-terminal -> elevated wt -f -p Terminal)"
 
     powershell.exe -NoProfile -ExecutionPolicy Bypass \
       -File "$(wslpath -w "$DOTFILES_PATH/winget/sleep-display-shortcut.ps1")" >/dev/null 2>&1 || true
