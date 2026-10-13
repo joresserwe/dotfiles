@@ -133,6 +133,10 @@ window_rules:
       # burying its buttons — so unmanage them entirely (not even floating).
       - window_process: { equals: 'explorer' }
         window_class: { regex: '#32770|OperationStatusWindow' }
+      - window_process: { regex: '(?i)^(msiexec|unins\d*|.*(setup|installer|uninstall).*|install([._ -].*)?)$' }
+      - window_class: { regex: '^(TWizardForm|TSetupForm|MsiDialogCloseClass|InstallShield_Win)$' }
+      - window_class: { regex: '^(#32770|SunAwtFrame|SunAwtDialog)$' }
+        window_title: { regex: '(?i)\b(install(ing|er|ation)?|setup|uninstall(ing|er|ation)?|installshield)\b|설치' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
