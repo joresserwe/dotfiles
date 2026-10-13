@@ -155,6 +155,9 @@
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "xhigh"
+    },
+    "claude-sonnet-5-5": {
+      "effortLevel": "high"
     }
   },
   "tui": "fullscreen",
