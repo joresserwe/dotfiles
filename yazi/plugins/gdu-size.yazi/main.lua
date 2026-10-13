@@ -18,6 +18,11 @@ local function from_windows(path)
 	return "/mnt/" .. drive:lower() .. (rest == "" and "" or "/" .. rest:gsub("\\", "/"))
 end
 
+local function resolve(path)
+	local output = Command("realpath"):arg(path):stdout(Command.PIPED):stderr(Command.NULL):output()
+	return output and output.status.success and output.stdout:gsub("\n$", "") or path
+end
+
 local function gdu(cmd, path)
 	return Command(cmd)
 		:arg({
@@ -28,18 +33,22 @@ local function gdu(cmd, path)
 			"--no-prefix",
 			"--depth",
 			"2",
-			path,
 		})
+		:arg(cmd == "gdu-go" and ya.target_os() == "linux" and { "--no-cross" } or {})
+		:arg(path)
 		:stdout(Command.PIPED)
 		:stderr(Command.NULL)
 		:output()
 end
 
-local function emit_sizes(stdout)
+local function emit_sizes(stdout, from, to)
 	local groups = {}
 	for line in stdout:gmatch("[^\r\n]+") do
 		local size, path = line:match("^%s*(%d+) (.+)$")
 		path = path and from_windows(path)
+		if path and from ~= to then
+			path = to .. path:sub(#from + 1)
+		end
 		local url = path and path:sub(1, 1) == "/" and Url(path)
 		local parent = url and url.parent
 		if parent then
@@ -64,14 +73,15 @@ function M:scan(done)
 
 	self.scans[key] = "running"
 	ya.async(function()
-		local windows = to_windows(path)
-		local output = windows and gdu("gdu.exe", windows)
-		if not (output and output.status.success) then
-			output = gdu("gdu-go", path)
+		local real = resolve(path)
+		local windows = to_windows(real)
+		local output, from = windows and gdu("gdu.exe", windows), real
+		if not output then
+			output, from = gdu("gdu-go", path), path
 		end
-		self.scans[key] = output and "done" or nil
+		self.scans[key] = output and output.status.success and "done" or nil
 		if output then
-			emit_sizes(output.stdout)
+			emit_sizes(output.stdout, from, path)
 		end
 		if done then
 			done()
