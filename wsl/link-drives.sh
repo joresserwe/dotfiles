@@ -24,6 +24,7 @@ self="$(realpath "${BASH_SOURCE[0]}")"
 canonical="${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles/wsl/link-drives.sh"
 [[ -f "$canonical" ]] && self="$canonical"
 ln -sfn "$self" "$DRIVES_DIR/refresh.sh"
+ln -sfn "$(dirname "$self")/compact-vhd.sh" "$DRIVES_DIR/compact.sh"
 
 # Single-letter FileSystem drives as Windows sees them (C, D, ... + network
 # maps). Mapped network drives are per-user, and interop PowerShell runs as
