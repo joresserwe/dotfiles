@@ -69,7 +69,9 @@ ensure_dir \
   "$XDG_STATE_HOME/vim" \
   "$XDG_STATE_HOME/node" \
   "$XDG_STATE_HOME/python" \
-  "$XDG_DATA_HOME/codex"
+  "$XDG_DATA_HOME/codex" \
+  "$XDG_DATA_HOME/gnupg"
+chmod 700 "$XDG_DATA_HOME/gnupg"
 
 log_step "apt: install base packages from apt/packages.txt"
 sudo apt-get update -y

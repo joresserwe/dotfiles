@@ -75,6 +75,14 @@ export PATH="$PATH:$GOPATH/bin"
 # gradle — ignores XDG, writes to ~/.gradle unless GRADLE_USER_HOME is set
 export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
 
+export SONAR_USER_HOME="$XDG_CACHE_HOME/sonar"
+export JDK_JAVA_OPTIONS="-Djava.util.prefs.userRoot=$XDG_CONFIG_HOME/java"
+
+export DOTNET_CLI_HOME="$XDG_DATA_HOME/dotnet"
+export DOTNET_GENERATE_ASPNET_CERTIFICATE=false
+
+export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+
 # kubectl — ignores XDG, defaults to ~/.kube for config and cache
 export KUBECONFIG="$XDG_CONFIG_HOME/kube/config"
 export KUBECACHEDIR="$XDG_CACHE_HOME/kube"

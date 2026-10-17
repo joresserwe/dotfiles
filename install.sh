@@ -64,8 +64,10 @@ ensure_dir \
 	"$XDG_RUNTIME_DIR" \
 	"$XDG_STATE_HOME/atuin/logs" \
 	"$XDG_STATE_HOME/zsh" \
-	"$XDG_DATA_HOME/codex"
+	"$XDG_DATA_HOME/codex" \
+	"$XDG_DATA_HOME/gnupg"
 chmod 700 "$XDG_RUNTIME_DIR" # XDG basedir spec requires mode 700 on the runtime dir
+chmod 700 "$XDG_DATA_HOME/gnupg"
 
 # -----------------------------------------------------------------------------------------------
 

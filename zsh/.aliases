@@ -56,6 +56,8 @@ alias ping="ping_or_tcping"
 # lazygit
 alias lg="lazygit"
 
+alias jshell='jshell -J-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME/java"'
+
 # kiro — launch kiro-cli on the V3 agent engine. Under WSL, only Kiro gets
 # the authenticated headless X11 clipboard; exporting DISPLAY for all tmux
 # panes makes Claude prefer this clipboard over its Windows-native fallback.
