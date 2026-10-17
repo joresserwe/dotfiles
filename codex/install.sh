@@ -6,10 +6,9 @@ set -Eeuo pipefail
 script_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(CDPATH= cd -- "$script_dir/.." && pwd)"
 xdg_data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
-default_codex_home="$HOME/.codex"
 xdg_codex_home="$xdg_data_home/codex"
 managed_config="$repo_root/codex/config.toml"
-codex_homes=("$default_codex_home" "$xdg_codex_home")
+codex_homes=("$xdg_codex_home")
 legacy_skills=(commit implement review shared-skills)
 
 die() {

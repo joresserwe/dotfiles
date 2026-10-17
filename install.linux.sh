@@ -1174,6 +1174,7 @@ log_done "Phase 4 complete (run 'nvim --headless \"+Lazy! sync\" +qa' to pre-ins
 log_step "Phase 5: Codex + Claude Code"
 
 log_step "Installing/updating Codex CLI (standalone installer)"
+export CODEX_HOME="$XDG_DATA_HOME/codex"
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 log_done "codex CLI installed: $HOME/.local/bin/codex"
 
