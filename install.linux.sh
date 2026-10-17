@@ -1175,7 +1175,7 @@ log_step "Phase 5: Codex + Claude Code"
 
 log_step "Installing/updating Codex CLI (standalone installer)"
 export CODEX_HOME="$XDG_DATA_HOME/codex"
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
 log_done "codex CLI installed: $HOME/.local/bin/codex"
 
 if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
