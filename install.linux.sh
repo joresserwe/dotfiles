@@ -310,6 +310,8 @@ create_link "$DOTFILES_PATH/atuin/config.toml" "$XDG_CONFIG_HOME/atuin/config.to
 
 create_link "$DOTFILES_PATH/mise/config.toml" "$XDG_CONFIG_HOME/mise/config.toml"
 
+create_link "$DOTFILES_PATH/wsl/environment.d/xdg.conf" "$XDG_CONFIG_HOME/environment.d/xdg.conf"
+
 # brew imagemagick has no font map; needed for SVG <text> rendering
 create_link "$DOTFILES_PATH/imagemagick/type.xml" "$XDG_CONFIG_HOME/ImageMagick/type.xml"
 
