@@ -107,8 +107,10 @@ else
   log_skip "earlyoom: systemd not running"
 fi
 
-[ -f /etc/ssl/certs/ca-certificates.crt ] \
-  && export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+  export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+  export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+fi
 
 log_step "TLS preflight: probe https://formulae.brew.sh"
 tls_rc=0
