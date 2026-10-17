@@ -19,6 +19,16 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
 
 DOTFILES_PATH="${DOTFILES_PATH:-$XDG_CONFIG_HOME/.dotfiles}"
 
+if [ -d "$DOTFILES_PATH/.git" ]; then
+  before_head="$(git -C "$DOTFILES_PATH" rev-parse HEAD 2>/dev/null)"
+  git -C "$DOTFILES_PATH" pull --ff-only || echo "dotfiles pull skipped (offline/dirty/diverged)"
+  after_head="$(git -C "$DOTFILES_PATH" rev-parse HEAD 2>/dev/null)"
+  if [ "$before_head" != "$after_head" ] && [ -z "${DOTFILES_REEXEC:-}" ]; then
+    echo "dotfiles updated — re-executing installer..."
+    DOTFILES_REEXEC=1 exec bash "$DOTFILES_PATH/install.linux.sh" "$@"
+  fi
+fi
+
 # ----- Library -------------------------------------------------------------
 if [ ! -f "$DOTFILES_PATH/lib/common.sh" ]; then
   echo "ERROR: $DOTFILES_PATH/lib/common.sh not found. Clone the dotfiles repo first." >&2
