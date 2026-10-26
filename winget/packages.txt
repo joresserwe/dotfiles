@@ -6,7 +6,7 @@
 # Tiling window manager (installer bundles Zebar)
 glzr-io.glazewm
 
-# 9PFXXSHC64H3 msstore
+# Application launcher
 Flow-Launcher.Flow-Launcher
 
 # Keyboard scripting — required by winget/winkey.ahk
