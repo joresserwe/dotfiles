@@ -20,6 +20,9 @@ window_rules:
     name: "Raycast"
     enabled: False
   - match: Process
+    name: "Flow.Launcher"
+    enabled: False
+  - match: Process
     name: "LeagueClientUx"
     enabled: False
   - match: Process
