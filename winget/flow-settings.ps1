@@ -5,8 +5,14 @@ if (-not (Test-Path $flow)) { exit 0 }
 
 $settingsPath = Join-Path $env:APPDATA 'FlowLauncher\Settings\Settings.json'
 if (-not (Test-Path $settingsPath)) {
-    Write-Host 'flow-settings: Settings.json missing — launch Flow Launcher once, then re-run'
-    exit 0
+    Start-Process $flow
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        Start-Sleep -Milliseconds 500
+        if (Test-Path $settingsPath) { break }
+    }
+    if (-not (Test-Path $settingsPath)) {
+        throw 'flow-settings: Flow Launcher did not create Settings.json'
+    }
 }
 
 # Flow only flushes settings (incl. per-plugin) on a graceful close and
