@@ -111,6 +111,7 @@ window_rules:
   - commands: ['ignore']
     match:
       - window_process: { equals: 'zebar' }
+      - window_class: { regex: '^HwndWrapper\[Flow\.Launcher;' }
       - window_process: { equals: 'chrome' }
         window_class: { equals: 'Chrome_WidgetWin_1' }
         window_title: { equals: '실시간 자막' }
@@ -141,7 +142,6 @@ window_rules:
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
     match:
-      - window_process: { equals: 'Flow.Launcher' }
       - window_process: { equals: 'CalculatorApp' }
       - window_process: { equals: 'KakaoTalk' }
       - window_process: { equals: 'Listary' }
