@@ -125,6 +125,7 @@ window_rules:
       - window_process: { equals: 'ShareX' }
       - window_process: { equals: 'AccordD64' }
       - window_process: { equals: 'CloudWidget' }
+      - window_process: { equals: 'DN' }
       - window_process: { equals: 'PotPlayer64' }
         window_class: { equals: 'PotShadowWnd' }
       # Explorer confirmation/progress dialogs (delete confirm, replace/move
@@ -139,6 +140,8 @@ window_rules:
       - window_class: { regex: '^(TWizardForm|TSetupForm|MsiDialogCloseClass|InstallShield_Win)$' }
       - window_class: { regex: '^(#32770|SunAwtFrame|SunAwtDialog)$' }
         window_title: { regex: '(?i)\b(install(ing|er|ation)?|setup|uninstall(ing|er|ation)?|installshield)\b|설치' }
+      - window_class: { equals: '#32770' }
+        window_title: { regex: '(?i)열기|저장|폴더|파일|업로드|\bopen\b|\bsave\b|folder|browse|upload' }
 
   # Float utility windows (mirrors AeroSpace floating rules)
   - commands: ['set-floating']
