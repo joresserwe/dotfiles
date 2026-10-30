@@ -20,6 +20,7 @@ general:
     # dies with glazewm. See tacky-borders/state-border.ps1.
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1"'
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\monitor-watch.ps1"'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\dpi-unaware-watch.ps1"'
   shutdown_commands:
     - 'shell-exec --hide-window taskkill /IM zebar.exe /F'
   config_reload_commands: []
