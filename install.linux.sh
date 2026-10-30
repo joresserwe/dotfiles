@@ -292,6 +292,7 @@ create_link "$DOTFILES_PATH/tmux/tmux.mapping.conf" "$XDG_CONFIG_HOME/tmux/tmux.
 create_link "$DOTFILES_PATH/tmux/gitmux.conf"       "$XDG_CONFIG_HOME/tmux/gitmux.conf"
 create_link "$DOTFILES_PATH/tmux/smart-split.sh"    "$XDG_CONFIG_HOME/tmux/smart-split.sh"
 create_link "$DOTFILES_PATH/tmux/pane-dim.sh"       "$XDG_CONFIG_HOME/tmux/pane-dim.sh"
+create_link "$DOTFILES_PATH/tmux/sync-cell-size.sh" "$XDG_CONFIG_HOME/tmux/sync-cell-size.sh"
 
 TPM_PREFIX="$(brew --prefix tpm 2>/dev/null || true)"
 TPM_INSTALL="${TPM_PREFIX:+$TPM_PREFIX/share/tpm/bin/install_plugins}"
