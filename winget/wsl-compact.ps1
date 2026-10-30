@@ -2,6 +2,9 @@
 # UNC — the script's own source vanishes at `wsl --shutdown` mid-run.
 param([string]$Distro = 'Ubuntu')
 
+Set-Location -LiteralPath $PSScriptRoot
+[Environment]::CurrentDirectory = $PSScriptRoot
+
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
   Start-Process powershell.exe -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Distro', $Distro)
   exit
