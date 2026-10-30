@@ -11,4 +11,4 @@
 guiApplications=false
 
 [experimental]
-autoMemoryReclaim=gradual
+autoMemoryReclaim=dropCache
