@@ -10,3 +10,5 @@
 #memory=16GB
 # swap.vhdx grows on C: (%TEMP%) up to the cap — keep C: headroom
 #swap=8GB
+# Relocate swap.vhdx off C: (escape backslashes; the folder must exist):
+#swapFile=D:\\WSL\\swap\\swap.vhdx

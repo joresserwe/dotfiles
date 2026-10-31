@@ -64,8 +64,14 @@ try {
   Write-Log ("compact failed after {0:N0}s: {1}" -f $sw.Elapsed.TotalSeconds, $_.Exception.GetBaseException().Message)
 }
 
-$free = (Get-PSDrive C).Free
-Write-Log ("C: free {0:N1} GB" -f ($free / 1GB))
-if ($free -lt 10GB) {
-  msg.exe * ("C: is low: {0:N1} GB free (WSL vhdx {1:N1} GB). Clean up or run wsl-compact.ps1." -f ($free / 1GB), ($after / 1GB))
+# The vhdx may live off C: (`wsl --manage --move`), so watch its own drive.
+# C: stays watched regardless: default swap.vhdx and %TEMP% live there.
+$vhdDrive = (Split-Path -Qualifier $vhd).TrimEnd(':').ToUpper()
+foreach ($d in @('C', $vhdDrive) | Select-Object -Unique) {
+  $free = (Get-PSDrive $d).Free
+  Write-Log ("{0}: free {1:N1} GB" -f $d, ($free / 1GB))
+  if ($free -lt 10GB) {
+    $hint = if ($d -eq $vhdDrive) { " (WSL vhdx {0:N1} GB). Clean up or run wsl-compact.ps1." -f ($after / 1GB) } else { '. Clean up %TEMP% / swap.vhdx.' }
+    msg.exe * ("{0}: is low: {1:N1} GB free{2}" -f $d, ($free / 1GB), $hint)
+  }
 }
