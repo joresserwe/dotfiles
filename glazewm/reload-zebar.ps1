@@ -1,5 +1,3 @@
-# Restart Zebar on Hyper+C.
-#
 # Zebar has no file watcher (verified against v3.3.1 source; notify crate is
 # not a dependency), so a full process restart is the only way to pick up
 # widget edits. Restart also clears accumulated ghost systray icons from
@@ -11,22 +9,18 @@
 # from the WSL clone by winget/sync-windows.ps1 (Hyper+C chain), so logon
 # and reload never depend on \\wsl.localhost being up.
 #
-# INTEGRITY GOTCHA: glazewm runs at Medium integrity (Startup-folder launch
-# via Explorer), its shell-exec spawns powershell at Medium, and this script
-# can therefore only kill a Medium-integrity zebar. If zebar was ever started
-# from a High-integrity shell (e.g. a WSL terminal whose integrity was
-# inherited through the GlazeWM-managed launch chain), Stop-Process fails
-# with "Access denied", Start-Process below spawns a Medium replacement that
-# hits the single-instance mutex and exits immediately, and the High stale
-# zebar keeps running — Hyper+C does nothing visible. Fix: kill the stale
-# zebar from an equally elevated context once, then let the next Hyper+C
-# spawn a clean Medium one.
+# INTEGRITY: zebar must run at Medium. Its systray provider registers a
+# topmost `Shell_TrayWnd` spy window without a UIPI message filter, so an
+# elevated zebar makes Shell_NotifyIcon fail with ERROR_ACCESS_DENIED for
+# every Medium app: their tray icons never register, and Call of Duty's
+# bootstrapper exits -2 on its failed NIM_ADD. glazewm is elevated, so this
+# script runs High and a direct Start-Process would inherit High; the
+# 'zebar-launch' task (RunLevel=Limited) starts zebar at Medium.
 #
 # Wait-Process after Stop-Process: Stop-Process signals WM_CLOSE and returns
 # immediately; Zebar's tauri-plugin-single-instance mutex is released only
 # after the old process fully tears down. Starting a new zebar too early
-# hits the mutex and the new instance silently exits, even in the non-UIPI
-# case.
+# hits the mutex and the new instance silently exits.
 
 $ZebarExe  = 'C:\Program Files\glzr.io\Zebar\zebar.exe'
 $ConfigDir = if ($env:DOTFILES_WIN) { "$env:DOTFILES_WIN\zebar" }
@@ -37,4 +31,8 @@ if ($existing) {
   $existing | Stop-Process -Force -ErrorAction SilentlyContinue
   $existing | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue
 }
-Start-Process -WindowStyle Hidden -FilePath $ZebarExe -ArgumentList 'startup', '--config-dir', $ConfigDir
+
+& schtasks.exe /run /tn zebar-launch 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  Start-Process -WindowStyle Hidden -FilePath $ZebarExe -ArgumentList 'startup', '--config-dir', $ConfigDir
+}

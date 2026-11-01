@@ -856,9 +856,6 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   # - glazewm.exe self-elevates via its manifest (runs at High integrity); a
   #   Highest task matches that, so the spawned glazewm is consistent with the
   #   running state and there's no UAC prompt at logon.
-  # - zebar is a child of glazewm (launched via startup_commands in
-  #   config.yaml), so zebar timing follows glazewm automatically — no
-  #   separate task needed.
   glazewm_exe_win='C:\Program Files\glzr.io\GlazeWM\glazewm.exe'
   glazewm_exe_wsl='/mnt/c/Program Files/glzr.io/GlazeWM/glazewm.exe'
   if [[ -x "$glazewm_exe_wsl" && -n "${startup_dir:-}" ]]; then
@@ -885,13 +882,31 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_manual "Scheduled Task 'winkey-glazewm-autostart' NOT registered: $REGISTER_TASK_ERROR"
     fi
 
+    # RunLevel=Limited is load-bearing: an elevated zebar's systray spy window
+    # makes Shell_NotifyIcon fail for every Medium app (see glazewm/reload-zebar.ps1).
+    zebar_exe_win='C:\Program Files\glzr.io\Zebar\zebar.exe'
+    if [[ -x '/mnt/c/Program Files/glzr.io/Zebar/zebar.exe' ]]; then
+      if register_task 'zebar-launch' "
+        \$act = New-ScheduledTaskAction -Execute '$zebar_exe_win' -Argument 'startup --config-dir \"${dotfiles_win}\\zebar\"'
+        \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances Parallel -ExecutionTimeLimit ([TimeSpan]::Zero) -Priority 4
+        \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Limited
+        Register-ScheduledTask -TaskName 'zebar-launch' -Action \$act -Settings \$set -Principal \$prn -Force | Out-Null
+      "; then
+        log_done "Scheduled Task 'zebar-launch' registered (on demand, Limited → $zebar_exe_win)"
+      else
+        log_manual "Scheduled Task 'zebar-launch' NOT registered: $REGISTER_TASK_ERROR"
+      fi
+    else
+      log_skip "zebar-launch task: zebar.exe missing"
+    fi
+
     # Restart a running glazewm through the task: a pre-existing instance
     # carries the env it was born with, so the setx'd vars above
     # (DOTFILES_WIN, GLAZEWM_TEMPLATE_PATH) are invisible to it — its
     # %DOTFILES_WIN% shell-exec rules then die in cmd ("The syntax of the
     # command is incorrect" console flashes) and the zebar startup_command
     # never comes up (observed 2026-07-18). Task Scheduler rebuilds the env
-    # from the registry at launch, and zebar follows as a child.
+    # from the registry at launch.
     if powershell.exe -NoProfile -Command \
         "[bool](Get-Process glazewm -ErrorAction SilentlyContinue)" 2>/dev/null | tr -d '\r' | grep -qi '^true$'; then
       powershell.exe -NoProfile -Command "

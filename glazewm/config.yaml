@@ -13,7 +13,7 @@ general:
   # --hide-window suppresses the cmd console that shell-exec would otherwise
   # flash at startup/shutdown (GlazeWM v3.6.0+).
   startup_commands:
-    - 'shell-exec --hide-window zebar startup --config-dir "%DOTFILES_WIN%\zebar"'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\reload-zebar.ps1"'
     # State-border daemon: flips tacky-borders' border_offset when focus lands
     # on / leaves a fullscreen window (border inside at fullscreen so it never
     # bleeds onto the neighboring monitor). Subscribes to focus_changed and
