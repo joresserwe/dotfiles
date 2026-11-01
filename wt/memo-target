@@ -9,16 +9,24 @@ fi
 # word-splits them, so a Windows path with spaces cannot survive either hop.
 win_temp="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
 tmpfile="$(wslpath -u "$win_temp")/open-memo-target.txt"
-[ -f "$tmpfile" ] || exit 1
-file="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
-[ -e "$file" ] || exit 1
+file=""
+if [ -f "$tmpfile" ]; then
+  file="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
+  [ -e "$file" ] || exit 1
+fi
 
 sock="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/memo.sock"
 max="${1:-0}"
 i=0
-while [ ! -S "$sock" ] && [ "$i" -lt "$max" ]; do
+until nvim --server "$sock" --remote-expr 1 >/dev/null 2>&1; do
+  [ "$i" -ge "$max" ] && exit 1
   sleep 0.1
   i=$((i + 1))
 done
-[ -S "$sock" ] || exit 1
-exec nvim --server "$sock" --remote "$file"
+[ -z "$file" ] || nvim --server "$sock" --remote "$file"
+
+where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')"
+pane="${where#*|}"
+if [ -n "$pane" ] && tmux -S "${where%%,*}" switch-client -t "$pane" 2>/dev/null; then
+  echo tmux
+fi

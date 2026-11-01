@@ -7,4 +7,4 @@ fi
 memo_dir="${XDG_DATA_HOME:-$HOME/.local/share}/memo"
 mkdir -p "$memo_dir"
 cd "$memo_dir" || exit 1
-NVIM_MEMO=1 exec nvim
+NVIM_MEMO=1 exec nvim "$@"

@@ -233,17 +233,27 @@ function y() {
 	rm -f -- "$tmp"
 }
 
-# np — Notepad++-style memo pad: focus (or launch) the standalone memo nvim
-# WT window via the same open-memo.ps1 the file association uses. WSL-only.
 if [[ -n "$WSL_DISTRO_NAME" || -n "$WSL_INTEROP" ]]; then
-  np() {
-    local up
-    up="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
+  note() {
+    local sock="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/memo.sock" f where
+    local -a files=()
+    for f in "$@"; do files+=("${f:a}"); done
 
-    /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
-      -NoProfile -ExecutionPolicy Bypass \
-      -File "${up}\\.dotfiles\\winget\\open-memo.ps1" >/dev/null 2>&1 &!
+    if ! nvim --server "$sock" --remote-expr 1 >/dev/null 2>&1; then
+      MEMO_TARGET_ENV=1 memo-run "${files[@]}"
+      return
+    fi
+
+    (( $#files )) && nvim --server "$sock" --remote "${files[@]}"
+    where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')"
+    if [[ -n "${where#*|}" ]]; then
+      tmux -S "${where%%,*}" switch-client -t "${where#*|}"
+    else
+      /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -Command \
+        "(New-Object -ComObject WScript.Shell).AppActivate('memo-pad')" >/dev/null 2>&1
+    fi
   }
+  alias memo=note
 fi
 
 # todo

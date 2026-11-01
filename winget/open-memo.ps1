@@ -4,32 +4,27 @@
 param([string]$Target)
 
 $relay = Join-Path $env:TEMP 'open-memo-target.txt'
-$haveFile = $false
 if ($Target) {
   if (-not (Test-Path -LiteralPath $Target -PathType Leaf)) { exit 1 }
   [IO.File]::WriteAllText($relay, $Target, (New-Object System.Text.UTF8Encoding($false)))
-  $haveFile = $true
 } else {
   Remove-Item $relay -ErrorAction SilentlyContinue
 }
 
-$delivered = $false
-if ($haveFile) {
-  & wsl.exe -d Ubuntu --cd ~ -e .local/bin/memo-target 0
-  $delivered = ($LASTEXITCODE -eq 0)
+$where = & wsl.exe -d Ubuntu --cd ~ -e .local/bin/memo-target 0
+if ($LASTEXITCODE -eq 0) {
+  $title = if ($where -match '^tmux\s*$') { 'Terminal' } else { 'memo-pad' }
+  (New-Object -ComObject WScript.Shell).AppActivate($title) | Out-Null
+  exit 0
 }
 
-$focused = (New-Object -ComObject WScript.Shell).AppActivate('memo-pad')
+$wtExe = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\wt.exe'
+Start-Process -FilePath $wtExe -ArgumentList @(
+  '-w', 'new', '-f',
+  'nt', '-p', 'Terminal', '--title', 'memo-pad',
+  'wsl.exe', '-d', 'Ubuntu', '--cd', '~', '-e', '.local/bin/memo-run'
+)
 
-if (-not $focused) {
-  $wtExe = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\wt.exe'
-  Start-Process -FilePath $wtExe -ArgumentList @(
-    '-w', 'new', '-f',
-    'nt', '-p', 'Terminal', '--title', 'memo-pad',
-    'wsl.exe', '-d', 'Ubuntu', '--cd', '~', '-e', '.local/bin/memo-run'
-  )
-}
-
-if ($haveFile -and -not $delivered) {
-  & wsl.exe -d Ubuntu --cd ~ -e .local/bin/memo-target 100
+if ($Target) {
+  & wsl.exe -d Ubuntu --cd ~ -e .local/bin/memo-target 100 | Out-Null
 }
