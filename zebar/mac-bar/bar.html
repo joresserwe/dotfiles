@@ -165,6 +165,41 @@
         return SYSTRAY_BLOCKLIST.some(b => t.includes(b));
       }
 
+      // zebar drops a tray icon only on NIM_DELETE, so an app that dies without
+      // one leaves a ghost and a restart adds a duplicate (glzr-io/zebar#288).
+      const TRAY_DEAD_ERROR = 'Unable to send event to icon.';
+      const TRAY_PROBE_MS = 15000;
+      const TRAY_CLICK_QUIET_MS = 30000;
+      let lastTrayClick = 0;
+
+      function useDeadTrayIcons(idsKey) {
+        const [dead, setDead] = useState(() => new Set());
+        useEffect(() => {
+          let alive = true;
+          const probe = async () => {
+            const tray = providers.outputMap.systray;
+            if (!tray || Date.now() - lastTrayClick < TRAY_CLICK_QUIET_MS) return;
+            const found = await Promise.all(
+              tray.icons.filter(i => !isBlockedTrayIcon(i.tooltip)).map(i =>
+                tray.onHoverLeave(i.id).then(
+                  () => null,
+                  e => (String(e?.message ?? e).includes(TRAY_DEAD_ERROR) ? i.id : null),
+                ),
+              ),
+            );
+            if (!alive) return;
+            const next = found.filter(Boolean);
+            setDead(prev =>
+              next.length === prev.size && next.every(id => prev.has(id)) ? prev : new Set(next),
+            );
+          };
+          probe();
+          const id = setInterval(probe, TRAY_PROBE_MS);
+          return () => { alive = false; clearInterval(id); };
+        }, [idsKey]);
+        return dead;
+      }
+
       const CAT_FRAME_URLS = [0, 1, 2, 3, 4].map(
         i => `https://cdn.jsdelivr.net/gh/Kyome22/menubar_runcat@master/resources/cat/png/${i}.png`
       );
@@ -279,6 +314,7 @@
         }, []);
         const ime = useImeState();
         useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
+        const deadTray = useDeadTrayIcons((out.systray?.icons || []).map(i => i.id).join(','));
 
         return (
           <div className="app">
@@ -402,7 +438,9 @@
                 </span>
               )}
               {(() => {
-                const visibleIcons = (out.systray?.icons || []).filter(i => !isBlockedTrayIcon(i.tooltip));
+                const visibleIcons = (out.systray?.icons || []).filter(
+                  i => !isBlockedTrayIcon(i.tooltip) && !deadTray.has(i.id),
+                );
                 if (!visibleIcons.length) return null;
                 return (
                   <span className="systray">
@@ -411,8 +449,12 @@
                         key={icon.id}
                         className="tray-icon"
                         title={icon.tooltip}
-                        onClick={() => out.systray.onLeftClick(icon.id)}
-                        onContextMenu={e => { e.preventDefault(); out.systray.onRightClick(icon.id); }}
+                        onClick={() => { lastTrayClick = Date.now(); out.systray.onLeftClick(icon.id); }}
+                        onContextMenu={e => {
+                          e.preventDefault();
+                          lastTrayClick = Date.now();
+                          out.systray.onRightClick(icon.id);
+                        }}
                       >
                         <img src={icon.iconUrl} alt="" />
                       </button>
