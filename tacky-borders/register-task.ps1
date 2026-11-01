@@ -66,6 +66,7 @@ $def.Settings.DisallowStartIfOnBatteries = $false
 $def.Settings.StopIfGoingOnBatteries = $false
 $def.Settings.StartWhenAvailable     = $true
 $def.Settings.ExecutionTimeLimit     = 'PT0S'
+$def.Settings.Priority               = 4
 # MultipleInstances can stay Parallel (=0) because the VBS wrapper does its
 # own kill-first-then-launch. StopExisting here would just add an extra
 # no-op signal to the previous wscript.exe (which is already done by the

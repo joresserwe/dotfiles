@@ -581,7 +581,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     terminal_vbs_win="${dotfiles_win}\\winget\\open-terminal.vbs"
     if register_task 'wsl-terminal' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$terminal_vbs_win\"'
-      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances Parallel -ExecutionTimeLimit (New-TimeSpan -Minutes 1)
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances Parallel -ExecutionTimeLimit (New-TimeSpan -Minutes 1) -Priority 4
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
       Register-ScheduledTask -TaskName 'wsl-terminal' -Action \$act -Settings \$set -Principal \$prn -Force | Out-Null
     "; then
@@ -835,7 +835,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     if register_task 'winkey-cold-boot-autofix' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$reload_local_win\"'
       \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
-      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -Priority 4
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
       Register-ScheduledTask -TaskName 'winkey-cold-boot-autofix' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
     "; then
@@ -876,7 +876,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     if register_task 'winkey-glazewm-autostart' "
       \$act = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument '\"$run_hidden_win\" \"$glazewm_autostart_win\"'
       \$trg = New-ScheduledTaskTrigger -AtLogOn -User \$env:USERNAME
-      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+      \$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -Priority 4
       \$prn = New-ScheduledTaskPrincipal -UserId \$env:USERNAME -LogonType Interactive -RunLevel Highest
       Register-ScheduledTask -TaskName 'winkey-glazewm-autostart' -Action \$act -Trigger \$trg -Settings \$set -Principal \$prn -Force | Out-Null
     "; then
