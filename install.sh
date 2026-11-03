@@ -252,6 +252,7 @@ create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
+create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 
 # -----------------------------------------------------------------------------------------------
 

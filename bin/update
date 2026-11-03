@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DOTFILES_PATH="${DOTFILES_PATH:-$XDG_CONFIG_HOME/.dotfiles}"
+ZSH="${ZSH:-$XDG_CONFIG_HOME/zsh/oh-my-zsh}"
+# shellcheck source=../lib/common.sh
+source "$DOTFILES_PATH/lib/common.sh"
+
+DEFAULT_STEPS="os brew mise pnpm uv omz yazi tmux nvim gcloud"
+EXTRA_STEPS="winget"
+
+usage() {
+  cat <<EOF
+Usage: update [-n] [-l] [STEP...]
+
+Update every package manager and plugin set outside the dotfiles repo.
+With no STEP, runs: $DEFAULT_STEPS
+Opt-in steps (run only when named): $EXTRA_STEPS
+
+  -n  dry run: print the commands without running them
+  -l  list steps
+  -h  show this help
+EOF
+}
+
+dry=""
+run() {
+  printf '    \033[2m$ %s\033[0m\n' "$*"
+  [ -n "$dry" ] || "$@"
+}
+have() { command -v "$1" >/dev/null 2>&1; }
+
+step_os() {
+  case "$(detect_os)" in
+    linux)
+      have apt-get || { log_skip "apt-get not found"; return 0; }
+      run sudo apt-get update && run sudo apt-get upgrade -y && run sudo apt-get autoremove -y
+      ;;
+    darwin)
+      have mas || { log_skip "mas not found"; return 0; }
+      run mas upgrade
+      ;;
+  esac
+}
+
+step_brew() {
+  have brew || { log_skip "brew not found"; return 0; }
+  run brew update && run brew upgrade && run brew autoremove && run brew cleanup
+}
+
+step_mise() {
+  have mise || { log_skip "mise not found"; return 0; }
+  run mise upgrade
+}
+
+step_pnpm() {
+  have pnpm || { log_skip "pnpm not found"; return 0; }
+  # </dev/null: pnpm >=10 blocks on an interactive build-approval picker
+  # when a TTY is attached, and CI=1 alone does not suppress it.
+  run env CI=1 pnpm update -g </dev/null
+}
+
+step_uv() {
+  have uv || { log_skip "uv not found"; return 0; }
+  run uv tool upgrade --all
+}
+
+step_omz() {
+  [ -f "$ZSH/tools/upgrade.sh" ] || { log_skip "oh-my-zsh not found: $ZSH"; return 0; }
+  run env ZSH="$ZSH" zsh -f "$ZSH/tools/upgrade.sh" || return 1
+  local dir
+  for dir in "$ZSH"/custom/plugins/*/ "$ZSH"/custom/themes/*/; do
+    [ -d "$dir/.git" ] || continue
+    run git -C "$dir" pull --ff-only --quiet || return 1
+  done
+}
+
+step_yazi() {
+  have ya || { log_skip "ya not found"; return 0; }
+  run ya pkg upgrade
+}
+
+step_tmux() {
+  local tpm
+  tpm="$(brew --prefix tpm 2>/dev/null)/share/tpm/bin/update_plugins"
+  [ -x "$tpm" ] || { log_skip "tpm not found"; return 0; }
+  run "$tpm" all
+}
+
+step_nvim() {
+  have nvim || { log_skip "nvim not found"; return 0; }
+  run nvim --headless "+Lazy! update" "+MasonToolsUpdateSync" +qa
+}
+
+step_gcloud() {
+  have gcloud || { log_skip "gcloud not found"; return 0; }
+  run gcloud components update --quiet
+}
+
+step_winget() {
+  have winget.exe || { log_skip "winget.exe not found"; return 0; }
+  run winget.exe upgrade --all --accept-source-agreements --accept-package-agreements
+}
+
+while getopts 'nlh' opt; do
+  case "$opt" in
+    n) dry=1 ;;
+    l) echo "$DEFAULT_STEPS (opt-in: $EXTRA_STEPS)"; exit 0 ;;
+    h) usage; exit 0 ;;
+    *) usage >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+[ $# -gt 0 ] || set -- $DEFAULT_STEPS
+
+for step in "$@"; do
+  declare -F "step_$step" >/dev/null || { echo "update: unknown step '$step'" >&2; usage >&2; exit 1; }
+done
+
+failed=""
+for step in "$@"; do
+  log_step "$step"
+  if "step_$step"; then
+    log_done "$step"
+  else
+    log_manual "$step failed"
+    failed="$failed $step"
+  fi
+done
+
+if [ -n "$failed" ]; then
+  printf '\n\033[1;31mfailed:%s\033[0m\n' "$failed"
+  exit 1
+fi
+printf '\n\033[1;32mall done\033[0m\n'
