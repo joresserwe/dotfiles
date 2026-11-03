@@ -95,6 +95,10 @@ export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
 # var and fall back to ~/.python_history)
 export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"
 
+export DUCKDB_HISTORY="$XDG_STATE_HOME/duckdb/history"
+export PSQL_HISTORY="$XDG_STATE_HOME/psql/history"
+export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite/history"
+
 export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
 
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"

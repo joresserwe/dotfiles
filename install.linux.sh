@@ -79,6 +79,9 @@ ensure_dir \
   "$XDG_STATE_HOME/vim" \
   "$XDG_STATE_HOME/node" \
   "$XDG_STATE_HOME/python" \
+  "$XDG_STATE_HOME/duckdb" \
+  "$XDG_STATE_HOME/psql" \
+  "$XDG_STATE_HOME/sqlite" \
   "$XDG_DATA_HOME/duckdb" \
   "$XDG_DATA_HOME/codex" \
   "$XDG_DATA_HOME/gnupg"
