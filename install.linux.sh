@@ -1115,7 +1115,6 @@ if command -v ya >/dev/null 2>&1; then
     boydaihungst/mediainfo \
     ndtoan96/ouch \
     yazi-rs/plugins:jump-to-char \
-    KKV9/archive \
     yazi-rs/plugins:full-border \
     yazi-rs/plugins:git \
     yazi-rs/plugins:smart-filter \

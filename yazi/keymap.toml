@@ -4,7 +4,6 @@ prepend_keymap = [
 	# Plugins
 	{ on = "F",                  run = "plugin jump-to-char",                desc = "Jump to char" },
 	{ on = "C",                  run = "plugin ouch",                        desc = "Compress with ouch" },
-	{ on = [ "c", "a", "a" ],   run = "plugin archive",                     desc = "Archive selected files" },
 	{ on = [ "c", "m" ],        run = "plugin chmod",                       desc = "Chmod on selected files" },
 	{ on = "T",                  run = "plugin toggle-pane max-preview",     desc = "Toggle maximize preview" },
 	{ on = "<C-s>",              run = "plugin smart-filter",                desc = "Smart filter" },
