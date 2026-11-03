@@ -13,6 +13,7 @@ brew "universal-ctags"
 brew "curl"
 # Syntax-highlighting pager for git and diff output
 brew "git-delta"
+brew "duckdb"
 # Read and write EXIF metadata (yazi "Show EXIF" opener)
 brew "exiftool"
 # Modern, maintained replacement for ls
