@@ -79,6 +79,7 @@ ensure_dir \
   "$XDG_STATE_HOME/vim" \
   "$XDG_STATE_HOME/node" \
   "$XDG_STATE_HOME/python" \
+  "$XDG_DATA_HOME/duckdb" \
   "$XDG_DATA_HOME/codex" \
   "$XDG_DATA_HOME/gnupg"
 chmod 700 "$XDG_DATA_HOME/gnupg"
@@ -341,6 +342,7 @@ ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
+create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 

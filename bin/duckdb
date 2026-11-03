@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+real=""
+IFS=: read -ra dirs <<<"$PATH"
+for dir in "${dirs[@]}"; do
+  candidate="$dir/duckdb"
+  if [ -x "$candidate" ] && [ "$(readlink -f "$candidate")" != "$self" ]; then
+    real="$candidate"
+    break
+  fi
+done
+if [ -z "$real" ]; then
+  echo "duckdb: no duckdb binary found in PATH besides this wrapper" >&2
+  exit 127
+fi
+
+data="${XDG_DATA_HOME:-$HOME/.local/share}/duckdb"
+exec "$real" \
+  -cmd "SET extension_directories=['$data/extensions']" \
+  -cmd "SET secret_directory='$data/stored_secrets'" \
+  "$@"
