@@ -23,21 +23,36 @@ base_rgb() { # colour index -> BASE_R / BASE_G / BASE_B (decimal)
   fi
 }
 
-cmds=""
+palette=""
 for ((i = 0; i < 256; i++)); do
   base_rgb "$i"
   printf -v dimmed '#%02x%02x%02x' \
     $((BASE_R * DIM_PERCENT / 100)) $((BASE_G * DIM_PERCENT / 100)) $((BASE_B * DIM_PERCENT / 100))
-  cmds+="set -p \"pane-colours[$i]\" \"$dimmed\" ; "
+  palette+="$dimmed "
 done
+tmux set -gw pane-colours "${palette% }"
+
+focus_out="set -pu pane-colours"
 
 # pane-colours only remaps the 256 indexed colours, and on a client focus-out
 # the pane stays ACTIVE, so its default-fg text keeps window-active-style's
 # bright fg.
 inactive_fg="$(tmux show -gv window-style 2>/dev/null | grep -o 'fg=[^,]*' | cut -d= -f2)"
 if [ -n "$inactive_fg" ] && [ "$inactive_fg" != "default" ]; then
-  cmds+="set -p window-active-style \"fg=$inactive_fg\" ; "
+  focus_out+=" ; set -p window-active-style \"fg=$inactive_fg\""
 fi
 
-tmux set-hook -g pane-focus-out "${cmds% ; }"
-tmux set-hook -g pane-focus-in 'set -pu pane-colours ; set -pu window-active-style'
+tmux set-hook -g pane-focus-out "$focus_out"
+tmux set-hook -g pane-focus-in 'set -p pane-colours "" ; set -pu window-active-style'
+
+sync=()
+while read -r pane focused; do
+  if [ "$focused" = 1 ]; then
+    sync+=(set -p -t "$pane" pane-colours "" \;)
+  else
+    sync+=(set -pu -t "$pane" pane-colours \;)
+  fi
+done < <(tmux list-panes -a -F '#{pane_id} #{&&:#{pane_active},#{&&:#{window_active},#{session_attached}}}')
+if ((${#sync[@]})); then
+  tmux "${sync[@]}"
+fi
