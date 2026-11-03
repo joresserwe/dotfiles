@@ -62,6 +62,7 @@ ensure_dir \
 	"$XDG_STATE_HOME/duckdb" \
 	"$XDG_STATE_HOME/psql" \
 	"$XDG_STATE_HOME/sqlite" \
+	"$XDG_CACHE_HOME/wget" \
 	"$XDG_DATA_HOME/duckdb" \
 	"$XDG_DATA_HOME" \
 	"$XDG_STATE_HOME" \
@@ -250,6 +251,7 @@ done
 create_link "$DOTFILES_PATH/atuin/config.toml" "$XDG_CONFIG_HOME/atuin/config.toml"
 # mise
 create_link "$DOTFILES_PATH/mise/config.toml" "$XDG_CONFIG_HOME/mise/config.toml"
+create_link "$DOTFILES_PATH/wget/wgetrc" "$XDG_CONFIG_HOME/wget/wgetrc"
 # wezterm
 create_link "$DOTFILES_PATH/wezterm/wezterm.lua" "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
 create_link "$DOTFILES_PATH/wezterm/smart-split" "$XDG_CONFIG_HOME/wezterm/smart-split"

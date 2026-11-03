@@ -82,6 +82,7 @@ ensure_dir \
   "$XDG_STATE_HOME/duckdb" \
   "$XDG_STATE_HOME/psql" \
   "$XDG_STATE_HOME/sqlite" \
+  "$XDG_CACHE_HOME/wget" \
   "$XDG_DATA_HOME/duckdb" \
   "$XDG_DATA_HOME/codex" \
   "$XDG_DATA_HOME/gnupg"
@@ -326,6 +327,8 @@ fi
 create_link "$DOTFILES_PATH/atuin/config.toml" "$XDG_CONFIG_HOME/atuin/config.toml"
 
 create_link "$DOTFILES_PATH/mise/config.toml" "$XDG_CONFIG_HOME/mise/config.toml"
+
+create_link "$DOTFILES_PATH/wget/wgetrc" "$XDG_CONFIG_HOME/wget/wgetrc"
 
 create_link "$DOTFILES_PATH/wsl/environment.d/xdg.conf" "$XDG_CONFIG_HOME/environment.d/xdg.conf"
 

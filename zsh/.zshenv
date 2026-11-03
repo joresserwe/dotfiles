@@ -99,7 +99,7 @@ export DUCKDB_HISTORY="$XDG_STATE_HOME/duckdb/history"
 export PSQL_HISTORY="$XDG_STATE_HOME/psql/history"
 export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite/history"
 
-export WGET_HSTS_FILE="$XDG_CACHE_HOME/wget/wget-hsts"
+export WGETRC="$XDG_CONFIG_HOME/wget/wgetrc"
 
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
