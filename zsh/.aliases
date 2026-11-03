@@ -36,6 +36,7 @@ esac
 alias vi="nvim"
 alias vid="nvim -d"
 alias vidiff="nvim -d"
+alias db="nvim +GripConnect"
 
 # Bat
 alias cat="bat"
