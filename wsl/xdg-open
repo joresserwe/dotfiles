@@ -10,6 +10,9 @@ if [[ "$target" == *://* ]]; then
 else
   win="$(wslpath -w "$(realpath "$target")")"
 fi
-# cmd.exe by absolute path: launcher-spawned sessions (e.g. Flow -> wt ->
-# wsl -e) inherit a stripped Windows PATH, so bare cmd.exe resolves to nothing.
-exec /mnt/c/Windows/System32/cmd.exe /c start "" "$win" 2>/dev/null
+export XDG_OPEN_TARGET="$win"
+export WSLENV="${WSLENV:+$WSLENV:}XDG_OPEN_TARGET"
+# powershell.exe by absolute path: launcher-spawned sessions (e.g. Flow -> wt ->
+# wsl -e) inherit a stripped Windows PATH, so bare powershell.exe resolves to nothing.
+exec /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -NonInteractive \
+  -Command 'Start-Process -FilePath $env:XDG_OPEN_TARGET' </dev/null 2>/dev/null
