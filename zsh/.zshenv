@@ -38,7 +38,7 @@ case "$OSTYPE" in
     if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
       export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
       # Node bundles its own CA store and ignores SSL_CERT_FILE, so behind a
-      # TLS-intercepting corp proxy (LG CNS) node-based tools — notably the
+      # TLS-intercepting corp proxy node-based tools — notably the
       # kiro-cli v3/KAS TUI — fail with "self-signed certificate in
       # certificate chain". Point node at the same system bundle.
       export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
