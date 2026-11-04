@@ -27,4 +27,4 @@ common_subcommands = ["cargo", "docker", "git", "kubectl", "npm", "pnpm", "brew"
 common_prefix = ["sudo"]
 
 [logs]
-dir = "~/.local/state/atuin/logs"
+dir = "$XDG_STATE_HOME/atuin/logs"

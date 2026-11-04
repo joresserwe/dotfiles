@@ -135,7 +135,7 @@ alt-shift-x = []
 alt-shift-y = []
 # Restore the most recently minimized window (pairs with alt-shift-m below;
 # mirrors Windows f13+shift+z). UNTESTED on a real mac yet.
-alt-shift-z = 'exec-and-forget ~/.config/.dotfiles/aerospace/restore-min.sh'
+alt-shift-z = 'exec-and-forget "${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles/aerospace/restore-min.sh"'
 alt-tab = []
 alt-shift-tab = []
 alt-slash = []
@@ -173,7 +173,7 @@ alt-space = 'layout floating tiling'
 alt-m = 'fullscreen'
 # Minimize the focused window onto a restore stack (alt-shift-z pops it;
 # mirrors Windows f13+shift+m). UNTESTED on a real mac yet.
-alt-shift-m = 'exec-and-forget ~/.config/.dotfiles/aerospace/minimize.sh'
+alt-shift-m = 'exec-and-forget "${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles/aerospace/minimize.sh"'
 
 alt-shift-s = 'layout tiles horizontal vertical'
 

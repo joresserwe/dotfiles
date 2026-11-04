@@ -200,7 +200,7 @@ fh() {
 }
 
 # legacy
-alias edot='nvim $(fd --type f . ~/.config/.dotfiles | fzf --preview "bat --color=always {}")'
+alias edot='nvim $(fd --type f . "$DOTFILES_PATH" | fzf --preview "bat --color=always {}")'
 alias dsync='"$DOTFILES_PATH/wsl/sync-mirror.sh"'
 # fa: find alias/function and execute
 fa() {
