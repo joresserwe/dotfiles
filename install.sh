@@ -219,6 +219,7 @@ create_link "$DOTFILES_PATH/ideavim/mac/.ideavimrc" "$XDG_CONFIG_HOME/ideavim/id
 create_link "$DOTFILES_PATH/vim/vimrc" "$XDG_CONFIG_HOME/vim/vimrc"
 # git
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
+git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 # npm
 create_link "$DOTFILES_PATH/npm/npmrc" "$XDG_CONFIG_HOME/npm/npmrc"
 # aerospace

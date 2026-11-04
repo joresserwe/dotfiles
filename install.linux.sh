@@ -271,6 +271,7 @@ brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
+git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 
 # WSL: make this clone pushable. The shared git/config routes github.com
 # credentials to `gh auth git-credential`, which needs a per-machine login;

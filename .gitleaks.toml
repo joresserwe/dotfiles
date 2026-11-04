@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "bitbucket-data-center-pat"
+description = "Bitbucket Data Center personal access token"
+regex = '''BBDC-[A-Za-z0-9+/_=-]{20,}'''
+keywords = ["bbdc-"]
