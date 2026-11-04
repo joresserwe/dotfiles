@@ -17,7 +17,7 @@
       "caching": { "defaultDuration": 604800, "rules": [] },
       "privileges": {
         "shellCommands": [
-          { "program": "cmd.exe", "argsRegex": ".*glazewm-jump-map\\.txt.*" }
+          { "program": "cmd.exe", "argsRegex": "^/c echo [0-9 ]+ > %TEMP%\\\\glazewm-jump-map\\.txt$" }
         ]
       },
       "presets": [
