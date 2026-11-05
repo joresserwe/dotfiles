@@ -67,6 +67,7 @@ brew "nyancat"
 brew "ouch"
 # Fast, disk space efficient package manager
 brew "pnpm"
+brew "poppler"
 # Python package installer and resolver
 brew "uv"
 # SVG rendering tool (yazi's builtin svg previewer)
