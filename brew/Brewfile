@@ -7,6 +7,7 @@ brew "bat"
 brew "bottom"
 # Fix common misspellings in source code and text files
 brew "codespell"
+brew "croc"
 # Maintained ctags implementation
 brew "universal-ctags"
 # Get a file from an HTTP, HTTPS or FTP server
