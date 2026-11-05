@@ -63,6 +63,7 @@ alias jshell='jshell -J-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME/java"'
 # the authenticated headless X11 clipboard; exporting DISPLAY for all tmux
 # panes makes Claude prefer this clipboard over its Windows-native fallback.
 kiro-cli() {
+  (( $# )) || set -- chat --effort high
   if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
     systemctl --user start kiro-clipboard-xvfb.service >/dev/null 2>&1 || {
       print -u2 'kiro-cli: failed to start the image clipboard service'
@@ -76,10 +77,10 @@ kiro-cli() {
   fi
 }
 kiro() {
-  kiro-cli --v3 "$@"
+  kiro-cli --v3 chat --effort high "$@"
 }
 kirod() {
-  kiro-cli --v3 chat --trust-all-tools "$@"
+  kiro-cli --v3 chat --effort high --trust-all-tools "$@"
 }
 
 # bottom — btm sees only WSL-side processes; btmw runs the Windows build
