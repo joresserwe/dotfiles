@@ -12,6 +12,7 @@ notifications = true
 theme = "catppuccin-mocha"
 terminal_title = ["spinner", "project"]
 status_line = [
+  "current-dir",
   "model-with-reasoning",
   "context-remaining",
   "used-tokens",
