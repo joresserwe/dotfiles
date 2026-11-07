@@ -67,7 +67,7 @@ function M:scan(done)
 	local path = tostring(cwd)
 	local key = cx.active.id.value .. ":" .. path
 	self.scans = self.scans or {}
-	if not cwd.is_regular or self.scans[key] then
+	if not cwd.spec.is_regular or self.scans[key] then
 		return done and done()
 	end
 
