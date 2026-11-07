@@ -194,3 +194,5 @@ systemctl --user status kiro-clipboard-xvfb.service
 DISPLAY=:99 XAUTHORITY="$XDG_RUNTIME_DIR/kiro-clipboard.Xauthority" \
   xclip -selection clipboard -target TARGETS -out
 ```
+
+Claude Code와 Codex의 공통 스킬은 `skills/`에서 Git으로 관리한다. `claude/skills/`와 `codex/skills/`는 각 공통 스킬 디렉터리를 상대 심볼릭 링크로 참조한다. 공통 규칙·스킬을 변경하면 양쪽 기본 지침과 전역 연결까지 같은 작업에서 확인한다. 상세 연결 방식은 [공유 스킬 관리](skills/shared-skills/SKILL.md)를 따른다.

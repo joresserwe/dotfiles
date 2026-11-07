@@ -1,5 +1,12 @@
 # Gotchas
 
+## Shared rules and skills — sync to Codex
+
+- When adding, changing, or removing a rule or skill that applies to both Claude and Codex, update both in the same task. Do not leave synchronization as a follow-up.
+- Keep shared skill sources in `skills/<name>/SKILL.md` in the dotfiles repository. Both `claude/skills/<name>` and `codex/skills/<name>` must be relative directory symlinks to `../../skills/<name>`; edit the shared source rather than creating separate copies.
+- Mirror shared default-rule changes into `codex/AGENTS.md`, preserving their meaning. Read the counterpart first and resolve conflicting shared instructions together. Keep Claude-specific tools, plugins, permissions, and model settings separate.
+- Use the shared `shared-skills` skill for this work. Verify both repository and global skill links, and report any synchronization that could not be completed. Keep downloaded plugins and `skills/synced/` out of the shared sources.
+
 ## Comments — mechanical procedure, no judgment calls
 
 Run this checklist on EVERY comment line you are about to add (or modify), one comment at a time, before finishing the edit. Rules are checked in order; the FIRST rule that matches decides. Do not weigh trade-offs, do not reason about whether this case is special — if a rule matches, apply it. This applies everywhere comments can appear: source files, configs, scripts, and code blocks inside plan/spec documents (those get copied verbatim later, so they must pass the same checklist when written).

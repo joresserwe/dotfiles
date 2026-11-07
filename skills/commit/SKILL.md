@@ -17,7 +17,7 @@ Determine the repository scope with `git remote get-url origin` before writing a
 | No remote | This skill's personal convention |
 | Any other owner, or a fork sending changes to `upstream` | The repository's own enforced/history convention |
 
-For another repository, inspect enforced rules first (`CONTRIBUTING.md`, `.gitmessage`, commitlint, hooks, and PR templates), then sample `git log --oneline -30` and match the observed prefix, scope, capitalization, tense, length, body, and trailers. In the Korean plan, state the convention and its evidence. Do not impose this skill on another owner's project.
+For another repository, inspect enforced rules first (`CONTRIBUTING.md`, `.gitmessage`, commitlint, hooks, and PR templates), then sample `git log --oneline -30` and `git log -10` and match the observed prefix, scope, capitalization, tense, length, body, and trailers. In the Korean plan, state the convention and its evidence. Do not impose this skill on another owner's project. If neither enforced rules nor history establish a convention, use the personal convention and explain the fallback in the plan.
 
 ## Personal convention
 
@@ -50,3 +50,5 @@ Make is the catch-all last row, so every change has a table verb; never use an o
 5. After the required authorization, execute the approved commits in order and report the resulting hashes and checks.
 
 Never add `Co-Authored-By` or any attribution trailer. Preserve another repository's enforced rules and history even when they differ from this personal convention.
+
+For explicitly requested history rewriting (message or author changes), use `git filter-repo`.
