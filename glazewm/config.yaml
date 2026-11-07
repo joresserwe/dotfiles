@@ -119,6 +119,7 @@ window_rules:
       - window_title: { regex: '[Pp]icture.in.[Pp]icture|PIP 모드' }
       - window_process: { regex: 'LeagueClientUx|RiotClientUx|Riot Client' }
       - window_process: { equals: 'League of Legends' }
+      - window_process: { regex: '(?i)^rct2$' }
       - window_process: { equals: 'VLauncher' }
       - window_process: { equals: 'Game' }
         window_class: { equals: 'R2Beat' }
@@ -126,6 +127,8 @@ window_rules:
       - window_process: { equals: 'AccordD64' }
       - window_process: { equals: 'CloudWidget' }
       - window_process: { equals: 'DN' }
+      - window_process: { equals: 'CapCut' }
+      - window_process: { equals: 'OneDrive' }
       - window_class: { equals: 'PotShadowWnd' }
       # Explorer confirmation/progress dialogs (delete confirm, replace/move
       # confirm, name-collision, copy/move progress). These are the `explorer`
