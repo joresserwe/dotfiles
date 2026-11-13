@@ -130,6 +130,12 @@ window_rules:
       - window_process: { equals: 'CapCut' }
       - window_process: { equals: 'OneDrive' }
       - window_class: { equals: 'PotShadowWnd' }
+      # mTalk messenger: mtalk.exe = main window (Flutter), mwm.exe = chat
+      # windows (C:\Program Files\mTalk\mwm\mwm.exe). Fully unmanaged so
+      # mTalk keeps its own window positions. As set-floating (no
+      # --centered) the main window was restored to its minimized-parking
+      # rect (-32000,-32000) and vanished off-screen.
+      - window_process: { regex: '^(mtalk|mwm)$' }
       # Explorer confirmation/progress dialogs (delete confirm, replace/move
       # confirm, name-collision, copy/move progress). These are the `explorer`
       # process but use the standard Win32 dialog class #32770 (or the copy
@@ -168,10 +174,6 @@ window_rules:
       - window_process: { regex: '(?i)AutoHotkey' }
       - window_process: { equals: 'tacky-borders' }
       - window_process: { equals: 'steamwebhelper' }
-
-  - commands: ['set-floating --centered']
-    match:
-      - window_process: { equals: 'mtalk' }
 
 # ---------------------------------------------------------------------------
 # Binding Modes (resize / move — mirrors AeroSpace modes)
