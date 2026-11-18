@@ -126,6 +126,8 @@ export PROMPTFOO_CONFIG_DIR="$XDG_CONFIG_HOME/promptfoo"
 # the parent dir; EasyOCR creates model/ and user_network/ underneath it.
 export EASYOCR_MODULE_PATH="$XDG_DATA_HOME/easyocr"
 
+export CUDA_CACHE_PATH="$XDG_CACHE_HOME/nv"
+
 # remove less history
 export LESSHISTFILE=-
 
