@@ -236,6 +236,8 @@ function y() {
 }
 
 if [[ -n "$WSL_DISTRO_NAME" || -n "$WSL_INTEROP" ]]; then
+  alias winhosts='nvim /mnt/c/Windows/System32/drivers/etc/hosts'
+
   note() {
     local sock="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/memo.sock" f where
     local -a files=()

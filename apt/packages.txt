@@ -1,4 +1,3 @@
-bind9-host
 bubblewrap
 build-essential
 ca-certificates
