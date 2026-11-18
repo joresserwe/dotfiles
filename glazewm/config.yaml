@@ -397,13 +397,13 @@ keybindings:
   - commands: ['toggle-fullscreen', 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\tacky-borders\state-border.ps1" -Once']
     bindings: ['f13+m']
 
-  # ---- Toggle tiling direction (win+shift+s) ----
+  # ---- Toggle tiling direction (win+shift+t) ----
   # Transpose the focused 2-window split (horizontal <-> vertical) via
   # transpose.ps1 — glazewm's toggle-tiling-direction only affects the NEXT
   # insertion, never existing windows. 1 or 3+ siblings fall back to the
   # insertion-direction toggle.
   - commands: ['shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DOTFILES_WIN%\glazewm\transpose.ps1"']
-    bindings: ['f13+shift+s']
+    bindings: ['f13+shift+t']
 
   # ---- Focus monitor (win+[ / win+]) ----
   - commands: ['focus --workspace-in-direction left']

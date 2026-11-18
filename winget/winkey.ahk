@@ -436,7 +436,14 @@ JumpToWindow(idx) {
 }
 #HotIf !VmActive() && !HyperHeld()
 ~F13 & a::JumpToWindow(1)
-~F13 & s::JumpToWindow(2)
+~F13 & s:: {
+    if GetKeyState("Shift", "P") {
+        MarkHotkey("ShareXRegion")
+        Run('"' A_ProgramFiles '\ShareX\ShareX.exe" -RectangleRegion')
+        return
+    }
+    JumpToWindow(2)
+}
 ~F13 & x::JumpToWindow(3)
 ~F13 & c::JumpToWindow(4)
 ~F13 & v::JumpToWindow(5)
