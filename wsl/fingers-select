@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -eu
+
+target=$(cat)
+case "$target" in
+  [a-zA-Z]:\\*) target=$(wslpath -u "$target") ;;
+  '~/'*) target="$HOME/${target:2}" ;;
+esac
+
+if [[ "$target" == http://* || "$target" == https://* || "$target" == file://* || -e "$target" ]]; then
+  xdg-open "$target" || { tmux display-message -l "Could not open $target"; exit 1; }
+elif [[ "$target" == /* ]]; then
+  tmux display-message -l "File not found: $target"
+elif command -v win32yank.exe >/dev/null; then
+  printf '%s' "$target" | win32yank.exe -i --crlf
+elif command -v clip.exe >/dev/null; then
+  printf '%s' "$target" | clip.exe
+fi
