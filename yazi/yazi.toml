@@ -26,6 +26,9 @@ ueberzug_scale  = 1
 ueberzug_offset = [ 0, 0, 0, 0 ]
 
 [opener]
+excel = [
+	{ run = '"/mnt/c/Program Files/Microsoft Office/root/Office16/EXCEL.EXE" "$(wslpath -w %s1)"', desc = "Microsoft Excel", orphan = true, for = "linux" },
+]
 edit = [
 	{ run = '${EDITOR:-vi} %s', desc = "$EDITOR", block = true, for = "unix" },
 	{ run = 'code %s',    orphan = true, desc = "code",           for = "windows" },
@@ -64,6 +67,7 @@ winopen = [
 rules = [
 	# Folder
 	{ url = "*/", use = [ "edit", "open", "reveal" ] },
+	{ url = "*.xlsx", use = [ "excel", "open", "winopen", "reveal" ] },
 	{ mime = "text/html", use = [ "edit", "open", "winopen", "reveal" ] },
 	# Text
 	{ mime = "text/*", use = [ "edit", "pager", "winopen", "open", "reveal" ] },
