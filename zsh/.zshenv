@@ -118,6 +118,8 @@ export CLAUDE_CONFIG_DIR="$XDG_DATA_HOME/claude"
 # codex — ignores XDG, defaults to ~/.codex unless CODEX_HOME is set
 export CODEX_HOME="$XDG_DATA_HOME/codex"
 
+export DISABLE_TELEMETRY=1
+
 # promptfoo — ignores XDG, defaults to ~/.promptfoo unless PROMPTFOO_CONFIG_DIR
 # is set (holds the eval SQLite db, cache, and logs)
 export PROMPTFOO_CONFIG_DIR="$XDG_CONFIG_HOME/promptfoo"
