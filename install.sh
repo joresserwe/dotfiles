@@ -273,6 +273,7 @@ fi
 
 echo "Configuring Codex..."
 bash "$DOTFILES_PATH/codex/install.sh"
+install_codex_web_guidance || exit 1
 
 # -----------------------------------------------------------------------------------------------
 

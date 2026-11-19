@@ -1221,6 +1221,7 @@ if pnpm list -g --depth=0 2>/dev/null | grep -Fq '@openai/codex@'; then
 fi
 
 bash "$DOTFILES_PATH/codex/install.sh"
+install_codex_web_guidance
 
 # Claude Code CLI — native installer, lands in ~/.local/bin/claude (same
 # convention as win32yank; .zshenv already puts ~/.local/bin on PATH) and

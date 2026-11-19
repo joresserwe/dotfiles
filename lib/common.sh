@@ -2,7 +2,8 @@
 # This file is SOURCED, never executed. No top-level side effects. Mode 644.
 
 # Refuse direct execution.
-if [ "${BASH_SOURCE[0]:-${(%):-%x}}" = "${0}" ]; then
+if { [ -n "${BASH_VERSION:-}" ] && [ "${BASH_SOURCE[0]}" = "$0" ]; } ||
+   { [ -n "${ZSH_VERSION:-}" ] && [ "$ZSH_EVAL_CONTEXT" = toplevel ]; }; then
   echo "lib/common.sh is a library; source it instead of executing." >&2
   exit 1
 fi
@@ -53,4 +54,19 @@ create_link() {
   [ -d "$link_dir" ] || mkdir -p "$link_dir"
   ln -sf "$target_file" "$link_path"
   log_done "link: $link_path -> $target_file"
+}
+
+install_codex_web_guidance() {
+  local cli="$HOME/.local/bin/codex" catalogs source_url plugins
+  catalogs="$("$cli" plugin marketplace list --json)" || return 1
+  source_url="$(jq -r '.marketplaces[] | select(.name == "googlechrome") | .marketplaceSource.source // "local"' <<< "$catalogs")" || return 1
+  case "$source_url" in
+    "") "$cli" plugin marketplace add GoogleChrome/modern-web-guidance || return 1 ;;
+    https://github.com/GoogleChrome/modern-web-guidance.git) ;;
+    *) printf 'googlechrome already points to a different source: %s\n' "$source_url" >&2; return 1 ;;
+  esac
+  plugins="$("$cli" plugin list --marketplace googlechrome --json)" || return 1
+  if ! jq -e 'any(.installed[]; .pluginId == "modern-web-guidance@googlechrome")' <<< "$plugins" >/dev/null; then
+    "$cli" plugin add modern-web-guidance@googlechrome
+  fi
 }

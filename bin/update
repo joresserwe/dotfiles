@@ -7,7 +7,7 @@ ZSH="${ZSH:-$XDG_CONFIG_HOME/zsh/oh-my-zsh}"
 # shellcheck source=../lib/common.sh
 source "$DOTFILES_PATH/lib/common.sh"
 
-DEFAULT_STEPS="os brew mise pnpm uv omz yazi tmux nvim gcloud"
+DEFAULT_STEPS="os brew mise pnpm uv omz yazi tmux nvim gcloud codex-plugins"
 EXTRA_STEPS="winget"
 
 usage() {
@@ -96,6 +96,17 @@ step_nvim() {
 step_gcloud() {
   have gcloud || { log_skip "gcloud not found"; return 0; }
   run gcloud components update --quiet
+}
+
+step_codex-plugins() {
+  have codex || { log_skip "codex not found"; return 0; }
+  local markets
+  markets="$(codex plugin marketplace list --json)" || return 1
+  if jq -e 'any(.marketplaces[]; .name == "googlechrome")' <<< "$markets" >/dev/null; then
+    run codex plugin marketplace upgrade googlechrome
+  else
+    log_skip "googlechrome marketplace not configured"
+  fi
 }
 
 step_winget() {
