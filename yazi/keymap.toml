@@ -108,10 +108,10 @@ keymap = [
 	{ on = [ "m", "n" ], run = "linemode none",        desc = "Linemode: none" },
 
 	# Copy
-	{ on = [ "c", "c" ], run = "copy path",             desc = "Copy the file path" },
-	{ on = [ "c", "d" ], run = "copy dirname",          desc = "Copy the directory path" },
-	{ on = [ "c", "f" ], run = "copy filename",         desc = "Copy the filename" },
-	{ on = [ "c", "n" ], run = "copy name_without_ext", desc = "Copy the filename without extension" },
+	{ on = [ "c", "c" ], run = "copy path --hovered",             desc = "Copy the file path" },
+	{ on = [ "c", "d" ], run = "copy dirpath --hovered",          desc = "Copy the directory path" },
+	{ on = [ "c", "f" ], run = "copy filename --hovered",         desc = "Copy the filename" },
+	{ on = [ "c", "n" ], run = "copy name_without_ext --hovered", desc = "Copy the filename without extension" },
 	{ on = [ "c", "w" ], run = "shell 'for f in %s; do wslpath -w \"$f\"; done | head -c -1 | win32yank.exe -i --crlf'", desc = "Copy the Windows path" },
 
 	# Filter
