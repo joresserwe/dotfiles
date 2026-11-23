@@ -17,10 +17,15 @@
 # script runs High and a direct Start-Process would inherit High; the
 # 'zebar-launch' task (RunLevel=Limited) starts zebar at Medium.
 #
-# Wait-Process after Stop-Process: Stop-Process signals WM_CLOSE and returns
-# immediately; Zebar's tauri-plugin-single-instance mutex is released only
-# after the old process fully tears down. Starting a new zebar too early
-# hits the mutex and the new instance silently exits.
+# Wait-Process after taskkill: taskkill returns immediately; Zebar's
+# tauri-plugin-single-instance mutex is released only after the old process
+# fully tears down. Starting a new zebar too early hits the mutex and the
+# new instance silently exits.
+#
+# taskkill /T + the port wait: processes a widget spawns (watch-ime.ahk)
+# inherit zebar's listening socket. One that outlives zebar keeps
+# 127.0.0.1:6124 bound, the new zebar cannot serve its widgets, and every
+# bar sits on ERR_CONNECTION_REFUSED.
 
 $ZebarExe  = 'C:\Program Files\glzr.io\Zebar\zebar.exe'
 $ConfigDir = if ($env:DOTFILES_WIN) { "$env:DOTFILES_WIN\zebar" }
@@ -28,8 +33,12 @@ $ConfigDir = if ($env:DOTFILES_WIN) { "$env:DOTFILES_WIN\zebar" }
 
 $existing = Get-Process zebar -ErrorAction SilentlyContinue
 if ($existing) {
-  $existing | Stop-Process -Force -ErrorAction SilentlyContinue
+  $existing | ForEach-Object { & taskkill.exe /F /T /PID $_.Id 2>&1 | Out-Null }
   $existing | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue
+}
+$portDeadline = (Get-Date).AddSeconds(20)
+while ((Get-NetTCPConnection -LocalPort 6124 -State Listen -ErrorAction SilentlyContinue) -and (Get-Date) -lt $portDeadline) {
+  Start-Sleep -Milliseconds 200
 }
 
 & schtasks.exe /run /tn zebar-launch 2>&1 | Out-Null
