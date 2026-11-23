@@ -13,12 +13,13 @@
       "focused": false,
       "resizable": false,
       "transparent": true,
-      "includeFiles": ["*.html", "*.css", "*.js", "*.txt", "watch-ime.ahk"],
+      "includeFiles": ["*.html", "*.css", "*.js", "*.txt", "gpu-usage.ps1", "watch-ime.ahk"],
       "caching": { "defaultDuration": 604800, "rules": [] },
       "privileges": {
         "shellCommands": [
           { "program": "cmd.exe", "argsRegex": "^/c echo [0-9 ]+ > %TEMP%\\\\glazewm-jump-map\\.txt$" },
-          { "program": "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe", "argsRegex": "^/ErrorStdOut \\.\\\\watch-ime\\.ahk$" }
+          { "program": "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe", "argsRegex": "^/ErrorStdOut \\.\\\\watch-ime\\.ahk$" },
+          { "program": "powershell.exe", "argsRegex": "^-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \\.\\\\gpu-usage\\.ps1$" }
         ]
       },
       "presets": [

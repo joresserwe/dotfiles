@@ -246,6 +246,7 @@
       const baseUsageColors = {
         CPU: 'rgb(140, 190, 255)',
         Memory: 'rgb(180, 220, 150)',
+        GPU: 'rgb(212, 162, 255)',
       };
 
       function UsageStat({ name, reading, children }) {
@@ -260,9 +261,82 @@
           <span className={`stat compact usage${name === 'CPU' ? ' divider-left' : ''}`} title={name} style={{ color }}>
             {children}
             <span className="metric">{percent}%</span>
-            <Sparkline reading={reading} color={color} gradId={`sp-${name}`} />
+            <Sparkline reading={reading} color={name === 'GPU' ? baseUsageColors.GPU : color} gradId={`sp-${name}`} />
           </span>
         );
+      }
+
+      function useGpu() {
+        const [gpu, setGpu] = useState(null);
+        useEffect(() => {
+          const topic = 'dotfiles.mac-bar.gpu';
+          const channel = new BroadcastChannel(topic);
+          const controller = new AbortController();
+          const { signal } = controller;
+          const stopped = new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }));
+
+          function display(usage) {
+            if (usage === null || (Number.isFinite(usage) && usage >= 0 && usage <= 100)) {
+              setGpu(usage === null ? null : { usage });
+            }
+          }
+          channel.onmessage = event => display(event.data);
+          function publish(usage) {
+            if (signal.aborted) return;
+            display(usage);
+            channel.postMessage(usage);
+          }
+
+          async function collect() {
+            const cwd = zebar.currentWidget().htmlPath.replace(/[^\\/]+$/, '');
+            let sampler;
+            let sampled = false;
+            try {
+              sampler = await zebar.shellSpawn('powershell.exe',
+                ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', '.\\gpu-usage.ps1'], { cwd });
+              if (signal.aborted) return false;
+              // Zebar 3.0.3 sends "processId" for write/kill; the 3.3.1 desktop commands require "pid".
+              const pid = sampler.processId;
+              const ended = new Promise(resolve => {
+                const next = () => invoke('shell_write', { pid, buffer: '\n' }).catch(resolve);
+                sampler.onExit(() => { sampler = null; resolve(); });
+                sampler.onStdout(line => {
+                  if (signal.aborted || !line.trim()) return;
+                  const usage = Number(line);
+                  if (Number.isFinite(usage) && usage >= 0 && usage <= 100) {
+                    sampled = true;
+                    publish(usage);
+                  }
+                  next();
+                });
+                next();
+              });
+              await Promise.race([ended, stopped]);
+            } finally {
+              if (sampler) await invoke('shell_kill', { pid: sampler.processId }).catch(() => {});
+            }
+            return sampled;
+          }
+
+          async function ownSampler() {
+            publish(null);
+            let sampled;
+            do {
+              sampled = await collect().catch(() => false);
+              publish(null);
+            } while (sampled && !signal.aborted);
+            // Hold the lock on GPU-less PCs so other monitors don't repeat the probe.
+            await stopped;
+          }
+          navigator.locks.request(topic, { signal }, ownSampler).catch(() => {});
+          function stop() {
+            controller.abort();
+            channel.close();
+          }
+          window.addEventListener('pagehide', stop);
+          return () => { window.removeEventListener('pagehide', stop); stop(); };
+        }, []);
+        return gpu;
       }
 
       function ImeBadge() {
@@ -374,6 +448,7 @@
           });
           return () => { clearTimeout(id); if (typeof unsub === 'function') unsub(); };
         }, []);
+        const gpu = useGpu();
         useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
         const deadTray = useDeadTrayIcons((out.systray?.icons || []).map(i => i.id).join(','));
 
@@ -455,6 +530,16 @@
               </UsageStat>
               <UsageStat name="Memory" reading={out.memory}>
                 <i className="nf nf-fae-chip"></i>
+              </UsageStat>
+              <UsageStat name="GPU" reading={gpu}>
+                <svg width="17" height="13" viewBox="0 0 24 18" fill="currentColor" aria-hidden="true">
+                  <path d="M1 1h3v2h17a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4v2H2V3H1Z
+                           M12 8.5a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0
+                           M21 8.5a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0" fillRule="evenodd" />
+                  <path id="gpu-fan" d="M8.5 8.5Q6 8 7 6q2-1 1.5 2.5Q10 6.5 11 8.5q0 2-2.5 0Q9.5 11 7.5 11q-1.5-1 1-2.5Z" />
+                  <use href="#gpu-fan" x="9" />
+                  <path d="M6 15h3v2H6zm4 0h7v2h-7z" />
+                </svg>
               </UsageStat>
               {out.audio?.defaultPlaybackDevice && (
                 <span className={`stat compact audio ${out.audio.defaultPlaybackDevice.isMuted ? 'muted' : ''}`}>
