@@ -95,13 +95,20 @@ step_nvim() {
 
 step_gcloud() {
   have gcloud || { log_skip "gcloud not found"; return 0; }
+  local sdk_root
+  sdk_root="$(gcloud info --format='value(installation.sdk_root)' 2>/dev/null)"
+  if jq -e '.disable_updater' "$sdk_root/lib/googlecloudsdk/core/config.json" >/dev/null 2>&1; then
+    log_skip "gcloud component manager disabled (package-managed install)"
+    return 0
+  fi
   run gcloud components update --quiet
 }
 
 step_codex-plugins() {
   have codex || { log_skip "codex not found"; return 0; }
   local markets
-  markets="$(codex plugin marketplace list --json)" || return 1
+  markets="$(codex plugin marketplace list --json)" \
+    || { log_skip "codex marketplace list failed (run 'codex login' if Codex is used on this PC)"; return 0; }
   if jq -e 'any(.marketplaces[]; .name == "googlechrome")' <<< "$markets" >/dev/null; then
     run codex plugin marketplace upgrade googlechrome
   else
