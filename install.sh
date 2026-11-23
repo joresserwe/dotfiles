@@ -94,7 +94,7 @@ brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 echo "Installing node / java (via mise)..."
 eval "$(mise activate zsh)"
 mise use -g node@lts
-mise use -g java@temurin-21
+mise use -g java@temurin-21 java@temurin-25
 # mise activate hooks fire on prompt; in a non-interactive run we must add shims to PATH manually
 export PATH="$XDG_DATA_HOME/mise/shims:$PATH"
 

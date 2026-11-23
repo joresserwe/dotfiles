@@ -1150,7 +1150,7 @@ log_step "Phase 3: mise + node/java + global packages"
 
 eval "$(mise activate bash)"
 mise use -g node@lts
-mise use -g java@temurin-21
+mise use -g java@temurin-21 java@temurin-25
 # mise activate hooks fire on prompt; in non-interactive bash we must add shims to PATH manually
 export PATH="$XDG_DATA_HOME/mise/shims:$PATH"
 
