@@ -1134,6 +1134,7 @@ for c in trash trash-put trash-empty trash-list trash-restore trash-rm; do
 done
 
 if command -v ya >/dev/null 2>&1; then
+  ya_present=0
   for pkg in \
     boydaihungst/mediainfo \
     ndtoan96/ouch \
@@ -1147,8 +1148,15 @@ if command -v ya >/dev/null 2>&1; then
     Reledia/glow \
     h-hg/yamb \
     yazi-rs/flavors:catppuccin-mocha; do
-    ya pkg add "$pkg" || log_skip "ya pkg add $pkg (already installed or failed)"
+    if grep -qF "use = \"$pkg\"" "$XDG_CONFIG_HOME/yazi/package.toml" 2>/dev/null; then
+      ya_present=$((ya_present + 1))
+    elif ya pkg add "$pkg"; then
+      log_done "yazi package: $pkg"
+    else
+      log_manual "yazi package NOT installed: $pkg"
+    fi
   done
+  log_skip "yazi packages: $ya_present already in package.toml"
 else
   log_skip "ya command not found; skip yazi plugin install"
 fi
