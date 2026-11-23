@@ -18,7 +18,7 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect } from 'https://esm.sh/react@18.3.1?dev';
+      import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.3.1?dev';
       import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?dev';
       import { invoke } from 'https://esm.sh/@tauri-apps/api@2.0.2/core';
       import * as zebar from 'https://esm.sh/zebar@3.0.3';
@@ -401,18 +401,29 @@
         return ime && <span className={`ime divider-left ime-${ime.toLowerCase()}`}>{ime}</span>;
       }
 
+      const CAT_MIN_FPS = 4;
+      const CAT_MAX_FPS = SOFT_RENDER ? 10 : 30;
+      const CAT_HUE_DEG_PER_MS = 0.12;
+
       function RunCat({ cpuUsage }) {
         const [tick, setTick] = useState(0);
-        const fps = 4 + Math.round(Math.min(100, Math.max(0, cpuUsage ?? 0)) * 0.06);
+        const frameMs = useRef(0);
+        const load = Math.min(100, Math.max(0, cpuUsage ?? 0)) / 100;
+        frameMs.current = 1000 / (CAT_MIN_FPS + (CAT_MAX_FPS - CAT_MIN_FPS) * load);
         useEffect(() => {
           // Preload all frames once
           CAT_FRAME_URLS.forEach(u => { const img = new Image(); img.src = u; });
         }, []);
         useEffect(() => {
-          const id = setInterval(() => setTick(t => t + 1), 1000 / fps);
-          return () => clearInterval(id);
-        }, [fps]);
-        return <img className="runcat" style={{ '--cat-hue': `${(tick * 24) % 360}deg` }}
+          let id;
+          const step = () => {
+            setTick(t => t + 1);
+            id = setTimeout(step, frameMs.current);
+          };
+          id = setTimeout(step, frameMs.current);
+          return () => clearTimeout(id);
+        }, []);
+        return <img className="runcat" style={{ '--cat-hue': `${Math.round(performance.now() * CAT_HUE_DEG_PER_MS) % 360}deg` }}
           src={CAT_FRAME_URLS[tick % CAT_FRAME_URLS.length]} alt="" />;
       }
 
