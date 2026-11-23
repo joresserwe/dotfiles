@@ -480,7 +480,10 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     # </dev/null on every winget.exe call: interop lets it drain our stdin,
     # which is packages.txt — without it the loop dies after the first entry.
     # tr -d '\0': winget emits UTF-16-ish output over interop; NULs break grep.
-    if winget.exe list --accept-source-agreements </dev/null 2>/dev/null | tr -d '\0' | grep -q "$pkg"; then
+    # Captured, not piped: under pipefail, grep -q's early exit SIGPIPEs
+    # winget.exe (141) and a match reads as "not installed".
+    winget_installed="$(winget.exe list --accept-source-agreements </dev/null 2>/dev/null | tr -d '\0' || true)"
+    if grep -q "$pkg" <<<"$winget_installed"; then
       log_skip "winget: $pkg"
     else
       log_step "winget: installing $pkg (source: $src)"
