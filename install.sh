@@ -274,7 +274,8 @@ fi
 
 echo "Configuring Codex..."
 bash "$DOTFILES_PATH/codex/install.sh"
-install_codex_web_guidance || exit 1
+install_codex_web_guidance \
+	|| log_manual "codex: modern-web-guidance plugin NOT installed — run 'codex login', then re-run this script"
 
 # -----------------------------------------------------------------------------------------------
 
