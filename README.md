@@ -127,7 +127,7 @@ git clone https://github.com/joresserwe/dotfiles ~/.config/.dotfiles
 ~/.config/.dotfiles/install.linux.sh
 ```
 
-Optional profile flags: `--full` (default; full zebar effects) or `--light` (reduced zebar effects, tacky-borders animations off — for GPU-less VMs/RDP hosts). Both profiles use Flow Launcher. The choice is persisted in `$XDG_STATE_HOME/dotfiles/profile` and reused on flagless re-runs.
+The default `--full` profile uses full Zebar effects with hardware rendering and reduced effects with software rendering. Use `--light` to force reduced Zebar effects and disable tacky-borders animations, for example on VMs or RDP hosts. Both profiles use Flow Launcher. The choice is persisted in `$XDG_STATE_HOME/dotfiles/profile` and reused on flagless re-runs.
 
 The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powerlevel10k, neovim/AstroNvim, tmux, yazi, atuin, mise, claude code) using a hybrid **apt + Homebrew on Linux** setup. macOS-only tools (aerospace, karabiner, raycast, wallpaperkiller, casks, mas) are skipped automatically via `if OS.mac?` guards in the shared `Brewfile`.
 
