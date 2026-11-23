@@ -521,9 +521,7 @@
                   <span className="media-title">{out.media.currentSession.title}</span>
                 </button>
               )}
-              {out.cpu && (SOFT_RENDER
-                ? <img className="runcat" src={CAT_FRAME_URLS[0]} alt="" />
-                : <RunCat cpuUsage={out.cpu.usage} />)}
+              {out.cpu && <RunCat cpuUsage={out.cpu.usage} />}
               <ImeBadge />
               <UsageStat name="CPU" reading={out.cpu}>
                 <i className="nf nf-oct-cpu"></i>
