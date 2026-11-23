@@ -111,6 +111,7 @@ step_codex-plugins() {
 
 step_winget() {
   have winget.exe || { log_skip "winget.exe not found"; return 0; }
+  run winget.exe pin add --id Microsoft.WSL --exact --source winget --accept-source-agreements || return 1
   run winget.exe upgrade --all --accept-source-agreements --accept-package-agreements
 }
 
