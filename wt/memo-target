@@ -1,32 +1,33 @@
-#!/bin/sh
-# nvim lives on brew paths that a bare `wsl -e sh` PATH does not include.
-if [ -z "$MEMO_TARGET_ENV" ]; then
-  MEMO_TARGET_ENV=1 exec /usr/bin/zsh -lc "/bin/sh $0 $*"
-fi
+#!/usr/bin/zsh -l
 
-# The target path arrives via %TEMP%\open-memo-target.txt, not argv:
-# wt strips quotes from pass-through command-line tokens and wsl.exe -e
-# word-splits them, so a Windows path with spaces cannot survive either hop.
-win_temp="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
-tmpfile="$(wslpath -u "$win_temp")/open-memo-target.txt"
-file=""
-if [ -f "$tmpfile" ]; then
-  file="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
-  [ -e "$file" ] || exit 1
+start=""
+if [[ "$1" == --start ]]; then
+  start=1
+  shift
 fi
 
 sock="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/memo.sock"
-max="${1:-0}"
-i=0
-until nvim --server "$sock" --remote-expr 1 >/dev/null 2>&1; do
-  [ "$i" -ge "$max" ] && exit 1
-  sleep 0.1
-  i=$((i + 1))
-done
-[ -z "$file" ] || nvim --server "$sock" --remote "$file"
+if [[ -z "$start" && ! -S "$sock" ]]; then
+  exit 1
+fi
 
-where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')"
+files=()
+if [[ -n "$1" ]]; then
+  win_file="$(printf %s "$1" | base64 --decode)" || exit 1
+  file="$(wslpath -u "$win_file")" || exit 1
+  [[ -f "$file" ]] || exit 1
+  files+=("$file")
+fi
+
+if [[ -n "$start" ]]; then
+  NVIM_MEMO_OPEN_FILE="${files[1]}" MEMO_TARGET_ENV=1 exec "$HOME/.local/bin/memo-run"
+fi
+
+where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')" || exit 1
+if (( ${#files} )); then
+  nvim --server "$sock" --remote "${files[@]}" || exit 1
+fi
 pane="${where#*|}"
-if [ -n "$pane" ] && tmux -S "${where%%,*}" switch-client -t "$pane" 2>/dev/null; then
+if [[ -n "$pane" ]] && tmux -S "${where%%,*}" switch-client -t "$pane" 2>/dev/null; then
   echo tmux
 fi
