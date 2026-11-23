@@ -385,8 +385,8 @@ FloatKey(dir, dx, dy) {
 #HotIf
 
 ; --- Previous window back-and-forth (Win+Z) -------------------------------
-; Resident implementation: prev/cur foreground hwnds come from the 250ms
-; MonitorImeState sampler above, and WinActivate restores minimized windows
+; Resident implementation: prev/cur foreground hwnds come from the foreground
+; change hook and MonitorImeState fallback, and WinActivate restores minimized windows
 ; and pulls cross-workspace ones (glazewm follows external focus changes,
 ; same as alt-tab). Custom combos fire on every modifier variant, so shift
 ; is dispatched here too: f13+shift+z = restore most-recently-minimized via
@@ -503,13 +503,14 @@ SyncGlazePause() {
 
 ; --- IME state monitor for Zebar --------------------------------------
 ; Writes "KO" or "EN" to zebar/mac-bar/ime-state.txt whenever the foreground
-; window's IME open-status changes. Zebar polls the file to render the
-; bar's IME badge. Adds ~0MB — reuses this same AHK process.
+; window's IME conversion mode changes.
 imeStateFile := A_ScriptDir "\..\zebar\mac-bar\ime-state.txt"
 lastImeState := ""
 
 IME_GetConversionMode(hWnd) {
     ime := DllCall("imm32\ImmGetDefaultIMEWnd", "Ptr", hWnd, "Ptr")
+    if !ime
+        return -1
     ; WM_IME_CONTROL + IMC_GETCONVERSIONMODE (0x001); reports IME_CMODE_NATIVE
     ; (0x0001) bit for Hangul vs Alphanumeric — reliable across Windows 11 TSF
     ; and legacy IMM IMEs, unlike IMC_GETOPENSTATUS which some TSF IMEs leave
@@ -555,9 +556,7 @@ MonitorImeState() {
     hwnd := WinExist("A")
     if !hwnd
         return
-    ; Previous-window history for ~F13 & z, tracked here because this timer
-    ; already samples the foreground window 4×/sec. Zero-cost bookkeeping —
-    ; the shell-exec/daemon version cost a ~0.5s powershell spawn per press.
+    ; Keep previous-window history for ~F13 & z even when the foreground game skips IME queries.
     global curActiveHwnd, prevActiveHwnd
     if (hwnd != curActiveHwnd) {
         try {
@@ -569,14 +568,29 @@ MonitorImeState() {
         }
     }
     SyncGlazePause()
+    if GameForeground(hwnd)
+        return
     mode := IME_GetConversionMode(hwnd)
     if mode = -1  ; UIPI-blocked this tick; leave lastImeState as-is
         return
     state := (mode & 0x1) ? "KO" : "EN"
-    if state != lastImeState {
+    if state = lastImeState
+        return
+    try {
+        file := FileOpen(imeStateFile ".tmp", "w", "UTF-8-RAW")
+        file.Write(state)
+        file.Close()
+        FileMove(imeStateFile ".tmp", imeStateFile, 1)
         lastImeState := state
-        try FileDelete(imeStateFile)
-        try FileAppend(state, imeStateFile)
     }
 }
-SetTimer(MonitorImeState, 250)
+
+RefreshImeAfterInput() => MonitorImeState()
+QueueImeRefresh(*) => SetTimer(RefreshImeAfterInput, -20)
+
+~*vk15::QueueImeRefresh()
+~*RAlt Up::QueueImeRefresh()
+DllCall("SetWinEventHook", "UInt", 3, "UInt", 3, "Ptr", 0,
+    "Ptr", CallbackCreate(QueueImeRefresh, , 7), "UInt", 0, "UInt", 0, "UInt", 0)
+MonitorImeState()
+SetTimer(MonitorImeState, 1000)

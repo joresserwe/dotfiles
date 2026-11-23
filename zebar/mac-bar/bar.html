@@ -20,6 +20,7 @@
     <script type="text/babel" data-type="module">
       import React, { useState, useEffect } from 'https://esm.sh/react@18.3.1?dev';
       import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?dev';
+      import { invoke } from 'https://esm.sh/@tauri-apps/api@2.0.2/core';
       import * as zebar from 'https://esm.sh/zebar@3.0.3';
 
       // No hardware GPU (e.g. RDP/Citrix VM) → WebView2 rasterizes on CPU via
@@ -264,21 +265,66 @@
         );
       }
 
-      function useImeState() {
+      function ImeBadge() {
         const [ime, setIme] = useState(null);
         useEffect(() => {
-          let alive = true;
-          const poll = async () => {
+          let closed = false;
+          let watcher;
+          let timer;
+          let polling = false;
+          function update(text) {
+            const state = text.trim();
+            if (!closed && (state === 'KO' || state === 'EN')) setIme(state);
+          }
+          async function poll() {
             try {
               const r = await fetch('./ime-state.txt', { cache: 'no-store' });
-              if (alive) setIme(r.ok ? (await r.text()).trim() || null : null);
-            } catch { /* file may not exist yet */ }
-          };
-          poll();
-          const id = setInterval(poll, 400);
-          return () => { alive = false; clearInterval(id); };
+              if (r.ok) update(await r.text());
+            } catch { /* AHK may still be starting. */ }
+            if (!closed) timer = setTimeout(poll, 400);
+          }
+          function fallback() {
+            if (closed || polling) return;
+            polling = true;
+            clearTimeout(timer);
+            if (watcher) invoke('shell_kill', { pid: watcher.processId }).catch(() => {});
+            watcher = null;
+            poll();
+          }
+          function stop() {
+            closed = true;
+            clearTimeout(timer);
+            if (watcher) invoke('shell_kill', { pid: watcher.processId }).catch(() => {});
+            watcher = null;
+          }
+          async function connect() {
+            const cwd = zebar.currentWidget().htmlPath.replace(/[^\\/]+$/, '');
+            const child = await zebar.shellSpawn('C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe',
+              ['/ErrorStdOut', '.\\watch-ime.ahk'], { cwd });
+            watcher = child;
+            if (closed) { stop(); return; }
+            let received = false;
+            child.onStdout(line => {
+              if (!['KO', 'EN'].includes(line.trim())) return;
+              received = true;
+              update(line);
+            });
+            child.onExit(() => {
+              watcher = null;
+              if (closed || polling) return;
+              if (received) timer = setTimeout(start, 4000);
+              else fallback();
+            });
+            await invoke('shell_write', { pid: child.processId, buffer: '\n' });
+          }
+          function start() {
+            connect().catch(fallback);
+          }
+          start();
+          window.addEventListener('pagehide', stop);
+          return () => { window.removeEventListener('pagehide', stop); stop(); };
         }, []);
-        return ime;
+        return ime && <span className={`ime divider-left ime-${ime.toLowerCase()}`}>{ime}</span>;
       }
 
       function RunCat({ cpuUsage }) {
@@ -328,7 +374,6 @@
           });
           return () => { clearTimeout(id); if (typeof unsub === 'function') unsub(); };
         }, []);
-        const ime = useImeState();
         useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
         const deadTray = useDeadTrayIcons((out.systray?.icons || []).map(i => i.id).join(','));
 
@@ -404,9 +449,7 @@
               {out.cpu && (SOFT_RENDER
                 ? <img className="runcat" src={CAT_FRAME_URLS[0]} alt="" />
                 : <RunCat cpuUsage={out.cpu.usage} />)}
-              {ime && (
-                <span className={`ime divider-left ime-${ime.toLowerCase()}`}>{ime}</span>
-              )}
+              <ImeBadge />
               <UsageStat name="CPU" reading={out.cpu}>
                 <i className="nf nf-oct-cpu"></i>
               </UsageStat>
