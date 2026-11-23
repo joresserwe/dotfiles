@@ -1,0 +1,476 @@
+#!/usr/bin/env python3
+"""Show what is running, grouped by what was launched rather than by process.
+
+Each row is one launch root (a dev server, an agent session, an app) with
+the memory of its whole process tree, its listening ports, its uptime, and
+the tmux pane it was started from. Largest first.
+"""
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+SHELLS = {"zsh", "bash", "fish", "sh", "dash"}
+INTERPRETER = re.compile(r"^(python[\d.]*|node|bun|deno|ruby|perl)$")
+WORD = re.compile(r"^[a-z][a-z0-9_-]{0,19}$")
+JAVA_VALUE_FLAGS = {"-cp", "-classpath", "--class-path", "-p", "--module-path"}
+FOLD_KB = 100 * 1024
+HOME = os.path.expanduser("~")
+COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
+EIGHTHS = " ▏▎▍▌▋▊▉█"
+BAR_WIDTH = 10
+SUMMARY_WIDTH = 40
+BOLD, DIM, RED, GREEN, YELLOW, MAGENTA, CYAN = "1", "2", "1;31", "32", "33", "35", "36"
+
+
+def read(path):
+    try:
+        with open(path, "rb") as f:
+            return f.read().decode(errors="replace")
+    except OSError:
+        return ""
+
+
+def run(command):
+    try:
+        return subprocess.run(
+            command, capture_output=True, text=True, errors="replace", timeout=10
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+class Proc:
+    def __init__(self, pid, ppid, argv, kb, cwd, tty, leader, age):
+        self.pid = pid
+        self.ppid = ppid
+        self.argv = argv
+        self.exe = os.path.basename(argv[0]).lstrip("-")
+        self.kb = kb
+        self.cwd = cwd
+        self.tty = tty
+        self.leader = leader
+        self.age = age
+
+
+def linux_procs():
+    page_kb = os.sysconf("SC_PAGE_SIZE") // 1024
+    ticks = os.sysconf("SC_CLK_TCK")
+    uptime = float(read("/proc/uptime").split()[0])
+    procs = {}
+    for name in os.listdir("/proc"):
+        if not name.isdigit() or int(name) == os.getpid():
+            continue
+        pid = int(name)
+        stat = read(f"/proc/{pid}/stat")
+        argv = read(f"/proc/{pid}/cmdline").rstrip("\0").split("\0")
+        if not stat or not argv[0]:
+            continue
+        if len(argv) == 1:
+            argv = argv[0].split()
+        fields = stat[stat.rfind(")") + 2:].split()
+        ppid, sid, tty, start = (int(fields[i]) for i in (1, 3, 4, 19))
+        pss = re.search(r"^Pss:\s+(\d+)", read(f"/proc/{pid}/smaps_rollup"), re.M)
+        if pss:
+            kb = int(pss.group(1))
+        else:
+            statm = read(f"/proc/{pid}/statm").split()
+            kb = int(statm[1]) * page_kb if len(statm) > 1 else 0
+        try:
+            cwd = os.readlink(f"/proc/{pid}/cwd")
+        except OSError:
+            cwd = ""
+        procs[pid] = Proc(
+            pid, ppid, argv, kb, cwd, tty != 0, sid == pid, uptime - start / ticks
+        )
+    return procs
+
+
+def elapsed(text):
+    days, _, clock = text.rpartition("-")
+    seconds = 0
+    for part in clock.split(":"):
+        seconds = seconds * 60 + int(part)
+    return int(days or 0) * 86400 + seconds
+
+
+def lsof_fields(arguments):
+    pid = None
+    for line in run(["lsof"] + arguments + ["-Fpn"]).splitlines():
+        if line.startswith("p"):
+            pid = int(line[1:])
+        elif line.startswith("n") and pid is not None:
+            yield pid, line[1:]
+
+
+def mac_procs():
+    commands = {}
+    for line in run(["ps", "-axww", "-o", "pid=,command="]).splitlines():
+        pid, _, command = line.strip().partition(" ")
+        commands[pid] = command.strip()
+    cwds = dict(lsof_fields(["-a", "-d", "cwd"]))
+    procs = {}
+    listing = run(["ps", "-axww", "-o", "pid=,ppid=,rss=,stat=,tty=,etime=,comm="])
+    for line in listing.splitlines():
+        cols = line.split(None, 6)
+        if len(cols) < 7 or "Z" in cols[3]:
+            continue
+        pid, ppid = int(cols[0]), int(cols[1])
+        if os.getpid() in (pid, ppid):
+            continue
+        comm = cols[6]
+        command = commands.get(cols[0], comm)
+        if command.startswith(comm):
+            arguments = command[len(comm):]
+        else:
+            arguments = command.partition(" ")[2]
+        procs[pid] = Proc(
+            pid, ppid, [comm] + arguments.split(), int(cols[2]), cwds.get(pid, ""),
+            cols[4] != "??", "s" in cols[3], elapsed(cols[5]),
+        )
+    return procs
+
+
+def linux_ports():
+    ports = {}
+    for line in run(["ss", "-ltnpH"]).splitlines():
+        cols = line.split()
+        port = cols[3].rsplit(":", 1)[-1] if len(cols) > 3 else ""
+        if port.isdigit():
+            for pid in re.findall(r"pid=(\d+)", line):
+                ports.setdefault(int(pid), set()).add(int(port))
+    return ports
+
+
+def mac_ports():
+    ports = {}
+    for pid, name in lsof_fields(["-nP", "-iTCP", "-sTCP:LISTEN"]):
+        port = name.rsplit(":", 1)[-1]
+        if port.isdigit():
+            ports.setdefault(pid, set()).add(int(port))
+    return ports
+
+
+def linux_ephemeral():
+    bounds = read("/proc/sys/net/ipv4/ip_local_port_range").split()
+    return (int(bounds[0]), int(bounds[1])) if len(bounds) == 2 else (32768, 60999)
+
+
+def mac_ephemeral():
+    bounds = run(
+        ["sysctl", "-n", "net.inet.ip.portrange.first", "net.inet.ip.portrange.last"]
+    ).split()
+    return (int(bounds[0]), int(bounds[1])) if len(bounds) == 2 else (49152, 65535)
+
+
+def linux_memory():
+    info = {}
+    for line in read("/proc/meminfo").splitlines():
+        name, _, value = line.partition(":")
+        info[name] = int(value.split()[0])
+    cache = info["Buffers"] + info["Cached"] + info["SReclaimable"]
+    return info["MemTotal"], cache, info["MemFree"]
+
+
+def mac_memory():
+    out = run(["vm_stat"])
+    size = re.search(r"page size of (\d+) bytes", out)
+    page_kb = int(size.group(1)) // 1024 if size else 4
+    pages = {
+        name: int(count)
+        for name, count in re.findall(r'^"?([^":\n]+)"?:\s+(\d+)\.', out, re.M)
+    }
+    total = int(run(["sysctl", "-n", "hw.memsize"]).strip() or 0) // 1024
+    return (
+        total,
+        pages.get("File-backed pages", 0) * page_kb,
+        pages.get("Pages free", 0) * page_kb,
+    )
+
+
+def words(args, limit=2):
+    out = []
+    for arg in args:
+        if len(out) == limit or not WORD.match(arg):
+            break
+        out.append(arg)
+    return out
+
+
+def describe(p):
+    args = p.argv[1:]
+    if p.exe == "java":
+        for arg in args:
+            if arg.startswith("-Dorg.gradle.appname="):
+                return arg.split("=", 1)[1]
+        skip = False
+        for i, arg in enumerate(args):
+            if skip:
+                skip = False
+            elif arg == "-jar" and i + 1 < len(args):
+                return os.path.basename(args[i + 1])
+            elif arg in JAVA_VALUE_FLAGS:
+                skip = True
+            elif not arg.startswith(("-", "@")):
+                return arg.rsplit(".", 1)[-1]
+        return "java"
+    if INTERPRETER.match(p.exe):
+        for i, arg in enumerate(args):
+            if not arg.startswith("-"):
+                return " ".join([os.path.basename(arg)] + words(args[i + 1:]))
+    return " ".join([p.exe] + words(args))
+
+
+def is_boundary(p, procs, memo):
+    if p.pid not in memo:
+        memo[p.pid] = False
+        parent = procs.get(p.ppid)
+        memo[p.pid] = (
+            p.pid == 1
+            or p.exe in ("systemd", "launchd", "tmux", "login")
+            or p.exe.startswith("init")
+            or (
+                p.exe in SHELLS
+                and p.tty
+                and (p.leader or parent is None or is_boundary(parent, procs, memo))
+            )
+        )
+    return memo[p.pid]
+
+
+def root_of(p, procs, memo):
+    seen = set()
+    while p.pid not in seen:
+        seen.add(p.pid)
+        parent = procs.get(p.ppid)
+        if parent is None or is_boundary(parent, procs, memo):
+            break
+        p = parent
+    return p
+
+
+_tmux_panes = {}
+
+
+def tmux_pane(pid):
+    env = dict(
+        entry.split("=", 1)
+        for entry in read(f"/proc/{pid}/environ").split("\0")
+        if "=" in entry
+    )
+    socket, _, rest = env.get("TMUX", "").partition(",")
+    pane = env.get("TMUX_PANE")
+    if not socket or not pane:
+        return "-"
+    if socket not in _tmux_panes:
+        fmt = "#{pid} #{pane_id} #{session_name}:#{window_index}.#{pane_index}"
+        panes = {}
+        for line in run(["tmux", "-S", socket, "list-panes", "-a", "-F", fmt]).splitlines():
+            parts = line.split(" ", 2)
+            if len(parts) == 3:
+                panes[(parts[0], parts[1])] = parts[2]
+        _tmux_panes[socket] = panes
+    return _tmux_panes[socket].get((rest.split(",")[0], pane), "-")
+
+
+def human(kb):
+    return f"{kb / 1048576:.1f}G" if kb >= 1000 * 1024 else f"{kb / 1024:.0f}M"
+
+
+def age(seconds):
+    s = max(int(seconds), 0)
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m"
+    if s < 86400:
+        return f"{s // 3600}h{s % 3600 // 60:02d}m"
+    return f"{s // 86400}d{s % 86400 // 3600}h"
+
+
+def short(path):
+    return "~" + path[len(HOME):] if path == HOME or path.startswith(HOME + "/") else path
+
+
+def port_list(ports):
+    return " ".join(f":{port}" for port in sorted(ports)) or "-"
+
+
+def emit(segments, limit):
+    out = []
+    for text, codes in segments:
+        if limit is not None:
+            text = text[:limit]
+            limit -= len(text)
+        if COLOR and codes and text.strip():
+            text = f"\033[{codes}m{text}\033[0m"
+        out.append(text)
+    print("".join(out).rstrip())
+
+
+def heat(kb):
+    if kb >= 1024 * 1024:
+        return RED
+    if kb >= 300 * 1024:
+        return YELLOW
+    return GREEN
+
+
+def bar(fraction):
+    cells = min(max(fraction, 0), 1) * BAR_WIDTH
+    full = int(cells)
+    drawn = "█" * full + (EIGHTHS[int((cells - full) * 8)] if full < BAR_WIDTH else "")
+    return (drawn.strip() or "▏").ljust(BAR_WIDTH)
+
+
+def summary(total, cache, free, limit):
+    used = total - free - cache
+    used_cells = round(used / total * SUMMARY_WIDTH)
+    cache_cells = round(cache / total * SUMMARY_WIDTH)
+    free_cells = max(SUMMARY_WIDTH - used_cells - cache_cells, 0)
+    emit([
+        ("█" * used_cells, GREEN), ("▒" * cache_cells, YELLOW),
+        ("░" * free_cells, DIM), (f"  {human(total)}", BOLD),
+    ], limit)
+    emit([
+        ("█", GREEN), (f" used {human(used)}   ", ""),
+        ("▒", YELLOW), (f" cache {human(cache)}   ", ""),
+        ("░", DIM), (f" free {human(free)}", ""),
+    ], limit)
+    if os.environ.get("WSL_DISTRO_NAME"):
+        emit([(f"Windows vmmemWSL ≈ used + cache = {human(used + cache)}", DIM)], limit)
+    print()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "-a", "--all", action="store_true",
+        help=f"list groups under {human(FOLD_KB)} instead of folding them into one row",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true",
+        help="list the processes inside each group",
+    )
+    opts = parser.parse_args()
+
+    if sys.platform.startswith("linux"):
+        procs, ports = linux_procs(), linux_ports()
+        (low, high), memory = linux_ephemeral(), linux_memory()
+    elif sys.platform == "darwin":
+        procs, ports = mac_procs(), mac_ports()
+        (low, high), memory = mac_ephemeral(), mac_memory()
+    else:
+        sys.exit(f"memhogs: unsupported platform {sys.platform}")
+
+    memo = {}
+    groups = {}
+    for p in procs.values():
+        key = 0 if is_boundary(p, procs, memo) else root_of(p, procs, memo).pid
+        groups.setdefault(key, []).append(p)
+
+    def member_rows(members):
+        if not opts.verbose:
+            return []
+        ordered = sorted(members, key=lambda p: -p.kb)
+        return [
+            dict(kind="member", kb=p.kb, procs="", up=age(p.age),
+                 ports=port_list(ports.get(p.pid, ())), tmux="", pid=str(p.pid),
+                 name=("└─ " if p is ordered[-1] else "├─ ") + describe(p), cwd="")
+            for p in ordered
+        ]
+
+    def rollup(members, name):
+        return dict(kind="rollup", kb=sum(p.kb for p in members), procs=str(len(members)),
+                    up="", ports="-", tmux="-", pid="-", name=name, cwd="")
+
+    rows = []
+    folded = []
+    for key, members in sorted(
+        groups.items(), key=lambda item: -sum(p.kb for p in item[1])
+    ):
+        if key == 0:
+            continue
+        kb = sum(p.kb for p in members)
+        if kb < FOLD_KB and not opts.all:
+            folded.append(members)
+            continue
+        root = procs[key]
+        public = {
+            port
+            for p in members
+            for port in ports.get(p.pid, ())
+            if not low <= port <= high
+        }
+        rows.append(dict(
+            kind="group", kb=kb, procs=str(len(members)), up=age(root.age),
+            ports=port_list(public), tmux=tmux_pane(key), pid=str(key),
+            name=describe(root), cwd=short(root.cwd),
+        ))
+        rows += member_rows(members)
+    if folded:
+        rows.append(rollup(
+            [p for group in folded for p in group],
+            f"{len(folded)} groups under {human(FOLD_KB)} (-a lists them)",
+        ))
+    if 0 in groups:
+        rows.append(rollup(groups[0], "shells, tmux, init"))
+        rows += member_rows(groups[0])
+
+    limit = shutil.get_terminal_size().columns if sys.stdout.isatty() else None
+    if memory[0]:
+        summary(*memory, limit)
+
+    columns = [
+        ("procs", "PROCS", str.rjust, ""),
+        ("up", "UP", str.rjust, ""),
+        ("ports", "PORTS", str.ljust, CYAN),
+        ("tmux", "TMUX", str.ljust, MAGENTA),
+        ("pid", "PID", str.rjust, DIM),
+    ]
+    if all(row["tmux"] in ("", "-") for row in rows):
+        columns = [column for column in columns if column[0] != "tmux"]
+    width = {
+        key: max([len(title)] + [len(row[key]) for row in rows])
+        for key, title, _, _ in columns
+    }
+    mem_width = max([3] + [len(human(row["kb"])) for row in rows])
+    name_width = max([0] + [len(row["name"]) for row in rows if row["kind"] == "group"])
+    largest = max([row["kb"] for row in rows if row["kind"] == "group"] or [1])
+    gap = ("  ", "")
+
+    header = [("MEM".rjust(mem_width), DIM), gap, (" " * BAR_WIDTH, ""), gap]
+    for key, title, align, _ in columns:
+        header += [(align(title, width[key]), DIM), gap]
+    emit(header + [("WHAT", DIM)], limit)
+
+    for row in rows:
+        group = row["kind"] == "group"
+        muted = row["kind"] == "rollup"
+        line = [
+            (human(row["kb"]).rjust(mem_width),
+             heat(row["kb"]) if group else DIM if muted else ""),
+            gap,
+            (bar(row["kb"] / largest) if group else " " * BAR_WIDTH, heat(row["kb"])),
+            gap,
+        ]
+        for key, _, align, codes in columns:
+            line += [
+                (align(row[key], width[key]), DIM if muted or row[key] == "-" else codes),
+                gap,
+            ]
+        line += [
+            (row["name"].ljust(name_width) if row["cwd"] else row["name"],
+             BOLD if group else DIM if muted else ""),
+            gap,
+            (row["cwd"], DIM),
+        ]
+        emit(line, limit)
+
+
+if __name__ == "__main__":
+    main()

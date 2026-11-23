@@ -348,6 +348,7 @@ create_link "$DOTFILES_PATH/yazi/plugins/win-paste.yazi/paste.ps1" "$XDG_CONFIG_
 ensure_dir "$HOME/.local/bin"
 create_link "$DOTFILES_PATH/bin/term-spawn" "$HOME/.local/bin/term-spawn"
 create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
+create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
