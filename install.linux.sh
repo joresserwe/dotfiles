@@ -554,6 +554,12 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     cmd.exe /c setx DOTFILES_WIN "$dotfiles_win" >/dev/null 2>&1
     log_done "DOTFILES_WIN -> $dotfiles_win (mirror refreshed)"
 
+    if powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${dotfiles_win}\\winget\\install-nvim-menu.ps1"; then
+      log_done "Explorer: NVIM edit command"
+    else
+      log_manual "Explorer: NVIM edit command setup failed"
+    fi
+
     if [ -d /run/systemd/system ]; then
       ensure_dir "$XDG_CONFIG_HOME/systemd/user"
       create_link "$DOTFILES_PATH/wsl/dotfiles-mirror-watch.service" \
