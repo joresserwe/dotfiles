@@ -279,8 +279,11 @@ git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 # (helper reset + GCM). Symlinked into ~/.local/bin because a credential
 # helper path can't contain spaces ("Program Files"). Machine state — the
 # override lives in .git/config, never in the synced git/config.
-GCM_WIN='/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe'
-if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [ -x "$GCM_WIN" ]; then
+GCM_WIN=''
+for gcm in '/mnt/c/Program Files/Git/'{ucrt64,mingw64}'/bin/git-credential-manager.exe'; do
+  if [ -x "$gcm" ]; then GCM_WIN=$gcm; break; fi
+done
+if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [ -n "$GCM_WIN" ]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$GCM_WIN" "$HOME/.local/bin/git-credential-manager.exe"
   git -C "$DOTFILES_PATH" config --local --replace-all "credential.https://github.com.helper" ""
