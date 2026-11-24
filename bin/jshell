@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+real=""
+IFS=: read -ra dirs <<<"$PATH"
+for dir in "${dirs[@]}"; do
+  candidate="$dir/jshell"
+  if [ -x "$candidate" ] && [ "$(readlink -f "$candidate")" != "$self" ]; then
+    real="$candidate"
+    break
+  fi
+done
+if [ -z "$real" ]; then
+  echo "jshell: no jshell binary found in PATH besides this wrapper" >&2
+  exit 127
+fi
+
+exec "$real" \
+  "-J-Djava.util.prefs.userRoot=${XDG_CONFIG_HOME:-$HOME/.config}/java" \
+  "$@"

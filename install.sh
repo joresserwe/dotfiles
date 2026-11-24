@@ -264,6 +264,7 @@ create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
 create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
+create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
 
 # -----------------------------------------------------------------------------------------------
 

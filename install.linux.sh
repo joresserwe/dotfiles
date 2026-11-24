@@ -218,6 +218,22 @@ if [ -f "$HOME/.sudo_as_admin_successful" ]; then
   log_done "removed ~/.sudo_as_admin_successful"
 fi
 
+# show-motd's update-motd.sh recreates ~/.motd_shown and (through the
+# landscape-sysinfo motd hook) ~/.landscape on interactive sh/bash logins.
+if [ -n "$(dpkg-divert --list /etc/profile.d/update-motd.sh)" ]; then
+  log_skip "update-motd.sh already diverted"
+elif [ -f /etc/profile.d/update-motd.sh ]; then
+  sudo dpkg-divert --quiet --local --rename \
+    --divert /etc/profile.d/update-motd.sh.distrib --add /etc/profile.d/update-motd.sh
+  log_done "diverted /etc/profile.d/update-motd.sh"
+fi
+for f in .motd_shown .landscape; do
+  if [ -e "$HOME/$f" ]; then
+    rm -rf "${HOME:?}/$f"
+    log_done "removed ~/$f"
+  fi
+done
+
 create_link "$DOTFILES_PATH/zsh/.zshenv" "$HOME/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshenv" "$XDG_CONFIG_HOME/zsh/.zshenv"
 create_link "$DOTFILES_PATH/zsh/.zshrc"  "$XDG_CONFIG_HOME/zsh/.zshrc"
@@ -356,6 +372,7 @@ create_link "$DOTFILES_PATH/bin/diskhogs" "$HOME/.local/bin/diskhogs"
 create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
+create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 
