@@ -119,7 +119,19 @@ step_codex-plugins() {
 step_winget() {
   have winget.exe || { log_skip "winget.exe not found"; return 0; }
   run winget.exe pin add --id Microsoft.WSL --exact --source winget --accept-source-agreements || return 1
-  run winget.exe upgrade --all --accept-source-agreements --accept-package-agreements
+  local ahk='/mnt/c/Program Files/AutoHotkey/v2/AutoHotkey64.exe' ahk_before rc=0
+  ahk_before="$(stat -c '%Y %s' "$ahk" 2>/dev/null)"
+  run winget.exe upgrade --all --accept-source-agreements --accept-package-agreements || rc=$?
+  # The AutoHotkey installer terminates every running script and restarts
+  # none; winkey.ahk has no supervisor, so hotkeys stay dead until relaunch.
+  if [ "$(stat -c '%Y %s' "$ahk" 2>/dev/null)" != "$ahk_before" ]; then
+    if run schtasks.exe /Run /TN winkey-cold-boot-autofix >/dev/null; then
+      log_done "winkey.ahk relaunched"
+    else
+      log_manual "winkey.ahk not relaunched — press Hyper+C"
+    fi
+  fi
+  return "$rc"
 }
 
 while getopts 'nlh' opt; do
