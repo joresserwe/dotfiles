@@ -23,7 +23,7 @@ update_check = false
 name = "catppuccin-mocha-mauve"
 
 [stats]
-common_subcommands = ["cargo", "docker", "git", "kubectl", "npm", "pnpm", "brew"]
+common_subcommands = ["cargo", "docker", "git", "npm", "pnpm", "brew"]
 common_prefix = ["sudo"]
 
 [logs]

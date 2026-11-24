@@ -93,11 +93,6 @@ esac
 alias rm="echo Use 'del' or 'trash', or the full path i.e. '/bin/rm'"
 alias del="trash"
 
-# k8s
-# alias k="kubectl"
-# alias mk="minikube"
-# alias kgp="kubectl get pod -o wide"
-
 # fzf — f* series
 # ff: find file (Ctrl+E to open in editor)
 ff() {

@@ -83,10 +83,6 @@ export DOTNET_GENERATE_ASPNET_CERTIFICATE=false
 
 export GNUPGHOME="$XDG_DATA_HOME/gnupg"
 
-# kubectl — ignores XDG, defaults to ~/.kube for config and cache
-export KUBECONFIG="$XDG_CONFIG_HOME/kube/config"
-export KUBECACHEDIR="$XDG_CACHE_HOME/kube"
-
 # node REPL history — defaults to ~/.node_repl_history; the parent dir must
 # already exist or node silently disables history persistence
 export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"

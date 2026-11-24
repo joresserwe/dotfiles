@@ -42,8 +42,6 @@ brew "httpie"
 brew "imagemagick"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
-# Kubernetes command-line interface
-brew "kubernetes-cli"
 # SVG rendering library (imagemagick's svg delegate: rsvg-convert)
 brew "librsvg"
 brew "libpq", link: true

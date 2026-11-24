@@ -57,11 +57,6 @@ eval "$(zoxide init zsh)"
 
 eval "$(atuin init zsh --disable-ctrl-r --disable-up-arrow)"
 
-# K8S
-# . <(kubectl completion zsh)
-# . ~/.minikube/.minikube-completion
-# export KUBE_EDITOR="nvim"
-
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && . "$HOME/.config/envman/load.sh"
 
