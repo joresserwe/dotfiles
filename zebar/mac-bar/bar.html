@@ -69,12 +69,25 @@
         return 'nf nf-md-wifi_strength_off_outline';
       }
 
-      function batteryIcon(b) {
-        if (b.chargePercent > 90) return 'nf nf-fa-battery_4';
-        if (b.chargePercent > 70) return 'nf nf-fa-battery_3';
-        if (b.chargePercent > 40) return 'nf nf-fa-battery_2';
-        if (b.chargePercent > 20) return 'nf nf-fa-battery_1';
-        return 'nf nf-fa-battery_0';
+      const BATTERY_BOLT = 'M12.4 1 7.4 6.9h3.2L9.6 11l5-5.9h-3.2Z';
+      function BatteryIcon({ percent, charging }) {
+        const level = Math.max(0, Math.min(100, percent)) / 100;
+        return (
+          <svg className="battery-icon" width="21" height="10" viewBox="0 0 25 12" aria-hidden="true">
+            {charging && (
+              <mask id="battery-bolt-cut">
+                <rect width="25" height="12" fill="#fff" />
+                <path d={BATTERY_BOLT} stroke="#000" strokeWidth="2.4" strokeLinejoin="round" />
+              </mask>
+            )}
+            <g mask={charging ? 'url(#battery-bolt-cut)' : undefined}>
+              <rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor" strokeOpacity="0.55" />
+              <rect x="23" y="4" width="1.5" height="4" rx="0.75" fill="currentColor" fillOpacity="0.55" />
+              <rect x="2" y="2" width={18 * level} height="8" rx="1.5" fill="currentColor" />
+            </g>
+            {charging && <path className="bolt" d={BATTERY_BOLT} />}
+          </svg>
+        );
       }
 
       function weatherIcon(w) {
@@ -551,12 +564,6 @@
                   <path d="M6 15h3v2H6zm4 0h7v2h-7z" />
                 </svg>
               </UsageStat>
-              {out.audio?.defaultPlaybackDevice && (
-                <span className={`stat compact audio ${out.audio.defaultPlaybackDevice.isMuted ? 'muted' : ''}`}>
-                  <i className={volumeIcon(out.audio.defaultPlaybackDevice)}></i>
-                  <span className="metric">{Math.round(out.audio.defaultPlaybackDevice.volume)}%</span>
-                </span>
-              )}
               {out.network && (
                 <span className="stat network">
                   <i className={networkIcon(out.network)}></i>
@@ -572,10 +579,15 @@
                   )}
                 </span>
               )}
+              {out.audio?.defaultPlaybackDevice && (
+                <span className={`stat compact audio divider-left ${out.audio.defaultPlaybackDevice.isMuted ? 'muted' : ''}`}>
+                  <i className={volumeIcon(out.audio.defaultPlaybackDevice)}></i>
+                  <span className="metric">{Math.round(out.audio.defaultPlaybackDevice.volume)}%</span>
+                </span>
+              )}
               {out.battery && (
                 <span className={`stat compact battery ${out.battery.isCharging ? 'charging' : ''}`}>
-                  {out.battery.isCharging && <i className="nf nf-md-power_plug charging-icon"></i>}
-                  <i className={batteryIcon(out.battery)}></i>
+                  <BatteryIcon percent={out.battery.chargePercent} charging={out.battery.isCharging} />
                   <span className="metric">{Math.round(out.battery.chargePercent)}%</span>
                 </span>
               )}

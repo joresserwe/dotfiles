@@ -295,8 +295,9 @@ i {
 .stat.media i        { color: var(--tint-media); }
 .stat.audio i        { color: var(--tint-audio); }
 .stat.network i      { color: var(--tint-network); }
-.stat.battery .charging-icon { color: var(--tint-battery); }
-.stat.battery.charging i     { color: var(--tint-battery); }
+.battery-icon                         { color: var(--fg-dim); flex-shrink: 0; }
+.stat.battery.charging .battery-icon  { color: var(--tint-battery); }
+.battery-icon .bolt                   { fill: var(--fg); }
 .stat.weather i         { font-size: 17px; line-height: 1; }
 .stat.weather           { font-size: 12px; font-weight: 500; gap: 5px; }
 .stat.weather.sun i     { color: var(--tint-sun); }
