@@ -249,7 +249,7 @@ if [[ -n "$WSL_DISTRO_NAME" || -n "$WSL_INTEROP" ]]; then
     fi
 
     (( $#files )) && nvim --server "$sock" --remote "${files[@]}"
-    where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')"
+    where="$(nvim --headless --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')"
     if [[ -n "${where#*|}" ]]; then
       tmux -S "${where%%,*}" switch-client -t "${where#*|}"
     else

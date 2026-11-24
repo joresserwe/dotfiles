@@ -23,7 +23,7 @@ if [[ -n "$start" ]]; then
   NVIM_MEMO_OPEN_FILE="${files[1]}" MEMO_TARGET_ENV=1 exec "$HOME/.local/bin/memo-run"
 fi
 
-where="$(nvim --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')" || exit 1
+where="$(nvim --headless --server "$sock" --remote-expr '$TMUX . "|" . $TMUX_PANE')" || exit 1
 if (( ${#files} )); then
   nvim --server "$sock" --remote "${files[@]}" || exit 1
 fi
