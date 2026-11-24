@@ -122,7 +122,6 @@ i {
   align-items: center;
   gap: 2px;
   padding: 0 10px;
-  margin-left: -8px;
 }
 .systray::before,
 .systray::after {
@@ -342,18 +341,19 @@ i {
 .traffic {
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   gap: 1px;
   font-variant-numeric: tabular-nums;
   font-size: 8.5px;
   line-height: 1.05;
   color: var(--fg-dim);
-  min-width: 52px;
+  min-width: 40px;
 }
 .traffic-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 3px;
 }
 .traffic-row i { font-size: 8.5px; color: var(--fg-dim); }
