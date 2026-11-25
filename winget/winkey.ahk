@@ -411,20 +411,21 @@ global curActiveHwnd := 0, prevActiveHwnd := 0
 
 ; --- Window jump (Win+<hint letter>) ---------------------------------------
 ; zebar's bar shows a hint letter next to each window on the focused
-; workspace and writes their hwnds in the same order to
-; %TEMP%\glazewm-jump-map.txt (bar.html JUMP_HINTS — keep the letter set in
-; sync with the combos below). Resident handling instead of glazewm
-; shell-exec: the per-press powershell cold start queued up and fired
-; seconds late. WinActivate restores minimized targets on its own.
+; workspace and puts their hwnds in the same order in its window title
+; (bar.html JUMP_HINTS — keep the letter set in sync with the combos below).
+; Resident handling instead of glazewm shell-exec: the per-press powershell
+; cold start queued up and fired seconds late. WinActivate restores minimized
+; targets on its own.
 JumpToWindow(idx) {
     MarkHotkey("Jump" idx)
-    try map := FileRead(A_Temp "\glazewm-jump-map.txt")
-    catch
-        return
-    toks := StrSplit(Trim(map, " `r`n"), " ")
-    if (idx > toks.Length)
-        return
-    hwnd := toks[idx] + 0
+    hwnd := 0
+    for bar in WinGetList("zebar-jump ahk_exe zebar.exe") {
+        try toks := StrSplit(WinGetTitle(bar), " ")
+        catch
+            continue
+        if (toks.Length > idx)
+            hwnd := toks[idx + 1] + 0
+    }
     if (hwnd && WinExist("ahk_id " hwnd)) {
         ; WinActivate alone skips restore when the minimized target is already
         ; the active window (glazewm keeps focus on a window it minimizes), and

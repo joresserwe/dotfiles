@@ -135,22 +135,19 @@
 
       // Must match the ~F13 & <letter> jump combos in winget/winkey.ahk.
       // When a letter gets taken by a new f13 binding, remove it from BOTH
-      // places. The map file below feeds AHK the hwnds in this same order.
+      // places. The window title below feeds AHK the hwnds in this same order.
       const JUMP_HINTS = 'asxcvqweg';
       let lastJumpMap = null;
 
       function writeJumpMap(glazewm) {
-        if (!glazewm?.displayedWorkspace?.hasFocus) {
-          lastJumpMap = null;
-          return;
-        }
-        const handles = workspaceWindows(glazewm.displayedWorkspace)
-          .slice(0, JUMP_HINTS.length)
-          .map(w => w.handle);
-        const map = handles.join(' ') || '0';
+        const workspace = glazewm?.displayedWorkspace;
+        const handles = workspace?.hasFocus
+          ? workspaceWindows(workspace).slice(0, JUMP_HINTS.length).map(w => w.handle)
+          : [];
+        const map = ['zebar-jump', ...handles].join(' ');
         if (map === lastJumpMap) return;
         lastJumpMap = map;
-        zebar.shellExec('cmd.exe', ['/c', 'echo', ...map.split(' '), '>', '%TEMP%\\glazewm-jump-map.txt']);
+        zebar.currentWidget().window.tauri.setTitle(map).catch(() => { lastJumpMap = null; });
       }
 
       function workspaceWindows(ws) {
