@@ -17,6 +17,46 @@ detect_os() {
   esac
 }
 
+# dotfiles_profile → echoes "light" or "full" (env DOTFILES_PROFILE, then
+# $XDG_STATE_HOME/dotfiles/profile, defaulting to "full")
+dotfiles_profile() {
+  local p="${DOTFILES_PROFILE:-}"
+  if [ "$p" != "light" ] && [ "$p" != "full" ]; then
+    p="$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/profile" 2>/dev/null || true)"
+  fi
+  case "$p" in
+    light) echo light ;;
+    *)     echo full ;;
+  esac
+}
+
+# install_claude_settings → links claude/settings.json on --full; on --light
+# writes a regular file with prefersReducedMotion=true so git stays clean.
+install_claude_settings() {
+  local managed="$DOTFILES_PATH/claude/settings.json"
+  local target="${XDG_DATA_HOME:-$HOME/.local/share}/claude/settings.json"
+  local profile merged tmp
+  profile="$(dotfiles_profile)"
+
+  mkdir -p "$(dirname "$target")"
+  if [ "$profile" = "light" ]; then
+    if [ -f "$target" ]; then
+      merged="$(jq -s '.[1] + (.[0] | {model} | with_entries(select(.value != null))) + {prefersReducedMotion: true}' "$target" "$managed")" || return 1
+    else
+      merged="$(jq '. + {prefersReducedMotion: true}' "$managed")" || return 1
+    fi
+    if [ ! -L "$target" ] && [ -f "$target" ] && jq -e --argjson want "$merged" '. == $want' "$target" >/dev/null; then
+      log_skip "claude settings already up to date (light): $target"
+      return 0
+    fi
+    tmp="$target.tmp.$$"
+    printf '%s\n' "$merged" > "$tmp" && mv "$tmp" "$target" || return 1
+    log_done "claude settings rendered (light: prefersReducedMotion=true): $target"
+  else
+    create_link "$managed" "$target"
+  fi
+}
+
 log_step() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 log_skip() { printf '    \033[2;37m-- %s\033[0m\n' "$*"; }
 log_done() { printf '    \033[1;32mok\033[0m %s\n' "$*"; }
@@ -68,5 +108,127 @@ install_codex_web_guidance() {
   plugins="$("$cli" plugin list --marketplace googlechrome --json)" || return 1
   if ! jq -e 'any(.installed[]; .pluginId == "modern-web-guidance@googlechrome")' <<< "$plugins" >/dev/null; then
     "$cli" plugin add modern-web-guidance@googlechrome
+  fi
+}
+
+_agy_same_link() {
+  local source="$1" target="$2" source_real target_link target_real
+  source_real="$(CDPATH= cd -- "$(dirname "$source")" && pwd)/$(basename "$source")"
+  target_link="$(readlink "$target")" || return 1
+  case "$target_link" in
+    /*) target_real="$target_link" ;;
+    *)  target_real="$(CDPATH= cd -- "$(dirname "$target")" && pwd)/$target_link" ;;
+  esac
+  [ "$target_real" = "$source_real" ]
+}
+
+_agy_backup() {
+  local path="$1" stamp backup index=0
+  stamp="$(date +%Y%m%d%H%M%S)"
+  backup="$path.agy-backup-$stamp-$$"
+  while [ -e "$backup" ] || [ -L "$backup" ]; do
+    index=$((index + 1))
+    backup="$path.agy-backup-$stamp-$$-$index"
+  done
+  mv "$path" "$backup"
+  log_done "agy backup: $path -> $backup"
+}
+
+_agy_link_file() {
+  local source="$1" target="$2"
+  [ -f "$source" ] || return 1
+  mkdir -p "$(dirname "$target")"
+  if [ -L "$target" ]; then
+    _agy_same_link "$source" "$target" && return 0
+    _agy_backup "$target"
+  elif [ -e "$target" ]; then
+    if [ -d "$target" ]; then
+      log_skip "agy preserved directory: $target"
+      return 0
+    fi
+    _agy_backup "$target"
+  fi
+  ln -s "$source" "$target"
+  log_done "link: $target -> $source"
+}
+
+_agy_link_skill() {
+  local source="$1" target="$2"
+  [ -d "$source" ] || return 1
+  mkdir -p "$(dirname "$target")"
+  if [ -L "$target" ]; then
+    _agy_same_link "$source" "$target" && return 0
+    _agy_backup "$target"
+  elif [ -e "$target" ]; then
+    log_skip "agy preserved existing skill entry: $target"
+    return 0
+  fi
+  ln -s "$source" "$target"
+  log_done "link: $target -> $source"
+}
+
+install_antigravity() {
+  local cli="$HOME/.local/bin/agy"
+  local managed="$DOTFILES_PATH/antigravity/settings.json"
+  local target="$HOME/.gemini/antigravity-cli/settings.json"
+  local config_dir="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config}"
+  local profile light_speed merged tmp skill_dir skill_name plugins
+
+  profile="$(dotfiles_profile)"
+  light_speed="medium"
+  [ "$profile" = "light" ] && light_speed="off"
+
+  if [ -x "$cli" ]; then
+    log_skip "agy CLI already installed (self-updates)"
+  else
+    curl -fsSL https://antigravity.google/cli/install.sh | bash || return 1
+    log_done "agy CLI installed: $cli"
+  fi
+
+  # agy rewrites settings.json via atomic replace (and normalizes it at
+  # startup), which would sever a symlink. Merge the managed keys into the
+  # machine-local file instead so /config and /model choices survive.
+  mkdir -p "$(dirname "$target")"
+  if [ -f "$target" ]; then
+    merged="$(jq -s --arg speed "$light_speed" '
+      .[0] as $cur | .[1] as $mgd | ($cur * $mgd)
+      | .runningLightSpeed = $speed
+      | if (($mgd.permissions // null) | type) == "object" then
+          .permissions.allow = ((($cur.permissions.allow // []) + ($mgd.permissions.allow // [])) | unique)
+          | .permissions.ask = ((($cur.permissions.ask // []) + ($mgd.permissions.ask // [])) | unique)
+          | .permissions.deny = ((($cur.permissions.deny // []) + ($mgd.permissions.deny // [])) | unique)
+        else . end
+    ' "$target" "$managed")" || return 1
+    if jq -e --argjson want "$merged" '. == $want' "$target" >/dev/null; then
+      log_skip "agy settings already up to date: $target"
+    else
+      tmp="$target.tmp.$$"
+      (umask 077 && printf '%s\n' "$merged" > "$tmp") && mv "$tmp" "$target" || return 1
+      log_done "agy settings merged ($profile: runningLightSpeed=$light_speed): $target"
+    fi
+  else
+    merged="$(jq --arg speed "$light_speed" '.runningLightSpeed = $speed' "$managed")" || return 1
+    tmp="$target.tmp.$$"
+    (umask 077 && printf '%s\n' "$merged" > "$tmp") && mv "$tmp" "$target" || return 1
+    log_done "agy settings merged ($profile: runningLightSpeed=$light_speed): $target"
+  fi
+
+  mkdir -p "$config_dir/skills"
+  _agy_link_file "$DOTFILES_PATH/antigravity/AGENTS.md" "$config_dir/AGENTS.md" || return 1
+  _agy_link_file "$DOTFILES_PATH/antigravity/hooks.json" "$config_dir/hooks.json" || return 1
+
+  for skill_dir in "$DOTFILES_PATH"/antigravity/skills/*; do
+    [ -d "$skill_dir" ] || continue
+    skill_name="$(basename "$skill_dir")"
+    _agy_link_skill "$skill_dir" "$config_dir/skills/$skill_name" || return 1
+  done
+
+  plugins="$("$cli" plugin list --json 2>/dev/null)" || plugins="[]"
+  if [ -d "$config_dir/plugins/modern-web-guidance" ] \
+    || jq -e 'any(.[]; ((.name // .id // .dir // "") | test("modern-web-guidance")))' <<< "$plugins" >/dev/null 2>&1; then
+    log_skip "agy plugin already installed: modern-web-guidance"
+  else
+    "$cli" plugin install https://github.com/GoogleChrome/modern-web-guidance || return 1
+    log_done "agy plugin installed: modern-web-guidance"
   fi
 }

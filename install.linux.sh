@@ -45,8 +45,8 @@ for arg in "$@"; do
     --full)  DOTFILES_PROFILE_ARG="full" ;;
     *)
       echo "Usage: install.linux.sh [--light|--full]" >&2
-      echo "  --light  lightweight Windows-side profile: reduced zebar effects" >&2
-      echo "  --full   full profile: full zebar effects (default on first run)" >&2
+      echo "  --light  lightweight no-GPU profile: reduced zebar/WT effects and CLI animations off" >&2
+      echo "  --full   full profile: full zebar effects and CLI animations on (default on first run)" >&2
       echo "Without a flag, the profile persisted in $DOTFILES_PROFILE_FILE is reused." >&2
       exit 1
       ;;
@@ -57,7 +57,7 @@ case "$DOTFILES_PROFILE_PREV" in
   light|full) ;;
   *) DOTFILES_PROFILE_PREV="" ;;
 esac
-DOTFILES_PROFILE="${DOTFILES_PROFILE_ARG:-${DOTFILES_PROFILE_PREV:-full}}"
+export DOTFILES_PROFILE="${DOTFILES_PROFILE_ARG:-${DOTFILES_PROFILE_PREV:-full}}"
 mkdir -p "${DOTFILES_PROFILE_FILE%/*}"
 printf '%s' "$DOTFILES_PROFILE" > "$DOTFILES_PROFILE_FILE"
 log_step "Install profile: $DOTFILES_PROFILE (persisted in $DOTFILES_PROFILE_FILE)"
@@ -672,8 +672,14 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     claude_win_dir="$win_userprofile_wsl/.claude"
     mkdir -p "$claude_win_dir"
     dotfiles_win_fwd="${dotfiles_win//\\//}"
-    sed "s|__DOTFILES_WIN__|$dotfiles_win_fwd|g" \
-      "$DOTFILES_PATH/claude/settings.windows.json" > "$claude_win_dir/settings.json"
+    if [[ "$DOTFILES_PROFILE" == "light" ]]; then
+      sed "s|__DOTFILES_WIN__|$dotfiles_win_fwd|g" \
+        "$DOTFILES_PATH/claude/settings.windows.json" \
+        | jq '. + {prefersReducedMotion: true}' > "$claude_win_dir/settings.json"
+    else
+      sed "s|__DOTFILES_WIN__|$dotfiles_win_fwd|g" \
+        "$DOTFILES_PATH/claude/settings.windows.json" > "$claude_win_dir/settings.json"
+    fi
     log_done "Claude Code (Windows): settings.json rendered (statusline -> $dotfiles_win_fwd/claude/statusline.ps1)"
   else
     log_skip "dotfiles mirror: could not resolve %USERPROFILE%"
@@ -1254,9 +1260,9 @@ fi
 log_done "Phase 4 complete (run 'nvim --headless \"+Lazy! sync\" +qa' to pre-install plugins)"
 
 # ============================================================================
-# Phase 5 — Codex + Claude Code
+# Phase 5 — Codex + Claude Code + Antigravity
 # ============================================================================
-log_step "Phase 5: Codex + Claude Code"
+log_step "Phase 5: Codex + Claude Code + Antigravity"
 
 log_step "Installing/updating Codex CLI (standalone installer)"
 export CODEX_HOME="$XDG_DATA_HOME/codex"
@@ -1289,7 +1295,7 @@ fi
 
 ensure_dir "$XDG_DATA_HOME/claude"
 
-create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
+install_claude_settings
 git -C "$DOTFILES_PATH" config filter.strip-claude-model.clean 'jq --indent 2 "del(.model)"'
 log_done "git clean filter set: claude/settings.json model field kept out of git"
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
@@ -1310,6 +1316,10 @@ if [ -L "$XDG_DATA_HOME/claude/skills" ] || [ ! -e "$XDG_DATA_HOME/claude/skills
 else
   log_skip "$XDG_DATA_HOME/claude/skills exists and is not a symlink — leaving alone"
 fi
+
+log_step "Antigravity CLI (agy)"
+install_antigravity \
+  || log_manual "agy: install or settings merge failed — re-run this script"
 
 log_done "Phase 5 complete"
 

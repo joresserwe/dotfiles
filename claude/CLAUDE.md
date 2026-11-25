@@ -1,11 +1,11 @@
 # Gotchas
 
-## Shared rules and skills — sync to Codex
+## Shared rules and skills — sync to Codex and Antigravity
 
-- When adding, changing, or removing a rule or skill that applies to both Claude and Codex, update both in the same task. Do not leave synchronization as a follow-up.
-- Keep shared skill sources in `skills/<name>/SKILL.md` in the dotfiles repository. Both `claude/skills/<name>` and `codex/skills/<name>` must be relative directory symlinks to `../../skills/<name>`; edit the shared source rather than creating separate copies.
-- Mirror shared default-rule changes into `codex/AGENTS.md`, preserving their meaning. Read the counterpart first and resolve conflicting shared instructions together. Keep Claude-specific tools, plugins, permissions, and model settings separate.
-- Use the shared `shared-skills` skill for this work. Verify both repository and global skill links, and report any synchronization that could not be completed. Keep downloaded plugins and `skills/synced/` out of the shared sources.
+- When adding, changing, or removing a rule or skill that applies across Claude, Codex, and Antigravity, update all three in the same task. Do not leave synchronization as a follow-up.
+- Keep shared skill sources in `skills/<name>/SKILL.md` in the dotfiles repository. `claude/skills/<name>`, `codex/skills/<name>`, and `antigravity/skills/<name>` must all be relative directory symlinks to `../../skills/<name>`; edit the shared source rather than creating separate copies.
+- Mirror shared default-rule changes into `codex/AGENTS.md` and `antigravity/AGENTS.md`, preserving their meaning. Read the counterparts first and resolve conflicting shared instructions together. Keep Claude-specific tools, plugins, permissions, and model settings separate.
+- Use the shared `shared-skills` skill for this work. Verify repository and global skill links across all three tools, and report any synchronization that could not be completed. Keep downloaded plugins and `skills/synced/` out of the shared sources.
 
 ## Comments — mechanical procedure, no judgment calls
 

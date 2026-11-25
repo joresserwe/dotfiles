@@ -7,7 +7,7 @@ tool_output_token_limit = 6000
 file_opener = "none"
 
 [tui]
-animations = false
+animations = true
 notifications = true
 theme = "catppuccin-mocha"
 terminal_title = ["spinner", "project"]

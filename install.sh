@@ -287,7 +287,7 @@ install_codex_web_guidance \
 
 echo "Configuring Claude Code..."
 ensure_dir "$XDG_DATA_HOME/claude"
-create_link "$DOTFILES_PATH/claude/settings.json" "$XDG_DATA_HOME/claude/settings.json"
+install_claude_settings
 git -C "$DOTFILES_PATH" config filter.strip-claude-model.clean 'jq --indent 2 "del(.model)"'
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
 if [ -L "$XDG_DATA_HOME/claude/skills" ] || [ ! -e "$XDG_DATA_HOME/claude/skills" ]; then
@@ -307,6 +307,12 @@ if command -v claude >/dev/null 2>&1 || [ -x "$HOME/.local/bin/claude" ]; then
 else
 	curl -fsSL https://claude.ai/install.sh | bash
 fi
+
+# -----------------------------------------------------------------------------------------------
+
+echo "Configuring Antigravity CLI (agy)..."
+install_antigravity \
+	|| log_manual "agy: install or settings merge failed — re-run this script"
 
 # -----------------------------------------------------------------------------------------------
 

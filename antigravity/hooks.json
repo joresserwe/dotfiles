@@ -1,0 +1,39 @@
+{
+  "comment-check": {
+    "PostToolUse": [
+      {
+        "matcher": "edit_file|write_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/antigravity/hooks/comment-check.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "python3 \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/antigravity/hooks/comment-check.py\"",
+        "timeout": 5
+      }
+    ]
+  },
+  "tmux-status": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "sh \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/antigravity/hooks/tmux-status.sh\" working",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "sh \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/antigravity/hooks/tmux-status.sh\" done",
+        "timeout": 5
+      }
+    ]
+  }
+}

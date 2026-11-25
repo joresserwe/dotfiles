@@ -24,7 +24,7 @@
 | **File Manager** | `yazi` &mdash; smart-enter, archive extract/compress, WSL `winopen` openers |
 | **Window Manager** | macOS: `aerospace` &mdash; gradient borders, auto-float rules &middot; WinOS: `glazewm` + `zebar` + `tacky-borders` |
 | **Keyboard** | macOS: `karabiner` &mdash; Right Option &rarr; Hyper, Caps Lock &rarr; Ctrl &middot; WinOS: `AutoHotkey` (`winkey.ahk`) &mdash; Hyper layer, window jump hints |
-| **Dev** | `git` `lazygit` `mise` `pnpm` `claude code` `codex` |
+| **Dev** | `git` `lazygit` `mise` `pnpm` `claude code` `codex` `antigravity cli` |
 | **Utility** | macOS: `raycast` `wallpaperkiller` &middot; WinOS: `Flow Launcher` `ShareX` |
 | **Browser** | `surfingkeys` &mdash; keyboard-driven web surfing, config loaded from raw URL |
 
@@ -92,6 +92,11 @@ ln -sf ~/.config/.dotfiles/claude/settings.json ~/.local/share/claude/settings.j
 ln -sf ~/.config/.dotfiles/claude/CLAUDE.md ~/.local/share/claude/CLAUDE.md
 ln -sf ~/.config/.dotfiles/claude/skills ~/.local/share/claude/skills
 
+# antigravity (settings.json merged by install_antigravity; config linked into ~/.gemini/config)
+ln -sf ~/.config/.dotfiles/antigravity/AGENTS.md ~/.gemini/config/AGENTS.md
+ln -sf ~/.config/.dotfiles/antigravity/hooks.json ~/.gemini/config/hooks.json
+ln -sf ~/.config/.dotfiles/antigravity/skills/<skill> ~/.gemini/config/skills/<skill>
+
 # tmux
 ln -sf ~/.config/.dotfiles/tmux/tmux.conf ~/.config/tmux/tmux.conf
 ln -sf ~/.config/.dotfiles/tmux/tmux.mapping.conf ~/.config/tmux/tmux.mapping.conf
@@ -127,7 +132,7 @@ git clone https://github.com/joresserwe/dotfiles ~/.config/.dotfiles
 ~/.config/.dotfiles/install.linux.sh
 ```
 
-The default `--full` profile uses full Zebar effects with hardware rendering and reduced effects with software rendering. Use `--light` to force reduced Zebar effects and disable tacky-borders animations, for example on VMs or RDP hosts. Both profiles use Flow Launcher. The choice is persisted in `$XDG_STATE_HOME/dotfiles/profile` and reused on flagless re-runs.
+The default `--full` profile uses full Zebar effects with hardware rendering and keeps CLI animations enabled. Use `--light` on GPU-less PCs, VMs, or RDP hosts to force reduced Zebar/Windows Terminal effects and disable tacky-borders plus CLI animations (`agy` `runningLightSpeed: "off"`, `codex` `animations = false` without title spinner, `claude` `prefersReducedMotion: true`). Both profiles use Flow Launcher. The choice is persisted in `$XDG_STATE_HOME/dotfiles/profile` and reused on flagless re-runs.
 
 The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powerlevel10k, neovim/AstroNvim, tmux, yazi, atuin, mise, claude code) using a hybrid **apt + Homebrew on Linux** setup. macOS-only tools (aerospace, karabiner, raycast, wallpaperkiller, casks, mas) are skipped automatically via `if OS.mac?` guards in the shared `Brewfile`.
 
@@ -147,7 +152,7 @@ The Linux installer reproduces the macOS CLI environment (zsh + oh-my-zsh + powe
 | **2** | `brew bundle` (Linux subset) + tmux/git/atuin/yazi configs |
 | **3** | mise + node LTS + global pnpm packages |
 | **4** | AstroNvim clone |
-| **5** | Codex standalone installer + Claude Code symlinks |
+| **5** | Codex standalone installer + Claude Code symlinks + Antigravity CLI (`agy`) settings merge, `~/.gemini/config` rules/hooks/skills links, and `modern-web-guidance` plugin |
 
 ### Windows-side setup
 
@@ -208,4 +213,4 @@ DISPLAY=:99 XAUTHORITY="$XDG_RUNTIME_DIR/kiro-clipboard.Xauthority" \
   xclip -selection clipboard -target TARGETS -out
 ```
 
-Claude Code와 Codex의 공통 스킬은 `skills/`에서 Git으로 관리한다. `claude/skills/`와 `codex/skills/`는 각 공통 스킬 디렉터리를 상대 심볼릭 링크로 참조한다. 공통 규칙·스킬을 변경하면 양쪽 기본 지침과 전역 연결까지 같은 작업에서 확인한다. 상세 연결 방식은 [공유 스킬 관리](skills/shared-skills/SKILL.md)를 따른다.
+Claude Code·Codex·Antigravity의 공통 스킬은 `skills/`에서 Git으로 관리한다. `claude/skills/`, `codex/skills/`, `antigravity/skills/`는 각 공통 스킬 디렉터리를 상대 심볼릭 링크로 참조한다. 공통 규칙·스킬을 변경하면 세 쪽 기본 지침과 전역 연결까지 같은 작업에서 확인한다. 상세 연결 방식은 [공유 스킬 관리](skills/shared-skills/SKILL.md)를 따른다.

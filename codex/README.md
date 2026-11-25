@@ -19,4 +19,4 @@ Codex 홈은 XDG 데이터 루트 `${XDG_DATA_HOME:-$HOME/.local/share}/codex` �
 
 `PostToolUse`의 `apply_patch` hook은 추가된 주석 줄만 보고 `AGENTS.md`의 주석 규칙을 짧게 환기한다. 저장소 전체 diff·테스트·모델 호출을 하지 않고, 주석이 없으면 조용히 종료한다. hook은 advisory라서 주석을 삭제하거나 쓰기를 차단하지 않는다. 처음 실행할 때 native hook 신뢰를 요청하면 정확한 로컬 hook 경로와 내용을 확인한 뒤 일반 `/hooks` UI에서 신뢰한다. 우회 플래그로 신뢰하지 않는다.
 
-공통 스킬 원본은 저장소의 `skills/`에 있으며 `claude/skills/`와 `codex/skills/`의 상대 디렉터리 링크를 통해 양쪽에서 사용한다. Claude에서도 `commit`, `dotfiles-manager`, `implement`, `review`, `shared-skills` 이름을 사용한다. 공통 기본 규칙은 `claude/CLAUDE.md`와 `codex/AGENTS.md`에 같은 작업에서 반영하며 제품 전용 설정은 분리한다.
+공통 스킬 원본은 저장소의 `skills/`에 있으며 `claude/skills/`, `codex/skills/`, `antigravity/skills/`의 상대 디렉터리 링크를 통해 세 도구에서 함께 사용한다. Claude와 Antigravity에서도 `commit`, `dotfiles-manager`, `implement`, `review`, `shared-skills` 이름을 사용한다. 공통 기본 규칙은 `claude/CLAUDE.md`, `codex/AGENTS.md`, `antigravity/AGENTS.md`에 같은 작업에서 반영하며 제품 전용 설정은 분리한다.

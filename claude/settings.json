@@ -190,7 +190,7 @@
     }
   },
   "tui": "fullscreen",
-  "prefersReducedMotion": true,
+  "prefersReducedMotion": false,
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",

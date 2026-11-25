@@ -11,6 +11,12 @@ managed_config="$repo_root/codex/config.toml"
 codex_homes=("$xdg_codex_home")
 legacy_skills=(commit implement review shared-skills)
 
+dotfiles_profile="${DOTFILES_PROFILE:-}"
+if [ "$dotfiles_profile" != "light" ] && [ "$dotfiles_profile" != "full" ]; then
+  dotfiles_profile="$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/profile" 2>/dev/null || true)"
+fi
+[ "$dotfiles_profile" = "light" ] || dotfiles_profile="full"
+
 die() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
@@ -97,7 +103,7 @@ link_skill() {
 sync_config() {
   local target="$1"
   mkdir -p "$(dirname "$target")"
-  python3 - "$managed_config" "$target" <<'PY'
+  python3 - "$managed_config" "$target" "$dotfiles_profile" <<'PY'
 import copy
 import datetime as dt
 import json
@@ -113,12 +119,19 @@ from pathlib import Path
 
 managed_path = Path(sys.argv[1])
 target = Path(sys.argv[2])
+profile = sys.argv[3]
 
 try:
     with managed_path.open("rb") as handle:
         managed = tomllib.load(handle)
 except (OSError, tomllib.TOMLDecodeError) as exc:
     raise SystemExit(f"cannot parse managed config {managed_path}: {exc}")
+
+if profile == "light":
+    tui = managed.setdefault("tui", {})
+    tui["animations"] = False
+    if isinstance(tui.get("terminal_title"), list):
+        tui["terminal_title"] = [item for item in tui["terminal_title"] if item != "spinner"]
 
 existing = {}
 if target.exists() or target.is_symlink():
