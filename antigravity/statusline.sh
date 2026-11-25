@@ -74,8 +74,7 @@ def make_pill(icon, accent, parts):
     body_plain = "".join(txt for _, txt in parts)
     rendered = (
         f"{ac_fg}{ROUND_L}"
-        f"{ac_bg}{CRUST_FG}{icon}"
-        f"{SURF0_BG}{ac_fg}█"
+        f"{ac_bg}{CRUST_FG}{icon} "
         f"{SURF0_BG}{TEXT_FG} {body_ansi} "
         f"{RST}{SURF0_FG}{ROUND_R}{RST}"
     )
@@ -118,6 +117,10 @@ else:
 if not effort and isinstance(d.get("effort"), dict):
     effort = d["effort"].get("level") or ""
 
+suffix = f" ({effort})"
+if effort and m_name.lower().endswith(suffix.lower()):
+    m_name = m_name[: -len(suffix)]
+
 m_parts = [(f"{BOLD}{TEXT_FG}", m_name)]
 if effort:
     ef_map = {
@@ -128,7 +131,7 @@ if effort:
         "max": (fg(*RED), "max"),
     }
     ef_col, ef_lbl = ef_map.get(effort, (fg(*YELLOW), effort))
-    m_parts.append((f"{NOBOLD}{ef_col}", f" \uf0e7{ef_lbl}"))
+    m_parts.append((f"{NOBOLD}{ef_col}", f" \uf0e7 {ef_lbl}"))
 else:
     m_parts.append((NOBOLD, ""))
 
