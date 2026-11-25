@@ -610,6 +610,18 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     create_link "$DOTFILES_PATH/wt/yazi-target" "$HOME/.local/bin/yazi-target"
     create_link "$DOTFILES_PATH/wt/memo-target" "$HOME/.local/bin/memo-target"
     create_link "$DOTFILES_PATH/wt/memo-run" "$HOME/.local/bin/memo-run"
+
+    symbols_font="$DOTFILES_PATH/fonts/DotfilesSymbols.ttf"
+    symbols_font_target="$win_userprofile_wsl/AppData/Local/Microsoft/Windows/Fonts/DotfilesSymbols.ttf"
+    mkdir -p "${symbols_font_target%/*}"
+    if { cmp -s "$symbols_font" "$symbols_font_target" || cp "$symbols_font" "$symbols_font_target"; } \
+      && reg.exe add 'HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts' /v 'Dotfiles Symbols (TrueType)' \
+        /t REG_SZ /d "$(wslpath -w "$symbols_font_target")" /f >/dev/null 2>&1 </dev/null; then
+      log_done "font: Dotfiles Symbols"
+    else
+      log_manual "font: Dotfiles Symbols not installed — close Windows Terminal and re-run this script"
+    fi
+
     wt_settings=""
     for cand in \
       "$win_userprofile_wsl/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json" \

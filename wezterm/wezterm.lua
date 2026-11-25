@@ -106,6 +106,7 @@ config.font = wezterm.font_with_fallback({
 	"0xProto Nerd Font",
 	"Sarasa Term K",
 	"codicon",
+	"Dotfiles Symbols",
 })
 
 -- Silence the missing-glyph log spam. Bash output occasionally renders

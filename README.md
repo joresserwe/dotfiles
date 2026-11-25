@@ -171,6 +171,8 @@ It covers exactly what `install.linux.sh` cannot, since that script runs inside 
    - **codicon** — covers VS Code PUA glyphs emitted by Claude Code's TUI, from [@vscode/codicons](https://unpkg.com/@vscode/codicons/dist/codicon.ttf).
 
    Idempotent: already-installed families are skipped; pass `-RefreshFonts` to force an update.
+
+   **Dotfiles Symbols** (`fonts/DotfilesSymbols.ttf`) is installed by `install.linux.sh` / `install.sh`. Its glyphs start 0.4 cell in and run past the right cell edge, so follow them with a space: U+10F100 check, U+10F101 ellipsis, U+10F102 dot. Regenerate with `fonts/build.py`.
 3. **Registry tweaks** — runs `winget/registry.ps1` elevated, so the HKLM Scancode Map (CapsLock → Ctrl, LWin → F13) actually lands — an unelevated pass silently cannot write it, and winkey.ahk + the glazewm Hyper chain depend on it.
 
 After the reboot, `wsl --install -d Ubuntu` creates the Linux user; then run `install.linux.sh` from a terminal launched **as Administrator** — the RunLevel=Highest scheduled tasks (glazewm autostart, winkey, tacky-borders) are registered through WSL interop, which inherits the terminal's token.
