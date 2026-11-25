@@ -103,7 +103,7 @@ export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
 # `install -g` when it's not in PATH.
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-for package in yarn npm-check-updates mcp-hub; do
+for package in yarn npm-check-updates mcp-hub @playwright/cli; do
 	if pnpm list -g --depth=0 2>/dev/null | grep "$package" >/dev/null; then
 		echo "$package is already installed."
 	else
@@ -113,6 +113,9 @@ for package in yarn npm-check-updates mcp-hub; do
 		CI=1 pnpm install -g "$package" </dev/null
 	fi
 done
+if command -v playwright-cli >/dev/null 2>&1; then
+	PLAYWRIGHT_BROWSERS_PATH="$XDG_CACHE_HOME/ms-playwright" playwright-cli install-browser chromium </dev/null
+fi
 
 # -----------------------------------------------------------------------------------------------
 
@@ -219,9 +222,11 @@ create_link "$DOTFILES_PATH/ideavim/mac/.ideavimrc" "$XDG_CONFIG_HOME/ideavim/id
 create_link "$DOTFILES_PATH/vim/vimrc" "$XDG_CONFIG_HOME/vim/vimrc"
 # git
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
+create_link "$DOTFILES_PATH/git/ignore" "$XDG_CONFIG_HOME/git/ignore"
 git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 # npm
 create_link "$DOTFILES_PATH/npm/npmrc" "$XDG_CONFIG_HOME/npm/npmrc"
+create_link "$DOTFILES_PATH/playwright/cli.config.json" "$XDG_CONFIG_HOME/playwright/cli.config.json"
 # aerospace
 create_link "$DOTFILES_PATH/aerospace/aerospace.toml" "$XDG_CONFIG_HOME/aerospace/aerospace.toml"
 # yazi
@@ -267,6 +272,7 @@ create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
+create_link "$DOTFILES_PATH/bin/playwright-cli" "$HOME/.local/bin/playwright-cli"
 create_link "$DOTFILES_PATH/bin/bwc" "$HOME/.local/bin/bwc"
 create_link "$DOTFILES_PATH/bin/bwg" "$HOME/.local/bin/bwg"
 create_link "$DOTFILES_PATH/bin/bw-type" "$HOME/.local/bin/bw-type"

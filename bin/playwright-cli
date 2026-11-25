@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+real=""
+search_path="${PATH}:${PNPM_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/pnpm}/bin"
+IFS=: read -ra dirs <<<"$search_path"
+for dir in "${dirs[@]}"; do
+  [ -n "$dir" ] || continue
+  candidate="$dir/playwright-cli"
+  if [ -x "$candidate" ] && [ "$(readlink -f "$candidate")" != "$self" ]; then
+    real="$candidate"
+    break
+  fi
+done
+if [ -z "$real" ]; then
+  echo "playwright-cli: no playwright-cli binary found in PATH besides this wrapper" >&2
+  exit 127
+fi
+
+export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${XDG_CACHE_HOME:-$HOME/.cache}/ms-playwright}"
+export PLAYWRIGHT_MCP_CONFIG="${PLAYWRIGHT_MCP_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/playwright/cli.config.json}"
+default_out_dir="${XDG_CACHE_HOME:-$HOME/.cache}/playwright-cli"
+export PLAYWRIGHT_MCP_OUTPUT_DIR="${PLAYWRIGHT_MCP_OUTPUT_DIR:-$default_out_dir}"
+export NO_UPDATE_NOTIFIER="${NO_UPDATE_NOTIFIER:-1}"
+mkdir -p "$PLAYWRIGHT_MCP_OUTPUT_DIR"
+
+for arg in "$@"; do
+  case "$arg" in
+    -*) ;;
+    open|attach)
+      find "$default_out_dir" -mindepth 1 -mtime +3 -delete 2>/dev/null || true
+      if [ -d "$PLAYWRIGHT_BROWSERS_PATH/daemon" ]; then
+        find "$PLAYWRIGHT_BROWSERS_PATH/daemon" -type f -name '*.err' -mtime +3 -delete 2>/dev/null || true
+      fi
+      find "${TMPDIR:-/tmp}" -maxdepth 1 -user "${USER:-$(id -un)}" \
+        \( -name 'playwright*' -o -name 'pw-*' \) -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+      break
+      ;;
+    *) break ;;
+  esac
+done
+
+exec "$real" "$@"

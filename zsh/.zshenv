@@ -97,6 +97,10 @@ export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite/history"
 
 export WGETRC="$XDG_CONFIG_HOME/wget/wgetrc"
 
+export PLAYWRIGHT_BROWSERS_PATH="$XDG_CACHE_HOME/ms-playwright"
+export PLAYWRIGHT_MCP_CONFIG="$XDG_CONFIG_HOME/playwright/cli.config.json"
+export PLAYWRIGHT_MCP_OUTPUT_DIR="$XDG_CACHE_HOME/playwright-cli"
+
 export FZF_DEFAULT_OPTS="--height=40% --layout=reverse --border --info=inline"
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 

@@ -69,7 +69,9 @@
       "Bash(brew --prefix:*)",
       "Bash(defaults read:*)",
       "Bash(mkdir:*)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Bash(playwright-cli:*)",
+      "Bash(playwright-win:*)"
     ],
     "deny": [
       "Read(~/.config/git/config.local)",

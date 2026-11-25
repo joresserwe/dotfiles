@@ -58,7 +58,11 @@ step_pnpm() {
   have pnpm || { log_skip "pnpm not found"; return 0; }
   # </dev/null: pnpm >=10 blocks on an interactive build-approval picker
   # when a TTY is attached, and CI=1 alone does not suppress it.
-  run env CI=1 pnpm update -g </dev/null
+  run env CI=1 pnpm update -g </dev/null || return 1
+  run pnpm store prune </dev/null || true
+  if have playwright-cli; then
+    run playwright-cli install-browser chromium </dev/null
+  fi
 }
 
 step_uv() {

@@ -287,6 +287,7 @@ brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
+create_link "$DOTFILES_PATH/git/ignore" "$XDG_CONFIG_HOME/git/ignore"
 git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 
 # WSL: make this clone pushable. The shared git/config routes github.com
@@ -313,6 +314,11 @@ else
   log_skip "git credential bridge: not WSL or GCM missing"
 fi
 create_link "$DOTFILES_PATH/npm/npmrc"  "$XDG_CONFIG_HOME/npm/npmrc"
+create_link "$DOTFILES_PATH/playwright/cli.config.json" "$XDG_CONFIG_HOME/playwright/cli.config.json"
+if [ -L "$HOME/.playwright/cli.config.json" ]; then
+  rm -f "$HOME/.playwright/cli.config.json"
+  rmdir "$HOME/.playwright" 2>/dev/null || true
+fi
 
 create_link "$DOTFILES_PATH/vim/vimrc" "$XDG_CONFIG_HOME/vim/vimrc"
 
@@ -377,6 +383,7 @@ create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
+create_link "$DOTFILES_PATH/bin/playwright-cli" "$HOME/.local/bin/playwright-cli"
 create_link "$DOTFILES_PATH/bin/bwc" "$HOME/.local/bin/bwc"
 create_link "$DOTFILES_PATH/bin/bwg" "$HOME/.local/bin/bwg"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
@@ -388,15 +395,19 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$DOTFILES_PATH/wsl/xdg-open" "$HOME/.local/bin/xdg-open"
   create_link "$DOTFILES_PATH/wsl/win-to-wsl-path" "$HOME/.local/bin/win-to-wsl-path"
+  create_link "$DOTFILES_PATH/wsl/playwright-win.sh" "$HOME/.local/bin/playwright-win"
   rm -f "$HOME/.local/bin/kiro-image-paste"
   create_link "$DOTFILES_PATH/bin/wsl-clipboard-paste" "$HOME/.local/bin/wsl-clipboard-paste"
-  log_done "WSL helpers: xdg-open + win-to-wsl-path + wsl-clipboard-paste"
+  log_done "WSL helpers: xdg-open + win-to-wsl-path + playwright-win + wsl-clipboard-paste"
 
   if [ -d /run/systemd/system ]; then
-    ensure_dir "$XDG_CONFIG_HOME/systemd/user"
+    ensure_dir "$XDG_CONFIG_HOME/systemd/user" "$XDG_CONFIG_HOME/user-tmpfiles.d"
+    create_link "$DOTFILES_PATH/wsl/user-tmpfiles.d/playwright.conf" \
+      "$XDG_CONFIG_HOME/user-tmpfiles.d/playwright.conf"
     create_link "$DOTFILES_PATH/wsl/kiro-clipboard-xvfb.service" \
       "$XDG_CONFIG_HOME/systemd/user/kiro-clipboard-xvfb.service"
     systemctl --user daemon-reload || true
+    systemctl --user enable --now systemd-tmpfiles-clean.timer >/dev/null 2>&1 || true
     systemctl --user enable kiro-clipboard-xvfb.service >/dev/null 2>&1 || true
     if systemctl --user restart kiro-clipboard-xvfb.service >/dev/null 2>&1; then
       log_done "Kiro image clipboard: authenticated headless X11 enabled on :99"
@@ -547,7 +558,9 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   for cand in \
     "$(command -v npm.cmd 2>/dev/null || true)" \
     "/mnt/c/Program Files/nodejs/npm.cmd" \
-    "/mnt/c/nvm4w/nodejs/npm.cmd"; do
+    "/mnt/c/nvm4w/nodejs/npm.cmd" \
+    /mnt/c/Users/*/scoop/apps/nodejs-lts/current/npm.cmd \
+    /mnt/c/Users/*/scoop/apps/nodejs/current/npm.cmd; do
     if [[ -n "$cand" && -x "$cand" ]]; then
       win_npm="$cand"
       break
@@ -555,18 +568,18 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   done
   if [[ -n "$win_npm" ]]; then
     win_npm="$(wslpath -w "$win_npm")"
-    if cmd.exe /d /c "$win_npm" list -g chrome-devtools-mcp --depth=0 </dev/null >/dev/null 2>&1; then
-      log_skip "win-npm: chrome-devtools-mcp"
+    if cmd.exe /d /c "$win_npm" list -g @playwright/cli --depth=0 </dev/null >/dev/null 2>&1; then
+      log_skip "win-npm: @playwright/cli"
     else
-      log_step "win-npm: installing chrome-devtools-mcp"
-      if cmd.exe /d /c "$win_npm" install -g chrome-devtools-mcp </dev/null; then
-        log_done "win-npm: chrome-devtools-mcp"
+      log_step "win-npm: installing @playwright/cli"
+      if cmd.exe /d /c "$win_npm" install -g @playwright/cli </dev/null; then
+        log_done "win-npm: @playwright/cli"
       else
-        log_manual "win-npm: install chrome-devtools-mcp manually on Windows (npm install -g chrome-devtools-mcp)"
+        log_manual "win-npm: install @playwright/cli manually on Windows (npm install -g @playwright/cli)"
       fi
     fi
   else
-    log_skip "win-npm: npm.cmd not found — skipping chrome-devtools-mcp"
+    log_skip "win-npm: npm.cmd not found — skipping @playwright/cli"
   fi
 
   log_step "ShareX: Start Menu capture shortcuts"
@@ -1275,7 +1288,7 @@ export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
 # `install -g` when it's not in PATH.
 export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
-for pkg in yarn npm-check-updates mcp-hub; do
+for pkg in yarn npm-check-updates mcp-hub @playwright/cli; do
   if pnpm list -g --depth=0 2>/dev/null | grep -q "$pkg"; then
     log_skip "pnpm global: $pkg"
   else
@@ -1287,6 +1300,10 @@ for pkg in yarn npm-check-updates mcp-hub; do
     log_done "pnpm global: $pkg"
   fi
 done
+if command -v playwright-cli >/dev/null 2>&1; then
+  PLAYWRIGHT_BROWSERS_PATH="$XDG_CACHE_HOME/ms-playwright" playwright-cli install-browser chromium </dev/null
+  log_done "playwright-cli browser: chromium"
+fi
 
 log_done "Phase 3 complete"
 

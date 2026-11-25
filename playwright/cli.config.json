@@ -1,0 +1,10 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome-for-testing"
+    }
+  },
+  "filePaths": "absolute",
+  "allowUnrestrictedFileAccess": true
+}
