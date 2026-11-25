@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Convert a Windows path to a WSL path, mounting unmounted drive letters and
+# UNC shares via drvfs on demand so Explorer-launched tools can open them.
+set -euo pipefail
+
+raw="${1:-}"
+[[ -n "$raw" ]] || exit 1
+
+if unix_path="$(wslpath -u "$raw" 2>/dev/null)"; then
+  printf '%s\n' "$unix_path"
+  exit 0
+fi
+
+norm="$raw"
+prefix="${norm:0:8}"
+if [[ "${prefix,,}" == '\\?\unc\' ]]; then
+  norm="\\\\${norm:8}"
+elif [[ "${norm:0:4}" == '\\?\' ]]; then
+  norm="${norm:4}"
+fi
+
+if [[ "$norm" == [A-Za-z]: || "$norm" == [A-Za-z]:[\\/]* ]]; then
+  letter="${norm:0:1}"
+  rest="${norm:2}"
+  rest="${rest//\\//}"
+  mnt="/mnt/${letter,,}"
+  if ! mountpoint -q "$mnt" 2>/dev/null; then
+    sudo -n mkdir -p "$mnt" >/dev/null
+    sudo -n mount -t drvfs "${letter^^}:" "$mnt" -o "uid=$(id -u),gid=$(id -g),noatime" >/dev/null
+  fi
+  if unix_path="$(wslpath -u "$norm" 2>/dev/null)"; then
+    printf '%s\n' "$unix_path"
+  else
+    printf '%s%s\n' "$mnt" "$rest"
+  fi
+  exit 0
+fi
+
+if [[ "$norm" == '\\'* || "$norm" == '//'* ]]; then
+  rest="${norm:2}"
+  rest="${rest//\\//}"
+  [[ "$rest" == */* ]] || exit 1
+  server="${rest%%/*}"
+  rest="${rest#*/}"
+  share="${rest%%/*}"
+  if [[ "$rest" == */* ]]; then
+    rel="/${rest#*/}"
+  else
+    rel=""
+  fi
+  if [[ -z "$server" || -z "$share" || "$server" == "." || "$server" == ".." || "$share" == "." || "$share" == ".." ]]; then
+    exit 1
+  fi
+  case "${server,,}" in
+    'wsl.localhost'|'wsl$') exit 1 ;;
+  esac
+  unc="\\\\${server}\\${share}"
+  mnt="/mnt/unc/${server,,}/${share,,}"
+  if ! mountpoint -q "$mnt" 2>/dev/null; then
+    sudo -n mkdir -p "$mnt" >/dev/null
+    sudo -n mount -t drvfs "$unc" "$mnt" -o "uid=$(id -u),gid=$(id -g),noatime" >/dev/null
+  fi
+  if unix_path="$(wslpath -u "$norm" 2>/dev/null)"; then
+    printf '%s\n' "$unix_path"
+  else
+    printf '%s%s\n' "$mnt" "$rel"
+  fi
+  exit 0
+fi
+
+wslpath -u "$raw"

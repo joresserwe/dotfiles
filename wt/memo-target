@@ -14,7 +14,7 @@ fi
 files=()
 if [[ -n "$1" ]]; then
   win_file="$(printf %s "$1" | base64 --decode)" || exit 1
-  file="$(wslpath -u "$win_file")" || exit 1
+  file="$("$HOME/.local/bin/win-to-wsl-path" "$win_file")" || exit 1
   [[ -f "$file" ]] || exit 1
   files+=("$file")
 fi

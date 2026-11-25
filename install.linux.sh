@@ -387,9 +387,10 @@ create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-reb
 if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$DOTFILES_PATH/wsl/xdg-open" "$HOME/.local/bin/xdg-open"
+  create_link "$DOTFILES_PATH/wsl/win-to-wsl-path" "$HOME/.local/bin/win-to-wsl-path"
   rm -f "$HOME/.local/bin/kiro-image-paste"
   create_link "$DOTFILES_PATH/bin/wsl-clipboard-paste" "$HOME/.local/bin/wsl-clipboard-paste"
-  log_done "WSL helpers: xdg-open + wsl-clipboard-paste"
+  log_done "WSL helpers: xdg-open + win-to-wsl-path + wsl-clipboard-paste"
 
   if [ -d /run/systemd/system ]; then
     ensure_dir "$XDG_CONFIG_HOME/systemd/user"

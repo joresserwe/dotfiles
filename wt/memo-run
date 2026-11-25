@@ -7,4 +7,15 @@ fi
 memo_dir="${XDG_DATA_HOME:-$HOME/.local/share}/memo"
 mkdir -p "$memo_dir"
 cd "$memo_dir" || exit 1
+
+# Remount any on-demand UNC shares saved in the persistence session before nvim
+# restores buffers (drvfs UNC mounts do not persist across WSL restarts).
+session_file="${XDG_STATE_HOME:-$HOME/.local/state}/nvim/sessions/$(printf '%s' "$memo_dir" | tr '/' '%').vim"
+if [ -f "$session_file" ] && [ -x "$HOME/.local/bin/win-to-wsl-path" ]; then
+  sed -n 's|.*/mnt/unc/\([^/]*\)/\([^/]*\)/.*|\1/\2|p' "$session_file" | sed 's/\\//g' | sort -u |
+    while IFS= read -r unc_share; do
+      [ -n "$unc_share" ] && "$HOME/.local/bin/win-to-wsl-path" "//$unc_share" >/dev/null 2>&1 || true
+    done
+fi
+
 NVIM_MEMO=1 exec nvim "$@"

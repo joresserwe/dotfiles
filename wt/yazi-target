@@ -5,7 +5,7 @@
 win_temp="$(/mnt/c/Windows/System32/cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')"
 tmpfile="$(wslpath -u "$win_temp")/open-yazi-target.txt"
 [ -f "$tmpfile" ] || exit 1
-dir="$(wslpath -u "$(tr -d '\r' < "$tmpfile")")"
+dir="$("$HOME/.local/bin/win-to-wsl-path" "$(tr -d '\r' < "$tmpfile")")"
 cd "$dir" || exit 1
 # The wt.exe this session rides in inherits a stripped Windows PATH, so
 # appendWindowsPath contributes no system dirs; restore them for interop
