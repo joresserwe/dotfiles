@@ -21,3 +21,6 @@ ShareX.ShareX
 
 dundee.gdu
 schollz.croc
+
+# Windows-side Node.js runtime — required by wsl/chrome-mcp.sh (WSL interop CDP bridge)
+OpenJS.NodeJS.LTS

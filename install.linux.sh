@@ -543,6 +543,32 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     fi
   fi
 
+  win_npm=""
+  for cand in \
+    "$(command -v npm.cmd 2>/dev/null || true)" \
+    "/mnt/c/Program Files/nodejs/npm.cmd" \
+    "/mnt/c/nvm4w/nodejs/npm.cmd"; do
+    if [[ -n "$cand" && -x "$cand" ]]; then
+      win_npm="$cand"
+      break
+    fi
+  done
+  if [[ -n "$win_npm" ]]; then
+    win_npm="$(wslpath -w "$win_npm")"
+    if cmd.exe /d /c "$win_npm" list -g chrome-devtools-mcp --depth=0 </dev/null >/dev/null 2>&1; then
+      log_skip "win-npm: chrome-devtools-mcp"
+    else
+      log_step "win-npm: installing chrome-devtools-mcp"
+      if cmd.exe /d /c "$win_npm" install -g chrome-devtools-mcp </dev/null; then
+        log_done "win-npm: chrome-devtools-mcp"
+      else
+        log_manual "win-npm: install chrome-devtools-mcp manually on Windows (npm install -g chrome-devtools-mcp)"
+      fi
+    fi
+  else
+    log_skip "win-npm: npm.cmd not found — skipping chrome-devtools-mcp"
+  fi
+
   log_step "ShareX: Start Menu capture shortcuts"
   powershell.exe -NoProfile -ExecutionPolicy Bypass \
     -File "$(wslpath -w "$DOTFILES_PATH/winget/sharex-shortcuts.ps1")" >/dev/null 2>&1 || true
