@@ -21,6 +21,13 @@
     ]
   },
   "tmux-status": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "sh \"${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/antigravity/hooks/tmux-status.sh\" clear",
+        "timeout": 5
+      }
+    ],
     "PreInvocation": [
       {
         "type": "command",

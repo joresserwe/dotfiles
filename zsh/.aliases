@@ -82,14 +82,19 @@ kirod() {
 }
 
 agy() {
+  local rc=0
   if [[ -n "${WSL_DISTRO_NAME:-}" ]] \
     && systemctl --user start kiro-clipboard-xvfb.service >/dev/null 2>&1; then
     DISPLAY=:99 \
       XAUTHORITY="${XDG_RUNTIME_DIR:-/run/user/$UID}/kiro-clipboard.Xauthority" \
-      command agy "$@"
+      command agy "$@" || rc=$?
   else
-    command agy "$@"
+    command agy "$@" || rc=$?
   fi
+  if [[ -n "${TMUX_PANE:-}" && -t 1 ]]; then
+    sh "${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}/claude/hooks/tmux-status.sh" clear
+  fi
+  return $rc
 }
 
 # bottom — btm sees only WSL-side processes; btmw runs the Windows build
