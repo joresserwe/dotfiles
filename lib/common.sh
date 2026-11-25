@@ -259,54 +259,9 @@ install_antigravity() {
     log_done "agy settings merged ($profile: runningLightSpeed=$light_speed): $target"
   fi
 
-  local managed_mcp="$DOTFILES_PATH/antigravity/mcp_config.json"
-  local target_mcp="$config_dir/mcp_config.json"
-  local merged_mcp chrome_mcp=""
-  [ -n "${WSL_DISTRO_NAME:-}" ] && chrome_mcp="$DOTFILES_PATH/wsl/chrome-mcp.sh"
-
   mkdir -p "$config_dir/skills"
   _agy_link_file "$DOTFILES_PATH/antigravity/AGENTS.md" "$config_dir/AGENTS.md" || return 1
   _agy_link_file "$DOTFILES_PATH/antigravity/hooks.json" "$config_dir/hooks.json" || return 1
-
-  # agy mcp mutates mcp_config.json via atomic replace, which would sever a symlink.
-  if [ -f "$managed_mcp" ]; then
-    local mcp_merge_jq='
-      ($mgd.mcpServers // {})
-      | if ($chrome_mcp | length) > 0 then
-          . + { "chrome-devtools": { "command": $chrome_mcp, "disabled": false } }
-        else . end
-      | to_entries
-      | map(
-          .key as $k
-          | (($cur.mcpServers // {})[$k] // null) as $prev
-          | .value = (
-              .value
-              | if ($prev != null and ($prev.disabled | type) == "boolean") then
-                  .disabled = $prev.disabled
-                elif (.disabled | type) != "boolean" then
-                  .disabled = false
-                else . end
-            )
-        )
-      | from_entries as $next_servers
-      | ($cur * { mcpServers: (($cur.mcpServers // {}) + $next_servers) })
-    '
-    if [ -f "$target_mcp" ]; then
-      merged_mcp="$(jq -s --arg chrome_mcp "$chrome_mcp" ".[0] as \$cur | .[1] as \$mgd | $mcp_merge_jq" "$target_mcp" "$managed_mcp")" || return 1
-      if jq -e --argjson want "$merged_mcp" '. == $want' "$target_mcp" >/dev/null; then
-        log_skip "agy mcp_config already up to date: $target_mcp"
-      else
-        tmp="$target_mcp.tmp.$$"
-        (umask 077 && printf '%s\n' "$merged_mcp" > "$tmp") && mv "$tmp" "$target_mcp" || return 1
-        log_done "agy mcp_config merged: $target_mcp"
-      fi
-    else
-      merged_mcp="$(jq --arg chrome_mcp "$chrome_mcp" "{} as \$cur | . as \$mgd | $mcp_merge_jq" "$managed_mcp")" || return 1
-      tmp="$target_mcp.tmp.$$"
-      (umask 077 && printf '%s\n' "$merged_mcp" > "$tmp") && mv "$tmp" "$target_mcp" || return 1
-      log_done "agy mcp_config created: $target_mcp"
-    fi
-  fi
 
   for skill_dir in "$DOTFILES_PATH"/antigravity/skills/*; do
     [ -d "$skill_dir" ] || continue

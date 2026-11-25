@@ -96,7 +96,6 @@
       "unsandboxed(pwd)",
       "unsandboxed(readlink)",
       "unsandboxed(realpath)",
-      "unsandboxed(regex:/(home|Users)/[^/]+/\\.config/\\.dotfiles/wsl/chrome-mcp\\.sh)",
       "unsandboxed(regex:/mnt/c/Users/[^/]+/scoop/apps/nodejs-lts/current/node\\.exe)",
       "unsandboxed(rg)",
       "unsandboxed(rsync)",
