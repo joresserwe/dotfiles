@@ -90,9 +90,8 @@ def make_pill(icon, accent, parts):
 def fmt_tokens(n):
     if not n or n <= 0:
         return "0"
-    if n >= 950_000:
-        m = n / 1_048_576 if abs(n - round(n / 1_048_576) * 1_048_576) < 65_536 else n / 1_000_000
-        return f"{m:.0f}M" if abs(m - round(m)) < 0.08 else f"{m:.1f}M"
+    if n % 1_048_576 == 0:
+        return f"{n // 1_048_576 * 1000}k"
     if n >= 1_000:
         return f"{round(n / 1_000)}k"
     return str(int(n))
