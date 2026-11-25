@@ -20,7 +20,7 @@ fail() {
   shift
   printf 'kiro-image-paste: %s\n' "$*" >&2
   if [[ -n "$pane" && -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
-    tmux display-message -t "$pane" "Kiro image paste: $*" 2>/dev/null || true
+    tmux display-message -t "$pane" "Image paste: $*" 2>/dev/null || true
   fi
   exit "$code"
 }
@@ -42,7 +42,7 @@ export XAUTHORITY="$runtime_dir/kiro-clipboard.Xauthority"
 
 # Serialize capture, publication, paste, and owner cleanup across tmux panes.
 exec 9>"$runtime_dir/kiro-image-paste.lock"
-flock -w 5 9 || fail 1 "another Kiro image paste is still running"
+flock -w 5 9 || fail 1 "another image paste is still running"
 
 rc=0
 png_base64="$("$powershell" -Sta -NoProfile -NonInteractive -Command '
@@ -101,7 +101,7 @@ if [[ -n "$pane" ]]; then
   # Windows Terminal consumes physical Ctrl+V. Sending it from tmux reaches
   # Kiro directly while the authenticated xclip owner is serving image/png.
   tmux send-keys -t "$pane" C-v \
-    || fail 1 "could not send Kiro's image-paste key to pane $pane"
+    || fail 1 "could not send the image-paste key to pane $pane"
   sleep 2
 else
   # Manual diagnostics get a short window to query TARGETS/image/png.

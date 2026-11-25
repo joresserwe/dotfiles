@@ -195,17 +195,17 @@ The stock section of the zebar bar is fed by an app stored encrypted in `market-
 
 A `watchlist.json` or `dividends.csv` in `$XDG_CONFIG_HOME/market-gauge` overrides the packed one on that PC.
 
-### Kiro image paste in WSL
+### Kiro and Antigravity image paste in WSL
 
 WSLg is intentionally disabled on this setup because its `weston` process crash-looped and filled the Windows system drive with dumps. The installer therefore provides a separate image-only bridge that does not depend on WSLg:
 
 ```text
-Windows clipboard → PowerShell (STA) → PNG → xclip/Xvfb :99 → Kiro
+Windows clipboard → PowerShell (STA) → PNG → xclip/Xvfb :99 → Kiro / agy
 ```
 
-`xvfb`, `xauth`, and `xclip` are installed in Phase 0, and the user service `kiro-clipboard-xvfb.service` owns an authenticated headless display. The shell's `kiro-cli` wrapper scopes `DISPLAY=:99` and its private Xauthority cookie to Kiro only; Claude and Codex never inherit that display. Inside a Kiro pane, `Alt+V` reads the current Windows clipboard image into memory, publishes it as `image/png`, and sends Kiro its image-paste `Ctrl+V` action. The X selection owner is terminated after Kiro consumes it, so screenshots are not retained. In every non-Kiro pane, `Alt+V` is forwarded unchanged.
+`xvfb`, `xauth`, and `xclip` are installed in Phase 0, and the user service `kiro-clipboard-xvfb.service` owns an authenticated headless display. The shell's `kiro-cli` and `agy` wrappers scope `DISPLAY=:99` and its private Xauthority cookie to those two programs only; Claude and Codex never inherit that display. Inside a Kiro or agy pane, `Alt+V` reads the current Windows clipboard image into memory, publishes it as `image/png`, and sends the program its image-paste `Ctrl+V` action. The X selection owner is terminated 2 seconds later, so screenshots are not retained. In every other pane, `Alt+V` is forwarded unchanged.
 
-After the first install, restart Kiro through `kiro`, `kirod`, or the interactive `kiro-cli` wrapper. Existing Kiro processes cannot gain the scoped clipboard environment retroactively.
+After the first install, restart Kiro through `kiro`, `kirod`, or the interactive `kiro-cli` wrapper, and agy through the interactive `agy` wrapper. Existing processes cannot gain the scoped clipboard environment retroactively.
 
 Diagnostics:
 
