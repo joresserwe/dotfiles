@@ -568,11 +568,11 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
   done
   if [[ -n "$win_npm" ]]; then
     win_npm="$(wslpath -w "$win_npm")"
-    if cmd.exe /d /c "$win_npm" list -g @playwright/cli --depth=0 </dev/null >/dev/null 2>&1; then
+    if (cd /mnt/c/Windows && cmd.exe /d /c "$win_npm" list -g @playwright/cli --depth=0 </dev/null >/dev/null 2>&1); then
       log_skip "win-npm: @playwright/cli"
     else
       log_step "win-npm: installing @playwright/cli"
-      if cmd.exe /d /c "$win_npm" install -g @playwright/cli </dev/null; then
+      if (cd /mnt/c/Windows && cmd.exe /d /c "$win_npm" install -g @playwright/cli </dev/null); then
         log_done "win-npm: @playwright/cli"
       else
         log_manual "win-npm: install @playwright/cli manually on Windows (npm install -g @playwright/cli)"
