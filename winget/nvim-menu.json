@@ -3,7 +3,7 @@
   "exe": "%SystemRoot%\\System32\\wscript.exe",
   "param": "\"run-hidden.vbs\" \"open-memo.ps1\" \"{path}\"",
   "workingDirectory": "%USERPROFILE%\\.dotfiles\\winget",
-  "icon": "%USERPROFILE%\\.dotfiles\\winget\\terminal.ico",
+  "icon": "%USERPROFILE%\\.dotfiles\\winget\\icons\\nvim.ico",
   "acceptFileFlag": 3,
   "acceptExts": ".txt|.log|.md|.ini|.cfg|.conf|.json|.yaml|.yml|.xml|.csv",
   "acceptDirectoryFlag": 0,

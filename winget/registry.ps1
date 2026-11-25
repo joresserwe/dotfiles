@@ -1,4 +1,4 @@
-# Windows registry tweaks applied from WSL via install.linux.sh.
+﻿# Windows registry tweaks applied from WSL via install.linux.sh.
 # Idempotent — safe to re-run.
 
 Remove-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' `
@@ -125,10 +125,16 @@ if ($env:COMPUTERNAME -like 'LCSKVM*') {
 # handler (UserChoice hash), so picking "always use" is a one-time manual step.
 $memoProgId = 'HKCU:\SOFTWARE\Classes\NvimMemo'
 $memoCmd = 'wscript.exe "{0}\.dotfiles\winget\run-hidden.vbs" "{0}\.dotfiles\winget\open-memo.ps1" "%1"' -f $env:USERPROFILE
-if (-not (Test-Path "$memoProgId\shell\open\command")) {
-  New-Item -Path "$memoProgId\shell\open\command" -Force | Out-Null
+$memoIcon = '{0}\.dotfiles\winget\icons\nvim.ico,0' -f $env:USERPROFILE
+foreach ($sub in 'shell\open\command', 'DefaultIcon', 'Application') {
+  if (-not (Test-Path "$memoProgId\$sub")) {
+    New-Item -Path "$memoProgId\$sub" -Force | Out-Null
+  }
 }
 Set-ItemProperty -Path $memoProgId -Name '(default)' -Value 'Neovim Memo' -Force
+Set-ItemProperty -Path "$memoProgId\DefaultIcon" -Name '(default)' -Value $memoIcon -Force
+Set-ItemProperty -Path "$memoProgId\Application" -Name 'ApplicationName' -Value 'Neovim Memo' -Force
+Set-ItemProperty -Path "$memoProgId\Application" -Name 'ApplicationIcon' -Value $memoIcon -Force
 Set-ItemProperty -Path "$memoProgId\shell\open\command" -Name '(default)' -Value $memoCmd -Force
 
 foreach ($ext in '.txt', '.log', '.md', '.ini', '.cfg', '.conf', '.json', '.yaml', '.yml', '.xml', '.csv') {
@@ -138,3 +144,9 @@ foreach ($ext in '.txt', '.log', '.md', '.ini', '.cfg', '.conf', '.json', '.yaml
   }
   Set-ItemProperty -Path $owp -Name 'NvimMemo' -Value '' -Type String -Force
 }
+
+Add-Type -Namespace Win32 -Name ShellNotify -MemberDefinition @'
+[DllImport("shell32.dll")]
+public static extern void SHChangeNotify(int wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
+'@ -ErrorAction SilentlyContinue
+[Win32.ShellNotify]::SHChangeNotify(0x08000000, 0x0000, [IntPtr]::Zero, [IntPtr]::Zero)

@@ -2,7 +2,7 @@ $wscript  = Join-Path $env:WINDIR 'System32\wscript.exe'
 $mirror   = if ($env:DOTFILES_WIN) { $env:DOTFILES_WIN } else { Join-Path $env:USERPROFILE '.dotfiles' }
 $programs = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
 $vbs  = Join-Path $mirror 'winget\run-task.vbs'
-$icon = Join-Path $mirror 'winget\terminal.ico'
+$icon = Join-Path $mirror 'winget\icons\terminal.ico'
 if (-not (Test-Path $vbs)) { exit 0 }
 
 $ws  = New-Object -ComObject WScript.Shell
