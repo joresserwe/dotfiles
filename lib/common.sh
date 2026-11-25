@@ -210,17 +210,33 @@ install_antigravity() {
   # agy rewrites settings.json via atomic replace (and normalizes it at
   # startup), which would sever a symlink. Merge the managed keys into the
   # machine-local file instead so /config and /model choices survive.
+  # The terminal sandbox rejects non-absolute ~/ paths and path globs
+  # (e.g. ~/.ssh/id_*) in read_file/write_file rules; normalize both here
+  # while keeping the repo file portable.
+  local expand_home_jq='
+    def expand_home($h):
+      if type == "string" then
+        (if startswith("read_file(~/") then "read_file(" + $h + "/" + .[12:]
+         elif startswith("write_file(~/") then "write_file(" + $h + "/" + .[13:]
+         elif . == "read_file(~)" then "read_file(" + $h + ")"
+         elif . == "write_file(~)" then "write_file(" + $h + ")"
+         else . end)
+        | if . == ("read_file(" + $h + "/.ssh/id_*)") then "read_file(" + $h + "/.ssh)"
+          else . end
+      else . end;
+  '
   mkdir -p "$(dirname "$target")"
   if [ -f "$target" ]; then
-    merged="$(jq -s --arg speed "$light_speed" '
-      .[0] as $cur | .[1] as $mgd | ($cur * $mgd)
-      | .runningLightSpeed = $speed
-      | if (($mgd.permissions // null) | type) == "object" then
-          .permissions.allow = ((($cur.permissions.allow // []) + ($mgd.permissions.allow // [])) | unique)
-          | .permissions.ask = ((($cur.permissions.ask // []) + ($mgd.permissions.ask // [])) | unique)
-          | .permissions.deny = ((($cur.permissions.deny // []) + ($mgd.permissions.deny // [])) | unique)
+    merged="$(jq -s --arg speed "$light_speed" --arg home "${HOME%/}" "
+      $expand_home_jq
+      .[0] as \$cur | .[1] as \$mgd | (\$cur * \$mgd)
+      | .runningLightSpeed = \$speed
+      | if ((\$mgd.permissions // null) | type) == \"object\" then
+          .permissions.allow = (((\$cur.permissions.allow // []) + (\$mgd.permissions.allow // [])) | map(expand_home(\$home)) | unique)
+          | .permissions.ask = (((\$cur.permissions.ask // []) + (\$mgd.permissions.ask // [])) | map(expand_home(\$home)) | unique)
+          | .permissions.deny = (((\$cur.permissions.deny // []) + (\$mgd.permissions.deny // [])) | map(expand_home(\$home)) | unique)
         else . end
-    ' "$target" "$managed")" || return 1
+    " "$target" "$managed")" || return 1
     if jq -e --argjson want "$merged" '. == $want' "$target" >/dev/null; then
       log_skip "agy settings already up to date: $target"
     else
@@ -229,7 +245,15 @@ install_antigravity() {
       log_done "agy settings merged ($profile: runningLightSpeed=$light_speed): $target"
     fi
   else
-    merged="$(jq --arg speed "$light_speed" '.runningLightSpeed = $speed' "$managed")" || return 1
+    merged="$(jq --arg speed "$light_speed" --arg home "${HOME%/}" "
+      $expand_home_jq
+      .runningLightSpeed = \$speed
+      | if ((.permissions // null) | type) == \"object\" then
+          .permissions.allow = ((.permissions.allow // []) | map(expand_home(\$home)) | unique)
+          | .permissions.ask = ((.permissions.ask // []) | map(expand_home(\$home)) | unique)
+          | .permissions.deny = ((.permissions.deny // []) | map(expand_home(\$home)) | unique)
+        else . end
+    " "$managed")" || return 1
     tmp="$target.tmp.$$"
     (umask 077 && printf '%s\n' "$merged" > "$tmp") && mv "$tmp" "$target" || return 1
     log_done "agy settings merged ($profile: runningLightSpeed=$light_speed): $target"
