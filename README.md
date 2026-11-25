@@ -183,7 +183,8 @@ The stock section of the zebar bar is fed by an app stored encrypted in `market-
 |------|---------|
 | Encrypt edits made in `$XDG_DATA_HOME/market-gauge/app` | `market-gauge/pack.sh`, then commit |
 | Set or change the password | `market-gauge/set-password.sh`, then commit |
-| Set up a PC that was skipped | `market-gauge/unlock.sh` |
+| Set up a PC that was skipped or turned off | `market-gauge/unlock.sh` |
+| Turn it off on a PC (removes the key and the bar's data) | `market-gauge/disable.sh` |
 
 A `watchlist.json` or `dividends.csv` in `$XDG_CONFIG_HOME/market-gauge` overrides the packed one on that PC.
 
