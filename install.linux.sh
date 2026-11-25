@@ -286,8 +286,6 @@ brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 # candidates exist — fatal under set -e
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
-configure_bitwarden || log_manual "bitwarden: server setup failed"
-
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 

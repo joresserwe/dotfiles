@@ -89,8 +89,6 @@ brew trust --formula felixkratz/formulae/borders 2>/dev/null || true
 brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
-configure_bitwarden || log_manual "bitwarden: server setup failed"
-
 # -----------------------------------------------------------------------------------------------
 
 echo "Installing node / java (via mise)..."
