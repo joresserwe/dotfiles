@@ -601,6 +601,8 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       log_skip "mirror watcher: systemd not running (set systemd=true in /etc/wsl.conf)"
     fi
 
+    bash "$DOTFILES_PATH/market-gauge/unlock.sh" || log_manual "market gauge: unlock failed (retry with market-gauge/unlock.sh)"
+
     ensure_dir "$HOME/.local/bin"
     create_link "$DOTFILES_PATH/wt/tmux-main" "$HOME/.local/bin/tmux-main"
     create_link "$DOTFILES_PATH/wt/yazi-target" "$HOME/.local/bin/yazi-target"

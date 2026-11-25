@@ -79,6 +79,7 @@ brew "gping"
 # TCP connect to the given IP/port combo
 brew "tcping"
 if OS.linux?
+  brew "age"
   # Terminal multiplexer
   brew "tmux"
   # Plugin manager for tmux

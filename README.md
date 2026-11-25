@@ -175,6 +175,18 @@ Still manual:
 1. **Default profile** — in Windows Terminal, set the default profile to launch `wsl.exe -d Ubuntu` so new tabs land in zsh.
 2. **Text clipboard** — tmux uses `set-clipboard on` (OSC 52), and the `_dotfiles_copy` shell helper falls back to `win32yank.exe`, then `clip.exe`, when no Wayland/X clipboard is available.
 
+### Market gauge
+
+The stock section of the zebar bar is fed by an app stored encrypted in `market-gauge/app.tar.age`. `install.linux.sh` runs `market-gauge/unlock.sh`, which asks for the password once per PC and then unpacks the app to `$XDG_DATA_HOME/market-gauge/app` and enables its systemd user timers. Answer `N` to leave the stock section off on that PC.
+
+| Task | Command |
+|------|---------|
+| Encrypt edits made in `$XDG_DATA_HOME/market-gauge/app` | `market-gauge/pack.sh`, then commit |
+| Set or change the password | `market-gauge/set-password.sh`, then commit |
+| Set up a PC that was skipped | `market-gauge/unlock.sh` |
+
+A `watchlist.json` or `dividends.csv` in `$XDG_CONFIG_HOME/market-gauge` overrides the packed one on that PC.
+
 ### Kiro image paste in WSL
 
 WSLg is intentionally disabled on this setup because its `weston` process crash-looped and filled the Windows system drive with dumps. The installer therefore provides a separate image-only bridge that does not depend on WSLg:
