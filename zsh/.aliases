@@ -408,7 +408,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
     esac
   }
 
-  # Comet browser CDP for the comet MCP server (wsl/comet-mcp.sh). The
+  # Comet browser CDP for playwright-win attach. The
   # debug port only applies at launch, so an already-running Comet without
   # it must be restarted. WSL-only.
   comet-debug() {
@@ -426,7 +426,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v wslpath >/dev/null 2>&1; then
       && echo 'comet-debug: Comet started with CDP on 9222'
   }
 
-  # Windows Chrome CDP for wsl/chrome-mcp.sh. Chrome 136+ requires a
+  # Windows Chrome CDP for playwright-win attach. Chrome 136+ requires a
   # dedicated user-data-dir for CDP, so this is a separate profile. WSL-only.
   chrome-debug() {
     local exe='C:\Program Files\Google\Chrome\Application\chrome.exe'
