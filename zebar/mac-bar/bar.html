@@ -18,7 +18,7 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.3.1?dev';
+      import React, { useState, useEffect, useRef, useCallback, useMemo } from 'https://esm.sh/react@18.3.1?dev';
       import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?dev';
       import { invoke } from 'https://esm.sh/@tauri-apps/api@2.0.2/core';
       import * as zebar from 'https://esm.sh/zebar@3.0.3';
@@ -41,7 +41,8 @@
       if (SOFT_RENDER) document.documentElement.classList.add('soft-render');
 
       const statsInterval = SOFT_RENDER ? 2000 : 1000;
-      const providers = zebar.createProviderGroup({
+      const PINNED = zebar.currentWidget().name === 'market';
+      const providers = PINNED ? null : zebar.createProviderGroup({
         glazewm: { type: 'glazewm' },
         network: { type: 'network', refreshInterval: statsInterval },
         cpu: { type: 'cpu', refreshInterval: statsInterval },
@@ -53,7 +54,7 @@
         date: { type: 'date', formatting: 'yyyy년 M월 d일 (EEE) HH:mm', locale: 'ko' },
       });
 
-      createRoot(document.getElementById('root')).render(<App />);
+      createRoot(document.getElementById('root')).render(PINNED ? <PinnedMarket /> : <App />);
 
       function networkIcon(n) {
         const t = n.defaultInterface?.type;
@@ -441,6 +442,1564 @@
           src={CAT_FRAME_URLS[tick % CAT_FRAME_URLS.length]} alt="" />;
       }
 
+      const MARKET_POLL_MS = 10 * 60 * 1000;
+      const QUOTES_POLL_MS = 20 * 1000;
+      const MARKET_STALE_DAYS = 5;
+      const HOVER_OPEN_MS = 150;
+      const HOVER_CLOSE_MS = 200;
+
+      const ABSENT_POLL_MS = 10 * 60 * 1000;
+
+      function useJson(path, pollMs, version = 0) {
+        const [data, setData] = useState(null);
+        const last = useRef('');
+        useEffect(() => {
+          if (!path) return;
+          let alive = true;
+          let id;
+          async function load() {
+            let next = pollMs;
+            try {
+              const r = await fetch(path, { cache: 'no-store' });
+              const text = r.ok ? await r.text() : '';
+              if (!text) next = ABSENT_POLL_MS;
+              if (alive && text !== last.current) {
+                setData(text ? JSON.parse(text) : null);
+                last.current = text;
+              }
+            } catch {}
+            if (alive) id = setTimeout(load, next);
+          }
+          load();
+          return () => { alive = false; clearTimeout(id); };
+        }, [path, pollMs, version]);
+        return data;
+      }
+
+      class MarketBoundary extends React.Component {
+        state = { failed: false };
+        static getDerivedStateFromError() { return { failed: true }; }
+        render() { return this.state.failed ? null : this.props.children; }
+      }
+
+      const PIN_LOCK = 'dotfiles.mac-bar.market-pin';
+      const PIN_WARM = 'dotfiles.mac-bar.market-pin-warm';
+      const PIN_SHOW = 'dotfiles.mac-bar.market-pin-show';
+      const PIN_READY_MS = 8000;
+      const PIN_SPOT = 'mac-bar.market.pin-spot';
+
+      async function isHeld(name) {
+        const { held } = await navigator.locks.query();
+        return held.some(lock => lock.name === name);
+      }
+
+      function post(name, message) {
+        const channel = new BroadcastChannel(name);
+        channel.postMessage(message);
+        channel.close();
+      }
+
+      function readSpot() {
+        try { return JSON.parse(localStorage.getItem(PIN_SPOT)); } catch { return null; }
+      }
+
+      function saveSpot(spot) {
+        try { localStorage.setItem(PIN_SPOT, JSON.stringify(spot)); } catch {}
+      }
+
+      function useHoverPanel() {
+        const [visible, setVisible] = useState(false);
+        const [left, setLeft] = useState(0);
+        const trigger = useRef(null);
+        const panel = useRef(null);
+        const wanted = useRef(false);
+        const base = useRef(null);
+        const queue = useRef(Promise.resolve());
+        const timer = useRef(null);
+
+        const apply = useCallback(async () => {
+          const win = zebar.currentWidget().window;
+          if (wanted.current && !base.current && panel.current && trigger.current) {
+            if (await isHeld(PIN_LOCK)) { wanted.current = false; return; }
+            const box = trigger.current.getBoundingClientRect();
+            const { offsetWidth: w, offsetHeight: h, offsetTop: top } = panel.current;
+            const size = await win.tauri.innerSize();
+            base.current = { type: 'Physical', width: size.width, height: size.height };
+            setLeft(Math.max(8, Math.min(box.left + box.width / 2 - w / 2, window.innerWidth - w - 8)));
+            await win.tauri.setSize({ ...base.current, height: Math.ceil((top + h + 8) * window.devicePixelRatio) });
+            await win.setZOrder('top_most');
+            setVisible(true);
+          } else if (!wanted.current && base.current) {
+            setVisible(false);
+            const restore = base.current;
+            await win.setZOrder('normal').catch(() => {});
+            await win.tauri.setSize(restore);
+            base.current = null;
+          }
+        }, []);
+
+        const holding = useRef(false);
+        const request = useCallback((open, delay) => {
+          if (holding.current) return;
+          clearTimeout(timer.current);
+          timer.current = setTimeout(() => {
+            wanted.current = open;
+            queue.current = queue.current.then(apply).catch(() => {
+              wanted.current = false;
+              if (!base.current) return;
+              setVisible(false);
+              return zebar.currentWidget().window.tauri.setSize(base.current)
+                .then(() => { base.current = null; }).catch(() => {});
+            });
+          }, delay);
+        }, [apply]);
+
+        const enter = useCallback(() => request(true, HOVER_OPEN_MS), [request]);
+        const leave = useCallback(() => request(false, HOVER_CLOSE_MS), [request]);
+        const show = useCallback(() => request(true, 0), [request]);
+        const pin = useCallback(async () => {
+          const box = panel.current.getBoundingClientRect();
+          const at = await zebar.currentWidget().window.tauri.outerPosition();
+          const scale = window.devicePixelRatio;
+          saveSpot({ right: Math.round(at.x + box.right * scale), y: Math.round(at.y + box.top * scale) });
+          const channel = new BroadcastChannel(PIN_LOCK);
+          const ready = new Promise(resolve => {
+            channel.onmessage = resolve;
+            setTimeout(resolve, PIN_READY_MS);
+          });
+          clearTimeout(timer.current);
+          holding.current = true;
+          try {
+            if (await isHeld(PIN_WARM)) post(PIN_SHOW, 'show');
+            else await zebar.startWidgetPreset('market', 'pinned');
+            await ready;
+          } finally {
+            channel.close();
+            holding.current = false;
+            request(false, 60);
+          }
+        }, [request]);
+        useEffect(() => {
+          const close = () => request(false, 0);
+          const onKey = e => { if (e.key === 'Escape') close(); };
+          window.addEventListener('keydown', onKey);
+          document.documentElement.addEventListener('pointerleave', leave);
+          return () => {
+            clearTimeout(timer.current);
+            window.removeEventListener('keydown', onKey);
+            document.documentElement.removeEventListener('pointerleave', leave);
+          };
+        }, [request, leave]);
+        return { visible, left, trigger, panel, enter, leave, show, pin };
+      }
+
+      const NAMES = { fear: '공포', crowd: '쏠림', orbit: '궤도' };
+      const signed = (v, digits = 0) => `${v > 0 ? '+' : ''}${v.toFixed(digits)}%`;
+      const marketLevel = v => (v >= 80 ? '매우 높음' : v >= 60 ? '높음' : v >= 40 ? '보통' : v >= 20 ? '낮음' : '매우 낮음');
+      const isStale = asof => Date.now() - new Date(`${asof}T21:00:00Z`).getTime() > MARKET_STALE_DAYS * 86400000;
+
+      const TICK_W = 44;
+      const TICK_H = 11;
+      const TICK_DAYS = 63;
+
+      function Tick({ axis, value, history }) {
+        const low = Math.min(...history);
+        const range = Math.max(...history) - low || 1;
+        const line = history
+          .map((v, i) => `${i ? 'L' : 'M'}${(i / (history.length - 1) * TICK_W).toFixed(1)},${(TICK_H - 1 - (v - low) / range * (TICK_H - 2)).toFixed(1)}`)
+          .join(' ');
+        return (
+          <span className={`mk-tick ${axis}`} aria-hidden="true">
+            <span className="mk-tick-top">{NAMES[axis]}<b>{value}</b></span>
+            <svg width={TICK_W} height={TICK_H}>
+              <defs>
+                <linearGradient id={`mk-tick-${axis}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopOpacity="0.5" />
+                  <stop offset="100%" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={`${line} L${TICK_W},${TICK_H} L0,${TICK_H} Z`} fill={`url(#mk-tick-${axis})`} />
+              <path className="line" d={line} />
+            </svg>
+          </span>
+        );
+      }
+
+      const ARC_PATH = 'M3 15.500A13 13 0 0 1 29 15.500';
+
+      function Gauge({ axis, value, kind }) {
+        if (kind === 'pill') {
+          return (
+            <span className={`mk-gauge ${axis}`} aria-hidden="true">
+              <span>{NAMES[axis]}</span>
+              <span className="mk-pill"><span style={{ width: `${value}%` }}></span><b>{value}</b></span>
+            </span>
+          );
+        }
+        return (
+          <span className={`mk-gauge ${axis}`} aria-hidden="true">
+            <span>{NAMES[axis]}</span>
+            <svg width="29" height="17" viewBox="1.5 0 29 17">
+              <path d={ARC_PATH} pathLength="100" />
+              {value > 0 && <path className="on" d={ARC_PATH} pathLength="100" strokeDasharray={`${value} 200`} />}
+              <text x="16" y="15.5">{value}</text>
+            </svg>
+          </span>
+        );
+      }
+
+      function BadgeRows({ rows }) {
+        return (
+          <span className="mk-badges" aria-hidden="true">
+            {rows.map(([key, name, from, to, text]) => (
+              <span key={key} className={AXES.includes(key) ? key : `orbit ${to > 50 ? 'over' : 'under'}`}>
+                {name}
+                <b><i style={{ left: `${from}%`, width: `${to - from}%` }}></i><span>{text}</span></b>
+              </span>
+            ))}
+          </span>
+        );
+      }
+
+      const QUOTE_TICK_W = 64;
+      const DAY_TICK_H = 12;
+
+      function dayShape(quote, width, height) {
+        const points = quote.day?.length > 1 ? quote.day : quote.m3;
+        const base = quote.day?.length > 1 ? quote.prev : points[0];
+        const slots = Math.max(quote.day?.length > 1 && quote.full ? quote.full : points.length, points.length);
+        const low = Math.min(...points, base);
+        const high = Math.max(...points, base);
+        const x = i => i / (slots - 1) * width;
+        const y = v => 1 + (high - v) / (high - low || 1) * (height - 2);
+        const line = points.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+        return { line, area: `${line} L${x(points.length - 1).toFixed(1)},${y(base).toFixed(1)} L0,${y(base).toFixed(1)} Z`, baseY: y(base) };
+      }
+
+      function DayLine({ quote, width, height }) {
+        const { line, area, baseY } = dayShape(quote, width, height);
+        return (
+          <svg className={toneOf(quote.chg)} width={width} height={height} aria-hidden="true">
+            <line className="base" x1="0" x2={width} y1={baseY} y2={baseY} />
+            <path className="fill" d={area} />
+            <path className="line" d={line} />
+          </svg>
+        );
+      }
+
+      function QuoteTick({ quote, value }) {
+        const text = value === 'price' ? formatPrice(quote.price, Math.min(quote.digits, 2)) : formatDelta(quote.chg, quote.unit);
+        return (
+          <span className={`mk-tick quote ${toneOf(quote.chg)} ${quote.stale ? 'stale' : ''}`} aria-hidden="true">
+            <span className="mk-tick-top">{quote.short ?? quote.name}<b>{text}</b></span>
+            <DayLine quote={quote} width={QUOTE_TICK_W} height={DAY_TICK_H} />
+          </span>
+        );
+      }
+
+      const MarketStat = React.memo(function MarketStat({ market, quotes, items, triggerRef, open, onEnter, onLeave, onClick }) {
+        const [value] = useStored('bar-value', keysOf(BAR_VALUES), 'chg');
+        const [kind] = useStored('bar-gauge', keysOf(BAR_STYLES), 'rows');
+        const main = market.indices[0];
+        const gauges = [
+          ['fear', main.fear, main.fearHist.slice(-TICK_DAYS)],
+          ['crowd', main.crowd, main.crowdHist.slice(-TICK_DAYS)],
+        ].filter(([axis]) => items.includes(axis));
+        const orbits = market.indices.filter(i => items.includes(orbitKey(i))).map(i => [i.key, i.name, i.trend.dev]);
+        const picked = quotesOf(quotes).filter(q => items.includes(q.key));
+        const label = [...gauges.map(([axis, v]) => `${NAMES[axis]} ${v}`), ...orbits.map(([, name, v]) => `${NAMES.orbit} ${name} ${signed(v)}`), ...picked.map(q => `${q.name} ${formatDelta(q.chg, q.unit)}`)].join(', ');
+        return (
+          <button
+            ref={triggerRef}
+            aria-label={label || '시장 온도계'}
+            className={`stat market divider-left ${isStale(market.asof) ? 'stale' : ''}`}
+            aria-expanded={open}
+            aria-controls="market-panel"
+            onPointerEnter={onEnter}
+            onPointerLeave={onLeave}
+            onClick={onClick}
+          >
+            {kind === 'rows' && gauges.length > 0 && <BadgeRows rows={gauges.map(([axis, v]) => [axis, NAMES[axis], 0, v, v])} />}
+            {kind !== 'rows' && gauges.map(([axis, v, history]) => (kind === 'trend'
+              ? <Tick key={axis} axis={axis} value={v} history={history} />
+              : <Gauge key={axis} axis={axis} value={v} kind={kind} />))}
+            {orbits.length > 0 && <BadgeRows rows={orbits.map(([key, name, v]) => [key, name, Math.min(50, dialAt(v)), Math.max(50, dialAt(v)), signed(v)])} />}
+            {picked.map(q => <QuoteTick key={q.key} quote={q} value={value} />)}
+            {!label && <span>시장</span>}
+          </button>
+        );
+      });
+
+      function Meter({ axis, value }) {
+        const name = NAMES[axis];
+        return (
+          <div className={`mk-meter ${axis}`}>
+            <span className="mk-name"><span className={`dot ${axis}`}></span><Help id={axis}>{name}</Help></span>
+            <span className="mk-track" role="meter" aria-label={name} aria-valuemin="0" aria-valuemax="100" aria-valuenow={value}>
+              <span className="mk-fill" style={{ width: `${value}%` }}></span>
+            </span>
+            <b className="mk-num">{value}</b>
+            <span className="mk-level">{marketLevel(value)}</span>
+          </div>
+        );
+      }
+
+      const CHART_W = 340;
+
+      function useScrub(count) {
+        const [at, setAt] = useState(null);
+        return [at, {
+          onPointerMove: e => {
+            const box = e.currentTarget.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width));
+            setAt(Math.round(ratio * (count - 1)));
+          },
+          onPointerLeave: () => setAt(null),
+        }];
+      }
+
+      const chartX = (i, count) => i / (count - 1) * CHART_W;
+      const chartPath = (values, y) => values
+        .map((v, i) => `${i ? 'L' : 'M'}${chartX(i, values.length).toFixed(1)},${y(v).toFixed(1)}`)
+        .join(' ');
+
+      function useStored(key, options, initial) {
+        const name = `mac-bar.market.${key}`;
+        const [value, setValue] = useState(() => {
+          try {
+            const saved = localStorage.getItem(name);
+            return options.includes(saved) ? saved : initial;
+          } catch { return initial; }
+        });
+        const update = useCallback(next => {
+          try { localStorage.setItem(name, next); } catch {}
+          window.dispatchEvent(new StorageEvent('storage', { key: name, newValue: next }));
+        }, [name]);
+        useEffect(() => {
+          const sync = e => { if (e.key === name && options.includes(e.newValue)) setValue(e.newValue); };
+          window.addEventListener('storage', sync);
+          return () => window.removeEventListener('storage', sync);
+        }, [name, options.join()]);
+        return [value, update];
+      }
+
+      const AXES = ['fear', 'crowd'];
+      const orbitKey = index => `orbit:${index.key}`;
+      const ORBIT_KEYS = ['orbit:IXIC', 'orbit:GSPC'];
+      const BAR_DEFAULT = [...AXES, ...ORBIT_KEYS, '^IXIC', '^GSPC'];
+      const BAR_VALUES = [['chg', '등락률'], ['price', '가격']];
+      const BAR_STYLES = [['rows', '가로 막대'], ['arc', '반원'], ['pill', '캡슐'], ['trend', '추이']];
+      const quotesOf = quotes => (quotes ? quotes.groups.flatMap(g => g.items) : []);
+
+      function useBarItems() {
+        const name = 'mac-bar.market.bar-items';
+        const read = () => {
+          try {
+            const saved = JSON.parse(localStorage.getItem(name));
+            return Array.isArray(saved) ? saved.flatMap(key => (key === 'orbit' ? ORBIT_KEYS : [key])) : BAR_DEFAULT;
+          } catch { return BAR_DEFAULT; }
+        };
+        const [items, setItems] = useState(read);
+        useEffect(() => {
+          const sync = e => { if (e.key === name) setItems(read()); };
+          window.addEventListener('storage', sync);
+          return () => window.removeEventListener('storage', sync);
+        }, []);
+        const toggle = useCallback(key => {
+          const now = read();
+          const next = now.includes(key) ? now.filter(k => k !== key) : [...now, key];
+          setItems(next);
+          try { localStorage.setItem(name, JSON.stringify(next)); } catch {}
+        }, []);
+        return [items, toggle];
+      }
+
+      function BarSettings({ indices, quotes, items, onToggle }) {
+        const [value, setValue] = useStored('bar-value', keysOf(BAR_VALUES), 'chg');
+        const [style, setStyle] = useStored('bar-gauge', keysOf(BAR_STYLES), 'rows');
+        const chip = (key, text) => (
+          <button key={key} className="mk-chip" aria-pressed={items.includes(key)} onClick={() => onToggle(key)}>{text}</button>
+        );
+        return (
+          <div className="mk-settings" role="dialog" aria-label="바에 표시할 항목">
+            <h3>바에 표시할 항목</h3>
+            <p>온도계</p>
+            <div>{AXES.map(axis => chip(axis, NAMES[axis]))}{indices.map(i => chip(orbitKey(i), `${NAMES.orbit} ${i.name}`))}</div>
+            {quotes?.groups.map(g => (
+              <React.Fragment key={g.group}>
+                <p>{g.group}</p>
+                <div>{g.items.map(q => chip(q.key, q.name))}</div>
+              </React.Fragment>
+            ))}
+            <p>공포·쏠림 모양</p>
+            <Choice kind="tabs" label="온도계 모양" options={BAR_STYLES} value={style} onChange={setStyle} />
+            <p>시세 값</p>
+            <Choice kind="tabs" label="바 시세 값" options={BAR_VALUES} value={value} onChange={setValue} />
+          </div>
+        );
+      }
+
+      function Choice({ kind, label, options, value, onChange }) {
+        return (
+          <div className={`mk-choice ${kind}`} role="group" aria-label={label}>
+            {options.map(([key, text]) => (
+              <button key={key} aria-pressed={key === value} onClick={() => onChange(key)}>{text}</button>
+            ))}
+          </div>
+        );
+      }
+
+      const MOOD_RANGES = [['6m', '6개월', 126], ['1y', '1년', 252], ['3y', '3년', 756], ['5y', '5년', 1260]];
+      const ORBIT_RANGES = [['5y', '5년', 260], ['10y', '10년', 520], ['20y', '20년', 1040], ['all', '전체', Infinity]];
+      const ORBIT_LINES = [55, 15, -15, -30];
+      const ORBIT_ZONES = ['크게 과평가', '과평가', '적정', '저평가', '크게 저평가'];
+      const ORBIT_VIEWS = [['dev', '괴리'], ['price', '지수'], ['both', '비교'], ['then', '당시']];
+      const aheadText = (dev, rate) => {
+        const years = Math.log1p(dev / 100) / Math.log1p(rate / 100);
+        return `${Math.abs(years).toFixed(1)}년 ${years < 0 ? '뒤처짐' : '앞섬'}`;
+      };
+      const keysOf = options => options.map(o => o[0]);
+      const sizeOf = (options, key) => options.find(o => o[0] === key)[2];
+
+      const MAX_POINTS = 420;
+      function thin(values) {
+        const stride = Math.ceil(values.length / MAX_POINTS);
+        return values.filter((_, i) => (values.length - 1 - i) % stride === 0);
+      }
+
+      function rolling(values, size) {
+        if (size === 1) return values;
+        return values.map((_, i) => {
+          const part = values.slice(Math.max(0, i - size + 1), i + 1);
+          return Math.round(part.reduce((sum, v) => sum + v, 0) / part.length);
+        });
+      }
+
+      const MoodChart = React.memo(function MoodChart({ index }) {
+        const [range, setRange] = useStored('mood-range', keysOf(MOOD_RANGES), '6m');
+        const size = sizeOf(MOOD_RANGES, range);
+        const span = size > 252 ? 10 : size > 126 ? 5 : 1;
+        const fear = thin(rolling(index.fearHist, span).slice(-size));
+        const crowd = thin(rolling(index.crowdHist, span).slice(-size));
+        const dates = thin(index.histDates.slice(-size));
+        const [at, scrub] = useScrub(fear.length);
+        const shown = Math.min(at ?? fear.length - 1, fear.length - 1);
+        const h = 122;
+        const y = v => h - v / 100 * h;
+        return (
+          <div className="mk-chart">
+            <div className="mk-read">
+              <span className="mk-inline"><Choice kind="range" label="공포·쏠림 기간" options={MOOD_RANGES} value={range} onChange={setRange} /><Help id="mood" /></span>
+              <span>{at != null ? <span>20{dates[shown]}</span> : span > 1 && <span>{span / 5}주 평균</span>}<i className="key fear"></i>{NAMES.fear}<b>{fear[shown]}</b><i className="key crowd"></i>{NAMES.crowd}<b>{crowd[shown]}</b></span>
+            </div>
+            <div className="mk-plot">
+              <svg viewBox={`0 -2 ${CHART_W} ${h + 4}`} height={h + 4} preserveAspectRatio="none" aria-hidden="true" {...scrub}>
+                {[20, 50, 80].map(v => <line key={v} className={v === 50 ? 'far' : 'guide'} x1="0" x2={CHART_W} y1={y(v)} y2={y(v)} />)}
+                <path className="area fear" d={`${chartPath(fear, y)} L${CHART_W},${h} L0,${h} Z`} />
+                <path className="crowd" d={chartPath(crowd, y)} />
+                <path className="fear" d={chartPath(fear, y)} />
+                {at != null && <line className="cross" x1={chartX(shown, fear.length)} x2={chartX(shown, fear.length)} y1="0" y2={h} />}
+              </svg>
+              <div className="mk-guides" aria-hidden="true">
+                {[20, 50, 80].map(v => <span key={v} style={{ top: y(v) + 2 }}>{v}</span>)}
+              </div>
+            </div>
+          </div>
+        );
+      });
+
+      const zoneIndex = dev => ORBIT_LINES.filter(v => (v > 0 ? dev < v : dev <= v)).length;
+      const orbitZone = dev => ORBIT_ZONES[zoneIndex(dev)];
+      const lineTone = n => `z${n < 2 ? n : n + 1}`;
+
+      function weekDates({ weekEnd, weekDev }, asof) {
+        const tail = asof !== weekEnd ? 1 : 0;
+        const end = Date.parse(`${weekEnd}T00:00:00Z`);
+        const fridays = weekDev.length - tail;
+        const dates = Array.from({ length: fridays }, (_, i) =>
+          new Date(end - (fridays - 1 - i) * 7 * 86400000).toISOString().slice(0, 10));
+        return tail ? [...dates, asof] : dates;
+      }
+
+      const thousands = v => Math.round(v).toLocaleString('en-US');
+
+      const DIAL_EDGES = [-50, ...[...ORBIT_LINES].reverse(), 100];
+      const dialAt = v => {
+        const [low, high] = [DIAL_EDGES[0], DIAL_EDGES.at(-1)].map(e => Math.log1p(e / 100));
+        return 100 * (Math.log1p(Math.max(DIAL_EDGES[0], Math.min(DIAL_EDGES.at(-1), v)) / 100) - low) / (high - low);
+      };
+
+      function PeakLine({ peak }) {
+        if (peak?.usd == null) return null;
+        return (
+          <div className="mk-peak">
+            1년 고점 대비<b>{signed(peak.usd, 1)}</b>
+            {peak.krw != null && <>·<span>원화로는</span><b>{signed(peak.krw, 1)}</b></>}
+            <Help id="peak" />
+          </div>
+        );
+      }
+
+      function OrbitDial({ trend }) {
+        const { dev, span } = trend;
+        const zone = zoneIndex(dev);
+        return (
+          <div className="mk-dial">
+            <div className="mk-dial-top">
+              <span><Help id="orbit">추세선</Help>보다 <b>{Math.abs(dev)}%</b> {dev > 0 ? '높음' : dev < 0 ? '낮음' : '차이'}{span && <small><Help id="orbitSpan">시작 연도별</Help> {signed(span.lo)} ~ {signed(span.hi)}</small>}</span>
+              <b className={`z${zone}`}>{ORBIT_ZONES[zone]}</b>
+            </div>
+            <div className="mk-dial-bar" role="img" aria-label={`${signed(dev)}, ${ORBIT_ZONES[zone]}`}>
+              {DIAL_EDGES.slice(0, -1).map((from, n) => {
+                const to = DIAL_EDGES[n + 1];
+                const k = ORBIT_LINES.length - n;
+                return (
+                  <span key={from} className={`z${k} ${k === zone ? 'on' : ''}`} style={{ left: `${dialAt(from)}%`, width: `${dialAt(to) - dialAt(from)}%` }}>{ORBIT_ZONES[k]}</span>
+                );
+              })}
+              <i style={{ left: `${dialAt(dev)}%` }}></i>
+            </div>
+            <div className="mk-dial-marks" aria-hidden="true">
+              {span && <i style={{ left: `${dialAt(span.lo)}%`, width: `${dialAt(span.hi) - dialAt(span.lo)}%` }}></i>}
+              {ORBIT_LINES.map((v, n) => <span key={v} className={lineTone(n)} style={{ left: `${dialAt(v)}%` }}>{signed(v)}</span>)}
+            </div>
+          </div>
+        );
+      }
+
+      const OrbitChart = React.memo(function OrbitChart({ index, other }) {
+        const [range, setRange] = useStored('orbit-range', keysOf(ORBIT_RANGES), '5y');
+        const [picked, setView] = useStored('orbit-view', keysOf(ORBIT_VIEWS), 'dev');
+        const { trend } = index;
+        const view = picked === 'then' && !trend.weekThen?.length ? 'dev' : picked;
+        const lines = ORBIT_LINES;
+        const total = (view === 'then' ? trend.weekThen : trend.weekDev).length;
+        const size = Math.min(sizeOf(ORBIT_RANGES, range), total);
+        const cut = values => thin(values.slice(-size));
+        const dev = cut(trend.weekDev);
+        const past = view === 'then' ? cut(trend.weekThen) : [];
+        const price = cut(trend.weekPx);
+        const allDates = useMemo(() => weekDates(trend, index.asof), [index]);
+        const dates = cut(allDates);
+        const rival = cut(other.trend.weekDev);
+        const [at, scrub] = useScrub(dev.length);
+        const shown = Math.min(at ?? dev.length - 1, dev.length - 1);
+
+        const h = 194;
+        const isPrice = view === 'price';
+        const log = v => Math.log1p(v / 100);
+        const fair = price.map((v, i) => Math.log(v) - log(dev[i]));
+        const main = isPrice ? price.map(Math.log) : dev.map(log);
+        const extra = (view === 'both' ? rival : past).map(log);
+        const bounds = isPrice
+          ? [...main, ...fair, fair.at(-1) + log(lines[0])]
+          : [...main, ...extra, log(lines[0]) + 0.04, log(lines[3]) - 0.04];
+        const top = Math.max(...bounds);
+        const bottom = Math.min(...bounds);
+        const y = v => (top - v) / (top - bottom) * h;
+        const base = isPrice ? fair.at(-1) : 0;
+        const edges = [top, ...lines.map(log), bottom].map(v => Math.max(bottom, Math.min(top, v)));
+        const line = chartPath(main, y);
+        const labels = [[base, '추세선'], ...[1, 2, 0, 3].map(n => [base + log(lines[n]), signed(lines[n]), lineTone(n)])];
+        const placed = [];
+        for (const [v, text, tone] of labels) {
+          if (v > top || v < bottom || placed.some(o => Math.abs(o.at - y(v)) < 10.5)) continue;
+          placed.push({ at: y(v), text, tone });
+        }
+
+        return (
+          <div className="mk-chart orbit">
+            <div className="mk-ctl">
+              <span className="mk-inline"><Choice kind="tabs" label="보기" options={ORBIT_VIEWS} value={view} onChange={setView} /><Help id="orbitChart" /></span>
+              <Choice kind="range" label="궤도 기간" options={ORBIT_RANGES} value={range} onChange={setRange} />
+            </div>
+            <div className="mk-read">
+              <span>{at == null ? (isPrice ? `${index.name} (로그)` : '현재 추세선 대비') : dates[shown].replaceAll('-', '.')}</span>
+              {view === 'dev' && <span><b>{signed(dev[shown])}</b>{orbitZone(dev[shown])}{trend.rate > 0 && ` · ${aheadText(dev[shown], trend.rate)}`}</span>}
+              {isPrice && <span><b>{thousands(price[shown])}</b>추세선 {thousands(Math.exp(fair[shown]))}</span>}
+              {view === 'both' && (
+                <span>
+                  <i className="key orbit"></i>{index.name}<b>{signed(dev[shown])}</b>
+                  <i className="key rival"></i>{other.name}<b>{signed(rival[shown])}</b>
+                </span>
+              )}
+              {view === 'then' && (
+                <span>
+                  <i className="key orbit"></i>지금 보면<b>{signed(dev[shown])}</b>
+                  <i className="key rival"></i>그날 봤다면<b>{signed(past[shown])}</b>
+                </span>
+              )}
+            </div>
+            <div className="mk-plot">
+              <svg viewBox={`0 -2 ${CHART_W} ${h + 4}`} height={h + 4} preserveAspectRatio="none" aria-hidden="true" {...scrub}>
+                {!isPrice && ORBIT_ZONES.map((name, k) => edges[k] > edges[k + 1] && (
+                  <rect key={name} className={`z${k}`} x="0" width={CHART_W} y={y(edges[k])} height={y(edges[k + 1]) - y(edges[k])} />
+                ))}
+                {view === 'dev' && <path className="area" d={`${line} L${CHART_W},${y(0)} L0,${y(0)} Z`} />}
+                {!isPrice && lines.map((v, n) => log(v) <= top && log(v) >= bottom && (
+                  <line key={v} className={`level ${lineTone(n)}`} x1="0" x2={CHART_W} y1={y(log(v))} y2={y(log(v))} />
+                ))}
+                {isPrice && lines.map((v, n) => <path key={v} className={`band ${lineTone(n)}`} d={chartPath(fair.map(f => f + log(v)), y)} />)}
+                {isPrice ? <path className="fair" d={chartPath(fair, y)} /> : <line className="zero" x1="0" x2={CHART_W} y1={y(0)} y2={y(0)} />}
+                {extra.length > 0 && <path className="rival" d={chartPath(extra, y)} />}
+                <path className="orbit" d={line} />
+                {at != null && <line className="cross" x1={chartX(shown, dev.length)} x2={chartX(shown, dev.length)} y1="0" y2={h} />}
+              </svg>
+              <div className="mk-guides" aria-hidden="true">
+                {placed.map(o => <span key={o.text} className={o.tone} style={{ top: o.at + 2 }}>{o.text}</span>)}
+              </div>
+            </div>
+            <div className="mk-axis"><span>{dates[0].slice(0, 7).replace('-', '.')}</span>{view === 'then'
+              ? <span>흰 선은 그날 이 그래프를 봤다면 나왔을 값</span>
+              : <span><b className="z0">빨간 선</b> 위 과평가 · <b className="z4">파란 선</b> 아래 저평가</span>}<span>현재</span></div>
+          </div>
+        );
+      });
+
+      function ZoneTable({ indices }) {
+        const all = indices.flatMap(i => AXES.flatMap(axis => [i.zone[axis].worst, i.zone[axis].p90]));
+        const low = Math.min(0, ...all);
+        const high = Math.max(0, ...all);
+        const at = v => (v - low) / (high - low) * 100;
+        return (
+          <table className="mk-zones">
+            <thead><tr><td></td><th scope="col"><i className="worst"></i>최악<i className="span"></i>10번 중 8번</th><th scope="col">하위 10%</th><th scope="col">가운데</th><th scope="col">20% 하락</th></tr></thead>
+            {AXES.map(axis => (
+              <tbody key={axis} className={axis}>
+                <tr><th scope="rowgroup" colSpan="5"><span className={`dot ${axis}`}></span>{NAMES[axis]} {indices[0].zone[axis].lo}–{indices[0].zone[axis].hi}이던 날</th></tr>
+                {indices.map(i => {
+                  const z = i.zone[axis];
+                  return (
+                    <tr key={i.key}>
+                      <th scope="row">{i.name}</th>
+                      <td>
+                        <span className="mk-range">
+                          <i className="base" style={{ left: `${at(0)}%` }}></i>
+                          <i className="tail" style={{ left: `${at(z.worst)}%`, width: `${at(z.p10) - at(z.worst)}%` }}></i>
+                          <i className="worst" style={{ left: `${at(z.worst)}%` }}></i>
+                          <i className="span" style={{ left: `${at(z.p10)}%`, width: `${at(z.p90) - at(z.p10)}%` }}></i>
+                          <i className="mid" style={{ left: `${at(z.med)}%` }}></i>
+                          <small className="from" style={{ right: `${100 - at(z.worst)}%` }}>{signed(z.worst)}</small>
+                          <small style={{ left: `${at(z.p90)}%` }}>{signed(z.p90)}</small>
+                        </span>
+                      </td>
+                      <td>{signed(z.p10)}</td>
+                      <td><b>{signed(z.med)}</b></td>
+                      <td>{z.dd20}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            ))}
+          </table>
+        );
+      }
+
+      const signalTag = sig => (sig.pending ? '월말 확정 전' : sig.on ? (sig.months ? `${sig.months}개월째` : '켜짐') : null);
+
+      function SignalTable({ signals }) {
+        const groups = [true, false].map(verified => signals.filter(sig => sig.verified === verified));
+        return (
+          <table className="mk-signals">
+            <colgroup><col className="dot-col" /><col /><col className="now-col" /><col className="rate-col" /><col className="rate-col" /></colgroup>
+            <thead><tr><td></td><td></td><th scope="col">지금 값</th><th scope="col">켜졌을 때</th><th scope="col">평소</th></tr></thead>
+            {groups.map((rows, i) => rows.length > 0 && (
+              <tbody key={i}>
+                {!rows[0].verified && <tr className="group"><th scope="rowgroup" colSpan="5">참고 (우연과 구분 안 됨)</th></tr>}
+                {rows.map(sig => (
+                  <tr key={sig.label} className={sig.on ? 'on' : ''}>
+                    <td><span className="mk-sig-dot" role="img" aria-label={sig.on ? '켜짐' : '꺼짐'}></span></td>
+                    <th scope="row"><Help id={sig.label}>{sig.label}</Help>{signalTag(sig) && <small>{signalTag(sig)}</small>}</th>
+                    <td>{sig.value || '–'}</td>
+                    <td>{sig.hit}%</td>
+                    <td>{sig.base}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+          </table>
+        );
+      }
+
+      const QUOTE_W = 104;
+      const QUOTE_H = 32;
+      const ROW_VIEWS = [['day', '오늘'], ['m3', '3개월']];
+      const DAY_S = 86400;
+      const QUOTE_RANGES = [['1d', '오늘', 0], ['1m', '1개월', 31], ['3m', '3개월', 92], ['6m', '6개월', 183], ['1y', '1년', 365], ['3y', '3년', 1096], ['5y', '5년', 1827]];
+
+      function scaled(values, width, height) {
+        const low = Math.min(...values);
+        const range = Math.max(...values) - low || 1;
+        const x = i => i / (values.length - 1) * width;
+        const y = v => height - 2 - (v - low) / range * (height - 4);
+        return { x, y, line: values.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ') };
+      }
+
+      function startIndex(days, span) {
+        const end = Date.parse(`20${days.at(-1).replaceAll('.', '-')}T00:00:00Z`);
+        const from = new Date(end - span * 86400000).toISOString().slice(2, 10).replaceAll('-', '.');
+        return Math.max(0, days.findIndex(d => d >= from));
+      }
+
+      const toneOf = v => (v > 0 ? 'up' : v < 0 ? 'down' : '');
+      const formatPrice = (v, digits) => v.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      const formatDelta = (v, unit) => `${v > 0 ? '+' : ''}${v.toFixed(unit === 'bp' ? 0 : 2)}${unit}`;
+      const moved = (from, to, unit) => (unit === 'bp' ? (to - from) * 100 : (to / from - 1) * 100);
+
+      function average(values, size) {
+        let sum = 0;
+        return values.map((v, i) => {
+          sum += v - (i >= size ? values[i - size] : 0);
+          return i >= size - 1 ? sum / size : null;
+        });
+      }
+
+      function niceTicks(low, high, count) {
+        const raw = (high - low) / count;
+        const power = 10 ** Math.floor(Math.log10(raw));
+        const step = [1, 2, 2.5, 5, 10].map(m => m * power).find(v => v >= raw);
+        const ticks = [];
+        for (let v = Math.ceil(low / step) * step; v <= high; v += step) ticks.push(v);
+        return ticks;
+      }
+
+      function clockOf(t) {
+        const d = new Date(t * 1000);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+
+      function dateTicks(days, count, isDay) {
+        if (isDay && days.length < count) return days.map((text, i) => ({ i, text }));
+        const ticks = [];
+        for (let n = 0; n < count; n++) {
+          const i = Math.round((n + 0.5) / count * (days.length - 1));
+          ticks.push({ i, text: isDay ? days[i] : days.length > 380 ? `20${days[i].slice(0, 5)}` : days[i].slice(3) });
+        }
+        return ticks;
+      }
+
+      const BIG_W = 1000;
+      const BIG_H = 490;
+      const LINES = [['50', 50], ['200', 200]];
+
+      function withHistory(quote, histories) {
+        const past = histories?.[quote.key];
+        if (!past) return null;
+        const fresh = past.days.at(-1) !== quote.date;
+        return {
+          ...quote,
+          hist: fresh ? [...past.hist, quote.price] : past.hist,
+          days: fresh ? [...past.days, quote.date] : past.days,
+        };
+      }
+
+      function BigChart({ quote }) {
+        const [range, setRange] = useStored('big-range', keysOf(QUOTE_RANGES), '1y');
+        const size = sizeOf(QUOTE_RANGES, range);
+        const { unit, digits } = quote;
+        const hasDay = quote.day?.length > 1;
+        const ranges = hasDay ? QUOTE_RANGES : QUOTE_RANGES.slice(1);
+        const isDay = hasDay && range === '1d';
+        const from = isDay ? 0 : startIndex(quote.days, size || 365);
+        const hist = isDay ? quote.day : quote.hist.slice(from);
+        const days = isDay ? quote.dayT.map(clockOf) : quote.days.slice(from);
+        const base = isDay ? quote.prev : hist[0];
+        const slots = isDay && quote.full ? Math.max(quote.full, hist.length) : hist.length;
+        const [at, scrub] = useScrub(hist.length);
+        const shown = Math.min(at ?? hist.length - 1, hist.length - 1);
+        const averages = isDay ? [] : LINES
+          .map(([key, n]) => [key, average(quote.hist, n).slice(from)])
+          .filter(([, values]) => size > 31 && values.some(v => v != null));
+        const all = [...hist, base, ...averages.flatMap(([, values]) => values.filter(v => v != null))];
+        const pad = (Math.max(...all) - Math.min(...all)) * 0.04 || 1;
+        const low = Math.min(...all) - pad;
+        const high = Math.max(...all) + pad;
+        const x = i => i / (slots - 1) * BIG_W;
+        const y = v => (high - v) / (high - low) * BIG_H;
+        const trace = values => {
+          let pen = false;
+          return values.map((v, i) => {
+            if (v == null) { pen = false; return ''; }
+            const cmd = pen ? 'L' : 'M';
+            pen = true;
+            return `${cmd}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
+          }).join(' ');
+        };
+        const line = trace(hist);
+        const total = moved(base, hist[shown], unit);
+        const year = quote.hist.slice(startIndex(quote.days, 365));
+        const top = Math.max(...year);
+        const bottom = Math.min(...year);
+        const last = quote.hist.at(-1);
+        const ma200 = average(quote.hist, 200).at(-1);
+        const ago = span => formatDelta(moved(quote.hist[startIndex(quote.days, span)], last, unit), unit);
+        const stats = [
+          ['1개월', ago(31)], ['3개월', ago(92)], ['1년', ago(365)],
+          ['52주 최고', formatPrice(top, digits)], ['최고 대비', formatDelta(moved(top, last, unit), unit)],
+          ['52주 최저', formatPrice(bottom, digits)],
+          ['200일선 대비', ma200 == null ? '–' : formatDelta(moved(ma200, last, unit), unit)],
+        ];
+        return (
+          <div className={`mk-big mk-chart ${toneOf(moved(base, hist.at(-1), unit))}`}>
+            <div className="mk-big-head">
+              <span className="mk-big-name">{quote.name}{QUOTE_HELP[quote.key] && <Help id={`quote:${quote.key}`} />}</span>
+              <b>{formatPrice(quote.price, digits)}</b>
+              <small className={toneOf(quote.chg)}>{formatDelta(quote.chg, unit)}</small>
+              <Choice kind="range" label="큰 차트 기간" options={ranges} value={isDay || range !== '1d' ? range : '1y'} onChange={setRange} />
+            </div>
+            <div className="mk-read">
+              <span>
+                {isDay ? days[shown] : `20${days[shown]}`}<b>{formatPrice(hist[shown], digits)}</b>
+                {averages.map(([key, values]) => values[shown] != null && (
+                  <span key={key} className="mk-ma"><i className={`key ma${key}`}></i>{key}일선 {formatPrice(values[shown], digits)}</span>
+                ))}
+              </span>
+              <span>{isDay ? '전일 종가 대비' : '기간 시작 대비'} <small className={toneOf(total)}>{formatDelta(total, unit)}</small></span>
+            </div>
+            <div className="mk-plot wide">
+              <svg viewBox={`0 0 ${BIG_W} ${BIG_H}`} height={BIG_H} preserveAspectRatio="none" aria-hidden="true" {...scrub}>
+                {niceTicks(low, high, 6).map(v => <line key={v} x1="0" x2={BIG_W} y1={y(v)} y2={y(v)} />)}
+                <line className="zero" x1="0" x2={BIG_W} y1={y(base)} y2={y(base)} />
+                <path className="fill" d={`${line} L${x(hist.length - 1)},${BIG_H} L0,${BIG_H} Z`} />
+                {averages.map(([key, values]) => <path key={key} className={`ma${key}`} d={trace(values)} />)}
+                <path className="line" d={line} />
+                {at != null && <line className="cross" x1={x(shown)} x2={x(shown)} y1="0" y2={BIG_H} />}
+                {at != null && <line className="cross" x1="0" x2={BIG_W} y1={y(hist[shown])} y2={y(hist[shown])} />}
+              </svg>
+              <div className="mk-guides" aria-hidden="true">
+                {niceTicks(low, high, 6).map(v => <span key={v} style={{ top: y(v) }}>{formatPrice(v, Math.min(digits, 2))}</span>)}
+              </div>
+            </div>
+            <div className="mk-big-dates" aria-hidden="true">
+              {dateTicks(days, 6, isDay).map(t => <span key={t.i} style={{ left: `${t.i / (slots - 1) * 100}%` }}>{t.text}</span>)}
+            </div>
+            <dl className="mk-big-stats">
+              {stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+            </dl>
+          </div>
+        );
+      }
+
+      function QuoteRow({ quote, view, open, onToggle }) {
+        const { price, chg, unit, digits, m3 } = quote;
+        const { line } = scaled(m3, QUOTE_W, QUOTE_H);
+        const late = Date.now() / 1000 - quote.time > DAY_S;
+        const day = new Date(quote.time * 1000);
+        return (
+          <li className={quote.stale ? 'stale' : ''}>
+            <button className="mk-q-row" aria-expanded={open} onClick={onToggle}>
+              <span className="mk-q-name">{quote.name}{late && <small>{day.getUTCMonth() + 1}.{day.getUTCDate()}</small>}</span>
+              {view === 'day' && quote.day?.length > 1 ? <DayLine quote={quote} width={QUOTE_W} height={QUOTE_H} /> : (
+                <svg className={toneOf(moved(m3[0], m3.at(-1), unit))} width={QUOTE_W} height={QUOTE_H} aria-hidden="true">
+                  <path className="fill" d={`${line} L${QUOTE_W},${QUOTE_H} L0,${QUOTE_H} Z`} />
+                  <path className="line" d={line} />
+                </svg>
+              )}
+              <span className="mk-q-px">{formatPrice(price, digits)}<small className={toneOf(chg)}>{formatDelta(chg, unit)}</small></span>
+            </button>
+          </li>
+        );
+      }
+
+      function QuoteSide({ quotes, flip, detail, onDetail }) {
+        const [open, setOpen] = useStored('quotes', ['open', 'closed'], 'closed');
+        const [view, setView] = useStored('row-view', keysOf(ROW_VIEWS), 'day');
+        if (!quotes) return null;
+        const at = new Date(quotes.generated * 1000);
+        const clock = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+        if (open === 'closed') {
+          return (
+            <button className={`mk-handle ${flip ? 'flip' : ''}`} aria-expanded="false" onClick={() => setOpen('open')}>시세</button>
+          );
+        }
+        return (
+          <aside className={`mk-side ${flip ? 'flip' : ''}`} aria-label="시세">
+            <header className="mk-head">
+              <span>시세</span>
+              <span className="mk-date">{clock} 갱신 · 매분<button className="mk-close" aria-label="시세 접기" onClick={() => setOpen('closed')}>✕</button></span>
+            </header>
+            <Choice kind="range" label="시세 그래프" options={ROW_VIEWS} value={view} onChange={setView} />
+            <MarketBoundary key={quotes.generated}>
+              {quotes.groups.map(g => (
+                <React.Fragment key={g.group}>
+                  <h2>{g.group}</h2>
+                  <ul className="mk-quotes">{g.items.map(q => <QuoteRow key={q.key} quote={q} view={view} open={detail === q.key} onToggle={() => onDetail(detail === q.key ? null : q.key)} />)}</ul>
+                </React.Fragment>
+              ))}
+            </MarketBoundary>
+            <footer>누르면 큰 차트 · 점선은 전일 종가 · 일부 10~15분 지연</footer>
+          </aside>
+        );
+      }
+
+      const fearText = v => (
+        v >= 80 ? '겁에 질려 앞다퉈 파는 분위기입니다' : v >= 60 ? '많이 겁먹은 분위기입니다'
+          : v >= 40 ? '평소 수준의 긴장감입니다' : v >= 20 ? '편안한 분위기입니다' : '걱정이 거의 없는 분위기입니다'
+      );
+      const crowdText = v => (
+        v >= 80 ? '너도나도 몰려든 분위기입니다' : v >= 60 ? '제법 몰려 있습니다'
+          : v >= 40 ? '몰리지도 떠나지도 않은 상태입니다' : v >= 20 ? '관심이 식은 편입니다' : '많이들 떠난 분위기입니다'
+      );
+      const gapText = dev => (dev > 0 ? `${dev}% 위` : dev < 0 ? `${-dev}% 아래` : '같은 높이');
+      const stepText = (from, to) => (to > from ? `${to - from} 올라 ${to}` : to < from ? `${from - to} 내려 ${to}` : `그대로 ${to}`);
+
+      function summaryText({ index }) {
+        const risk = index.signals.find(x => x.verified);
+        const price = `추세선보다 ${gapText(index.trend.dev)}로 ‘${orbitZone(index.trend.dev)}’ 구간`;
+        return `미국 시장: ${fearText(index.fear)}. ${crowdText(index.crowd)}. ${index.name} 가격은 ${price}입니다. ${risk?.pending ? `이번 달 10개월선 ${risk.on ? '아래로 내려왔습니다' : '위로 올라왔습니다'}(월말 확정 전).` : risk?.on ? '10개월선 아래라 평소보다 크게 출렁일 수 있습니다.' : '10개월선 위라 크게 빠질 위험은 평소 수준입니다.'}`;
+      }
+
+      const partOf = (index, label) => index.parts.find(x => x.label === label);
+      const feelOf = (entry, pct) => entry.feel[pct >= 90 ? 0 : pct >= 70 ? 1 : pct > 30 ? 2 : pct > 10 ? 3 : 4];
+      const partNow = label => ({ index }) => {
+        const part = partOf(index, label);
+        return part ? `${part.value} · ${feelOf(HELP[label], part.pct)}. 최근 10년 중 순위는 ${part.pct}입니다(100이 최고).` : null;
+      };
+      const signalOf = (index, label) => index.signals.find(x => x.label === label);
+      const signalNow = label => ({ index }) => {
+        const sig = signalOf(index, label);
+        if (!sig) return null;
+        return `${sig.on ? '켜짐' : '꺼짐'}${sig.value ? ` (${sig.value})` : ''}${sig.pending ? ', 월말 확정 전' : ''}. 과거에 켜진 달 100번 중 ${sig.hit}번은 그 뒤 1년 안에 20% 이상 빠졌습니다. 꺼진 달은 100번 중 ${sig.base}번이었습니다.`;
+      };
+      const UNPROVEN = '우연히 나올 수 있는 정도의 차이라 참고로만 봅니다.';
+
+      const HELP = {
+        guide: {
+          title: '시장 온도계 읽는 법',
+          what: '언제 사고팔지 알려주지 않습니다. 지금 분위기와 내 마음을 점검하는 화면입니다.',
+          now: summaryText,
+          read: [
+            ['공포·쏠림', '사람들이 겁먹었는지, 몰려들었는지 봅니다.'],
+            ['궤도', '지수가 오랜 평균 속도보다 앞서 있는지 봅니다. 추세선을 어느 해부터 긋느냐에 따라 답이 달라지므로 범위를 함께 봅니다.'],
+            ['위험 점검', '10개월선만 보세요. 효과가 확인된 것은 이것뿐입니다.'],
+          ],
+          tip: [
+            '점수가 20~80 사이면 대부분 신경 쓰지 않아도 됩니다. 그 밖이면 움직이기 전에 하루만 멈춰 보세요.',
+            '?나 항목 이름에 마우스를 올리면 설명이 나옵니다.',
+          ],
+        },
+        badge: {
+          title: 'LIVE와 CLOSE',
+          what: '지금 보이는 점수가 장중의 값인지, 장이 끝난 뒤 확정된 값인지 알려줍니다.',
+          now: ({ market }) => (isStale(market.asof)
+            ? '갱신 지연. 새 값을 받지 못해 예전 값을 보여주고 있습니다.'
+            : market.live
+              ? `LIVE. ${market.generated.slice(11, 16)}에 계산했고, 장이 끝날 때까지 바뀝니다.`
+              : 'CLOSE. 장이 끝난 뒤 확정한 값입니다.'),
+          read: [
+            ['LIVE', '장이 열려 있어 지금 시세로 계산한 값입니다. 10분마다 다시 계산하므로 장이 끝날 때까지 바뀝니다.'],
+            ['CLOSE', '장이 끝난 뒤 종가(그날 마지막 가격)로 확정한 값입니다. 한국시간 06:40에 나옵니다.'],
+          ],
+          note: 'LIVE일 때도 신용융자, 회사채 금리차, 3배 ETF 비중은 지금 값이 없어 가장 최근에 나온 값을 씁니다.',
+        },
+        fear: {
+          axis: 'fear', title: '공포',
+          what: '사람들이 얼마나 겁먹었는지를 0~100으로 나타냅니다. 구성 목록의 빨간 항목 5개 순위를 평균한 값입니다.',
+          now: ({ index }) => `${index.fear}. ${fearText(index.fear)}.`,
+          read: [
+            ['80↑', '겁에 질려 앞다퉈 파는 때. 크게 튀어 오른 적도, 더 크게 빠진 적도 많았습니다.'],
+            ['60–80', '많이 겁먹은 때. 1년 뒤가 아주 좋았던 적도, 나빴던 적도 있습니다.'],
+            ['40–60', '평소 수준입니다.'],
+            ['20–40', '편안합니다.'],
+            ['20↓', '걱정이 거의 없습니다. 방심하기 쉬운 때입니다.'],
+          ],
+          note: '나스닥과 S&P500을 따로 보지 않고, 미국 시장 전체를 하나로 나타낸 점수입니다.',
+          tip: '높다고 이제 바닥이라는 뜻은 아닙니다. 무서워서 팔려는 건 아닌지 스스로 물어보는 용도입니다.',
+        },
+        crowd: {
+          axis: 'crowd', title: '쏠림',
+          what: '사람들이 얼마나 몰렸는지를 0~100으로 나타냅니다. 빚내서 산 주식, 3배 상품에 건 돈, 짧은 기간에 오른 폭을 봅니다. 구성 목록의 보라 항목 3개 순위를 평균한 값입니다.',
+          now: ({ index }) => `${index.crowd}. ${crowdText(index.crowd)}.`,
+          read: [
+            ['80↑', '너도나도 몰린 때. 그 뒤 1년이 밋밋했던 적이 있지만, 사례가 10번 남짓이라 우연일 수 있습니다.'],
+            ['60–80', '제법 몰려 있습니다.'],
+            ['40–60', '보통입니다.'],
+            ['20–40', '관심이 식은 편입니다.'],
+            ['20↓', '많이들 떠난 때. 크게 떨어진 뒤에 자주 나옵니다.'],
+          ],
+          note: '나스닥과 S&P500을 따로 보지 않고, 미국 시장 전체를 하나로 나타낸 점수입니다.',
+          tip: '높다고 곧 떨어진다는 뜻은 아닙니다. 남들 따라 뒤늦게 사려는 건 아닌지 스스로 물어보는 용도입니다.',
+        },
+        orbit: {
+          axis: 'orbit', title: '궤도',
+          what: '추세선은 지수가 오랜 평균 속도로 꾸준히 자랐을 때의 높이입니다. 궤도는 지금 지수가 그 선보다 몇 % 위나 아래인지입니다.',
+          now: ({ index }) => {
+            const t = index.trend;
+            const ahead = t.rate > 0 ? ` (${aheadText(t.dev, t.rate)})` : '';
+            const chance = t.chance == null ? '' : ` 아무 규칙 없이 움직이는 주가라도 이만한 차이는 100번 중 ${t.chance}번쯤 생깁니다.`;
+            return `추세선보다 ${gapText(t.dev)}${ahead}라 ‘${orbitZone(t.dev)}’입니다. 1971년부터의 기록에서 이보다 높았던 때는 ${t.top}%였습니다.${chance}`;
+          },
+          read: [
+            ['+55%↑', '크게 과평가. 과거 10번 중 1번쯤입니다.'],
+            ['+15~+55%', '과평가.'],
+            ['-15~+15%', '적정. 과거의 절반쯤이 여기에 있습니다.'],
+            ['-30~-15%', '저평가.'],
+            ['-30%↓', '크게 저평가. 과거 10번 중 1번쯤입니다.'],
+          ],
+          tip: '높다고 곧 떨어지는 것도, 낮다고 곧 오르는 것도 아닙니다. 지금이 비싼 편인지 싼 편인지 감을 잡는 용도입니다.',
+          note: '지수에 배당을 더하고 물가를 빼서 계산합니다. 나스닥의 2003년 이전 배당은 추정값입니다.',
+        },
+        mood: {
+          title: '공포·쏠림 흐름',
+          what: '공포(빨강)와 쏠림(보라)이 어떻게 움직여 왔는지 보여줍니다. 가로선은 아래부터 20, 50, 80입니다.',
+          now: ({ index }) => `5거래일 전보다 공포는 ${stepText(index.fearHist.at(-6), index.fear)}, 쏠림은 ${stepText(index.crowdHist.at(-6), index.crowd)}입니다.`,
+          read: [
+            ['빨강↑ 보라↓', '겁먹고 떠나는 흐름입니다.'],
+            ['빨강↓ 보라↑', '들떠서 몰려드는 흐름입니다.'],
+            ['80 위', '빨강이면 겁에 질린 때, 보라면 너도나도 몰린 때입니다.'],
+          ],
+          how: [
+            '구성 목록에 있는 재료 8개의 그날 값을 구합니다.',
+            '값마다 최근 10년의 자기 기록과 견줘 순위를 매깁니다. 0이 가장 낮고 100이 가장 높습니다.',
+            '빨간 재료 5개의 순위를 평균하면 공포, 보라 재료 3개를 평균하면 쏠림입니다.',
+            '이 점수를 날마다 계산해 선으로 이었습니다.',
+          ],
+          tip: '하루하루보다 방향을 보세요. 1년 보기는 1주 평균, 3년·5년 보기는 2주 평균이라 선이 더 부드럽습니다.',
+        },
+        parts: {
+          list: true, title: '공포·쏠림 구성',
+          what: '공포와 쏠림 점수를 만드는 재료 8개입니다. 순위는 최근 10년의 자기 기록과 견준 위치입니다. 100이 가장 높고 50이 중간입니다.',
+          note: '미국 시장 전체의 점수입니다. 1년 고점 대비와 200일선 대비는 S&P500으로 계산합니다.',
+          tip: '하나만 높은지 여럿이 함께 높은지 보세요. 여럿이 함께 높을수록 분위기가 뚜렷합니다.',
+        },
+        'VIX': {
+          axis: 'fear', title: 'VIX (변동성 지수)',
+          brief: '앞으로 한 달 출렁임에 붙는 보험료',
+          feel: ['매우 불안', '불안', '평범', '평온', '매우 평온'],
+          what: '앞으로 한 달 동안 S&P500이 얼마나 출렁일지에 붙는 보험료입니다. 걱정이 클수록 비싸집니다. 흔히 공포지수라고 부릅니다.',
+          now: partNow('VIX'),
+          read: [['15 안팎', '평온한 때입니다.'], ['20대', '불안이 커진 때입니다.'], ['30↑', '공포가 큰 때. 2020년 3월에는 80을 넘었습니다.']],
+          tip: '주가가 이미 떨어진 뒤에 오르는 경우가 많습니다. 앞날을 알려주는 예보가 아니라 지금을 재는 체온계입니다.',
+        },
+        '단기/3개월 VIX': {
+          axis: 'fear', title: '단기/3개월 VIX',
+          brief: '한 달 불안 ÷ 석 달 불안. 1 넘으면 급함',
+          feel: ['당장이 매우 무서움', '당장이 무서움', '평범', '차분', '매우 차분'],
+          what: '앞으로 한 달의 불안(VIX)을 앞으로 석 달의 불안(3개월 VIX)으로 나눈 값입니다.',
+          now: partNow('단기/3개월 VIX'),
+          read: [['1 아래', '평소 모습입니다. 당장보다 먼 앞날을 더 걱정합니다.'], ['1 위', '당장이 더 무서운 때. 주가가 급하게 떨어질 때 나타납니다.']],
+          tip: '1을 넘으면 사람들이 바로 지금을 걱정한다는 뜻입니다.',
+        },
+        '회사채 금리차': {
+          axis: 'fear', title: '회사채 금리차',
+          brief: '회사가 나라보다 더 내는 이자',
+          feel: ['부도 걱정이 매우 큼', '부도 걱정이 큼', '평범', '평온', '매우 평온'],
+          what: '신용이 중간쯤인 회사가 돈을 빌릴 때 나라(국채)보다 이자를 얼마나 더 내는지입니다. 나라가 4%, 회사가 5.6%를 내면 1.6%p입니다. 회사가 망할 걱정이 클수록 커집니다.',
+          now: partNow('회사채 금리차'),
+          read: [['낮을 때', '돈을 빌려주는 사람들은 평온합니다.'], ['높을 때', '회사가 망할까 걱정합니다. 2008년 같은 깊은 위기 때 크게 올랐습니다.']],
+          tip: '주가는 흔들리는데 이 값이 낮으면, 회사가 망할 걱정보다는 주식시장만의 불안일 수 있습니다.',
+        },
+        '1년 고점 대비': {
+          axis: 'fear', title: '1년 고점 대비',
+          brief: '최근 1년 최고가에서 내려온 폭',
+          feel: ['매우 많이 빠짐', '많이 빠짐', '흔한 정도', '조금 빠짐', '최고가 근처'],
+          what: '최근 1년 중 하루 마감 가격이 가장 높았던 날보다 얼마나 내려왔는지입니다. S&P500으로 계산합니다.',
+          now: partNow('1년 고점 대비'),
+          read: [['-5% 안팎', '흔한 흔들림입니다.'], ['-10%↓', '흔히 조정(잠시 크게 쉬어 감)이라고 부릅니다.'], ['-20%↓', '흔히 약세장(길게 내리는 시장)이라고 부릅니다.']],
+          tip: '많이 빠졌다고 싸다는 뜻은 아닙니다. 비싼지 싼지는 궤도에서 따로 보세요.',
+        },
+        '채권 대비 부진': {
+          axis: 'fear', title: '채권 대비 부진',
+          brief: '최근 한 달 주식이 국채보다 뒤진 폭',
+          feel: ['채권으로 크게 피신', '채권으로 피신', '평범', '주식을 더 선호', '주식을 훨씬 선호'],
+          what: '최근 20거래일(한 달쯤) 동안 미국 주식이 미국 국채보다 얼마나 뒤졌는지입니다. S&P500 ETF와 중기 국채 ETF를 견줍니다.',
+          now: partNow('채권 대비 부진'),
+          read: [['플러스', '주식이 더 못했습니다. 안전한 곳으로 옮겨가는 분위기입니다.'], ['마이너스', '주식이 더 나았습니다. 위험을 감수하는 분위기입니다.']],
+          tip: '한 달 남짓한 짧은 분위기만 보여줍니다.',
+        },
+        '신용융자 증가율': {
+          axis: 'crowd', title: '신용융자 증가율',
+          brief: '빚내서 산 돈이 1년 전보다 늘어난 폭. 한 달쯤 늦음',
+          feel: ['빚투가 매우 빠르게 증가', '빚투가 빠르게 증가', '평범', '빚투가 식음', '빚투가 크게 식음'],
+          what: '미국 투자자가 주식을 사려고 빌린 돈이 1년 전보다 얼마나 늘었는지입니다.',
+          now: partNow('신용융자 증가율'),
+          read: [['높을 때', '빚내서 사는 돈이 빠르게 늘었습니다. 주가가 떨어지면 빚 때문에 억지로 파는 주식이 많아질 수 있습니다.'], ['낮을 때', '빚내서 사는 열기가 식었습니다.']],
+          tip: '한 달에 한 번, 한 달쯤 늦게 나옵니다. 최근 며칠의 변화는 담기지 않습니다.',
+        },
+        '3배 ETF 상승 베팅': {
+          axis: 'crowd', title: '3배 ETF 상승 베팅',
+          brief: '나스닥 3배 상품 거래 중 오르는 쪽 비율',
+          feel: ['상승 베팅이 매우 강함', '상승 베팅이 강함', '평범', '상승 베팅이 약함', '상승 베팅이 매우 약함'],
+          what: '나스닥100이 하루 1% 움직이면 3% 움직이는 상품 두 개를 봅니다. 오르는 쪽(TQQQ)과 내리는 쪽(SQQQ)의 최근 20거래일 거래 금액 가운데 오르는 쪽 비율입니다.',
+          now: partNow('3배 ETF 상승 베팅'),
+          read: [['높을 때', '오르는 쪽에 공격적으로 겁니다.'], ['낮을 때', '떨어지는 쪽에 걸거나 대비합니다.']],
+          tip: '짧게 사고파는 사람들의 기분에 가깝습니다. 장중에는 전날 값을 씁니다.',
+        },
+        '200일선 대비': {
+          axis: 'crowd', title: '200일선 대비',
+          brief: '최근 200일 평균 가격에서 벗어난 폭',
+          feel: ['매우 빨리 오른 상태', '빨리 오른 상태', '평범', '힘이 빠짐', '힘이 많이 빠짐'],
+          what: '지수가 최근 200거래일(약 10개월) 평균 가격보다 얼마나 위나 아래에 있는지입니다. S&P500으로 계산합니다.',
+          now: partNow('200일선 대비'),
+          read: [['크게 위', '짧은 기간에 많이 올랐습니다.'], ['아래', '최근 10개월 평균보다 낮습니다.']],
+          tip: '평균보다 멀리 위면 너무 빨리 오른 상태, 아래면 힘이 빠진 상태로 봅니다.',
+        },
+        zones: {
+          title: '과거 비슷한 날',
+          what: '공포나 쏠림이 지금과 비슷했던(위아래 10 안쪽) 과거의 날을 모두 모았습니다. 그날부터 1년 뒤 나스닥과 S&P500이 어떻게 됐는지 보여줍니다.',
+          now: ({ market }) => market.indices.map(({ name, zone: { fear } }) => `${name}은 공포가 ${fear.lo}–${fear.hi}이던 날의 1년 뒤 절반이 ${signed(fear.med)}보다 좋았고, 10번 중 1번은 ${signed(fear.p10)}보다 나빴습니다. 가장 나빴던 날은 ${signed(fear.worst)}였습니다.`).join(' '),
+          read: [
+            ['색 막대', '가장 나쁜 10%와 가장 좋은 10%를 뺀 범위입니다. 길수록 결과가 크게 갈렸습니다. 회색 세로선이 0%입니다.'],
+            ['점', '가장 나빴던 날의 결과입니다.'],
+            ['하위 10%', '10번 중 1번은 이보다 나빴습니다. 색 막대의 왼쪽 끝입니다.'],
+            ['가운데', '결과를 낮은 것부터 줄 세웠을 때 딱 가운데 값입니다. 막대의 흰 눈금입니다.'],
+            ['20% 하락', '1년 안에 그날보다 20% 이상 낮아진 비율입니다.'],
+          ],
+          how: [
+            '과거의 모든 날에 같은 방식으로 점수를 매깁니다. 공포는 1992년 말, 쏠림은 2001년부터입니다. 그때 아직 없던 재료는 빼고 평균합니다.',
+            '점수가 지금과 10 안쪽으로 차이 나던 날만 골라 1년 뒤를 봅니다.',
+            '그 결과를 줄 세워 한가운데와 양쪽 끝을 적었습니다.',
+          ],
+          tip: '가운데 값보다 막대 길이와 점을 보세요. 비슷한 시기가 20번 안팎뿐이라 앞날을 맞히는 숫자는 아닙니다.',
+        },
+        orbitChart: {
+          axis: 'orbit', title: '궤도 그래프',
+          what: '지수가 추세선보다 몇 % 위나 아래였는지 보여줍니다. 빨간 선은 과평가, 파란 선은 저평가가 시작되는 높이이고 진할수록 심합니다.',
+          now: ({ index }) => `추세선보다 ${gapText(index.trend.dev)}입니다.`,
+          read: [
+            ['괴리', '추세선과의 차이입니다.'],
+            ['지수', '실제 지수와 추세선을 함께 그립니다.'],
+            ['비교', '나스닥과 S&P500을 겹쳐 봅니다.'],
+            ['당시', '그날 이 그래프를 봤다면 몇 %로 나왔을지 보여줍니다(흰 선).'],
+          ],
+          how: [
+            '지수에 배당을 더하고 물가가 오른 만큼을 뺍니다.',
+            '1971년부터 지금까지를 가장 잘 지나가는, 일정한 속도로 자라는 선을 긋습니다. 이것이 추세선입니다.',
+            '매주 지수가 추세선보다 몇 % 위나 아래인지 구해 이었습니다.',
+          ],
+          tip: [
+            '옛날의 %도 오늘까지의 기록을 다 알고 나서 계산한 값입니다. 그때 사람들은 앞날을 몰랐으니 다른 값을 봤을 것입니다.',
+            '예를 들어 1987년 8월의 S&P500은 지금 계산하면 +20%쯤이지만, 그날 계산했다면 +85%쯤이었습니다. ‘당시’를 누르면 그날의 값이 흰 선으로 나옵니다. 두 선이 가까우면 그때도 지금과 비슷하게 보였다는 뜻입니다.',
+          ],
+        },
+        orbitSpan: {
+          axis: 'orbit', title: '시작 연도별 차이',
+          what: '추세선은 1971년부터 긋습니다. 다른 해부터 그었을 때 가장 낮은 값과 가장 높은 값입니다.',
+          now: ({ index: { trend: { span } } }) => `${span.from}~${span.to}년 중 어느 해부터 그어도 지수는 추세선보다 ${gapText(span.lo)}에서 ${gapText(span.hi)} 사이입니다.`,
+          read: [
+            ['좁을 때', '어느 해부터 그어도 결과가 비슷합니다.'],
+            ['넓을 때', '시작한 해에 따라 결과가 달라져 확실하지 않습니다.'],
+            ['0%를 걸칠 때', '비싼지 싼지 말하기 어렵습니다.'],
+          ],
+          tip: '눈금 아래의 가는 흰 선이 이 폭입니다. 한 칸 안에 들어 있으면 판정이 확실한 편입니다.',
+        },
+        peak: {
+          title: '1년 고점 대비',
+          what: '최근 1년 중 가장 높았던 종가보다 얼마나 내려와 있는지입니다. 원화 값은 지수에 원/달러 환율을 곱한 뒤 같은 방식으로 잽니다.',
+          now: ({ index: { peak } }) => peak && `달러로는 ${signed(peak.usd, 1)}${peak.krw != null ? `, 원화로는 ${signed(peak.krw, 1)}` : ''}입니다.`,
+          tip: '환헤지(환율 변동을 막는 장치) 없이 원화로 계좌를 본다면 원화 값이 체감에 더 가깝습니다.',
+        },
+        signals: {
+          title: '위험 점검',
+          what: '과거에 켜졌을 때 큰 하락이 더 잦았던 조건 5개입니다.',
+          now: ({ index }) => {
+            const on = index.signals.filter(x => x.on).map(x => x.label);
+            return on.length ? `켜진 것: ${on.join(', ')}.` : '켜진 것이 없습니다.';
+          },
+          read: [
+            ['켜졌을 때', '켜진 달 가운데 1년 안에 20% 이상 빠진 비율입니다.'],
+            ['평소', '꺼진 달의 비율입니다. 둘의 차이를 보세요.'],
+            ['참고', '우연일 수도 있는 조건입니다.'],
+            ['주황 점', '지금 켜져 있는 조건입니다.'],
+            ['N개월째', '몇 달 연속 켜져 있는지입니다.'],
+            ['월말 확정 전', '이번 달 들어 켜짐·꺼짐이 바뀌었습니다. 월말 값으로 확정됩니다.'],
+          ],
+          how: [
+            '달마다 조건이 켜졌는지, 1년 안에 20% 이상 빠졌는지 셉니다.',
+            '켜진 달과 꺼진 달의 비율을 견줍니다.',
+            '10개월선의 차이가 우연인지는 Monte Carlo simulation(컴퓨터로 가짜 주가를 수없이 만들어 보는 방법)으로 확인했습니다. 과거의 월별 등락을 무작위로 뽑아 이은 가짜 주가 1,000세트입니다.',
+            '나스닥에서 실제만큼 큰 차이는 가짜 1,000번 중 2번만 나왔습니다. 그래서 우연으로 보기 어렵습니다.',
+            '나머지 4개는 우연과 뚜렷이 구별되지 않아 참고로 둡니다.',
+          ],
+          tip: '10개월선이 켜지면 더 크게 출렁일 수 있다는 뜻이지, 수익이 나빠진다는 뜻은 아닙니다. 20~30% 빠져도 버틸 수 있는지 점검하세요.',
+        },
+        '10개월선 아래': {
+          title: '10개월선 아래',
+          what: '지수가 최근 10개월의 월말 가격 평균보다 낮은 상태입니다. 지금 값은 그 평균과의 차이입니다.',
+          now: signalNow('10개월선 아래'),
+          read: [['켜짐', '평소보다 크게 출렁일 수 있습니다.'], ['꺼짐', '크게 빠질 위험이 평소 수준입니다.']],
+          tip: ['우연이 아닌 것으로 확인된 유일한 위험 신호입니다. 더 크게 출렁인다는 뜻이지, 수익이 나쁘다는 뜻은 아닙니다.', '달 중간에 새로 켜지면 절반쯤은 월말에 다시 꺼졌습니다.'],
+        },
+        '금리 역전': {
+          title: '금리 역전',
+          what: '나라가 10년 빌릴 때 내는 이자가 3개월 빌릴 때보다 낮아진 상태입니다. 보통은 오래 빌릴수록 이자가 높습니다. 경기가 나빠지기 전에 자주 나타난다고 알려져 있습니다. 지금 값은 10년 이자에서 3개월 이자를 뺀 것입니다.',
+          now: signalNow('금리 역전'),
+          read: [['마이너스', '뒤집힌 상태. 앞으로 경기가 나빠질까 걱정합니다.'], ['플러스', '보통 상태입니다.']],
+          tip: UNPROVEN,
+        },
+        '역전 해소 1년 내': {
+          title: '역전 해소 1년 내',
+          what: '뒤집혔던 금리(‘금리 역전’)가 보통으로 돌아온 지 1년이 안 된 상태입니다. 실제 경기 침체는 이 무렵 시작된 경우가 많다고 알려져 있습니다.',
+          now: signalNow('역전 해소 1년 내'),
+          tip: UNPROVEN,
+        },
+        '실업수당 급증': {
+          title: '실업수당 급증',
+          what: '새로 실업수당을 신청한 사람이 1년 전보다 10% 넘게 늘어난 상태입니다. 지금 값은 1년 전과의 차이입니다.',
+          now: signalNow('실업수당 급증'),
+          tip: `일자리가 나빠지는 신호입니다. ${UNPROVEN}`,
+        },
+        '시장 폭 악화': {
+          title: '시장 폭 악화',
+          what: '최근 6개월 동안, 큰 회사 위주로 담은 S&P500 ETF보다 500개 회사를 똑같은 비중으로 담은 ETF가 못한 상태입니다. 몇몇 큰 회사만 오른다는 뜻입니다. 지금 값은 두 ETF의 차이입니다.',
+          now: signalNow('시장 폭 악화'),
+          tip: `2003년부터의 기록이라 짧습니다. ${UNPROVEN}`,
+        },
+      };
+
+      const QUOTE_HELP = {
+        '^IXIC': ['나스닥 종합', '나스닥 시장에 있는 회사 전체를 묶은 지수입니다. 기술 회사 비중이 큽니다.', '하루 1~2% 움직임은 흔합니다. 아래의 최고 대비와 200일선 대비를 함께 보세요.'],
+        '^GSPC': ['S&P500', '미국 대표 기업 500개를 묶은 지수입니다. 미국 시장 전체를 볼 때 기준으로 삼습니다.', '나스닥보다 덜 출렁입니다. 나스닥만 빠지면 기술주 문제, 둘 다 빠지면 시장 전체 문제일 수 있습니다.'],
+        'NQ=F': ['나스닥 선물', '나스닥100을 정해진 날에 사고팔기로 미리 약속하는 값입니다. 미국 장이 닫힌 시간에도 움직입니다.', '장이 닫혔을 때 다음 장의 분위기를 엿보는 용도입니다. 나스닥 종합과 담긴 회사가 달라 등락률도 다릅니다.'],
+        'ES=F': ['S&P500 선물', 'S&P500을 정해진 날에 사고팔기로 미리 약속하는 값입니다. 미국 장이 닫힌 시간에도 움직입니다.', '장이 닫힌 동안의 분위기를 봅니다. 장이 열리기 전에 얼마든지 바뀔 수 있습니다.'],
+        '^VIX': ['VIX', '앞으로 한 달 동안 S&P500이 얼마나 출렁일지에 붙는 보험료입니다.', '15 안팎은 평온, 20대는 불안, 30 이상은 공포로 봅니다. 대체로 주가가 내리면 오릅니다.'],
+        '^TNX': ['미 10년물 금리', '미국 정부가 10년 동안 돈을 빌릴 때 내는 이자입니다. 전 세계 이자의 기준이 됩니다. 1bp는 0.01%p입니다.', '빠르게 오르면 주가에 부담이 되는 경우가 많습니다. 경기가 좋아서 오르는지, 물가 때문에 오르는지에 따라 뜻이 다릅니다.'],
+        'DGS2': ['미 2년물 금리', '미국 정부가 2년 동안 돈을 빌릴 때 내는 이자입니다. 중앙은행이 앞으로 금리를 올릴지 내릴지에 대한 예상이 많이 담깁니다. 1bp는 0.01%p입니다.', '내려가면 금리 인하를, 오르면 금리 인상을 기대한다고 봅니다. 하루 이틀 늦은 값입니다.'],
+        'T10Y2Y': ['10년-2년 금리차', '10년물 금리에서 2년물 금리를 뺀 값입니다. 보통은 오래 빌릴수록 이자가 높아 플러스입니다. 1bp는 0.01%p입니다.', '마이너스면 앞으로 경기가 나빠질까 걱정하는 사람이 많다는 뜻으로 봅니다.'],
+        'DX-Y.NYB': ['달러인덱스', '유로, 엔 등 주요 6개 돈과 견준 달러의 힘입니다.', '달러가 강해지면 신흥국(빠르게 크는 나라들)과 원자재 값에 부담이 되는 경우가 많습니다.'],
+        'KRW=X': ['원/달러', '1달러를 사는 데 드는 원화입니다.', '오르면 원화가 약해진 것입니다. 미국 주식을 원화로 따진 금액은 환율이 오르면 커집니다.'],
+        'GC=F': ['금 선물', '금을 정해진 날에 사고팔기로 미리 약속하는 값입니다. 금은 불안할 때 찾는 대표 자산입니다.', '불안하거나, 물가를 뺀 이자가 내릴 때 오르는 경우가 많지만 늘 그렇지는 않습니다.'],
+        'BTC-USD': ['비트코인', '하루 24시간, 주말에도 거래됩니다.', '위험을 감수하는 분위기를 엿볼 수 있지만, 주식보다 훨씬 크게 출렁입니다.'],
+      };
+
+      const HELP_ICON_MS = 150;
+      const HELP_NAME_MS = 200;
+      const HelpContext = React.createContext(null);
+
+      function useHelp() {
+        const [help, setHelp] = useState(null);
+        const timer = useRef(null);
+        const api = useMemo(() => {
+          const show = next => { clearTimeout(timer.current); setHelp(next); };
+          return {
+            open: (id, el) => show({ id, el }),
+            close: () => show(null),
+            rest: (id, el, ms) => {
+              clearTimeout(timer.current);
+              timer.current = setTimeout(() => { if (el.isConnected) show({ id, el }); }, ms);
+            },
+          };
+        }, []);
+        useEffect(() => api.close, [api]);
+        return [help, api];
+      }
+
+      function Help({ id, children }) {
+        const [help, api] = React.useContext(HelpContext);
+        const open = help?.id === id;
+        const enter = e => api.rest(id, e.currentTarget, children ? HELP_NAME_MS : HELP_ICON_MS);
+        return (
+          <button
+            className={children ? 'mk-help-name' : 'mk-help-icon'}
+            aria-label={children ? undefined : '설명'}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            onPointerEnter={enter}
+            onPointerLeave={api.close}
+            onFocus={e => { if (e.currentTarget.matches(':focus-visible')) enter(e); }}
+            onBlur={api.close}
+            onClick={e => api.open(id, e.currentTarget)}
+          >
+            {children ?? '?'}
+          </button>
+        );
+      }
+
+      function PartsGuide({ index }) {
+        return ['fear', 'crowd'].map(axis => {
+          const parts = index.parts.filter(x => x.axis === axis);
+          return (
+            <React.Fragment key={axis}>
+              <h4><span className={`dot ${axis}`}></span>{NAMES[axis]}<b>{index[axis]}</b><small>아래 {parts.length}개 순위의 평균</small></h4>
+              <ul className="mk-help-list">
+                {parts.map(part => (
+                  <li key={part.label}>
+                    <span><strong>{part.label}</strong><small>{HELP[part.label].brief}</small></span>
+                    <span><strong>{feelOf(HELP[part.label], part.pct)}</strong><small>{part.value} · 순위 {part.pct}</small></span>
+                  </li>
+                ))}
+              </ul>
+            </React.Fragment>
+          );
+        });
+      }
+
+      function HelpCard({ help, context, panel }) {
+        const card = useRef(null);
+        const [spot, setSpot] = useState(null);
+        const entry = help.id.startsWith('quote:')
+          ? (([title, what, tip]) => ({ title, what, tip }))(QUOTE_HELP[help.id.slice(6)])
+          : HELP[help.id];
+        useEffect(() => {
+          const root = panel.current;
+          const host = root.getBoundingClientRect();
+          const topOf = el => el.getBoundingClientRect().top - host.top;
+          const { offsetHeight: h, offsetWidth: w } = card.current;
+          const { el } = help;
+          const column = el.closest('.mk-cols > div');
+          const right = column ? !column.previousElementSibling : el.getBoundingClientRect().left - host.left > host.width / 2;
+          const start = column
+            ? Math.max(topOf(el) - 12, topOf(column))
+            : topOf(root.querySelector('.mk-big .mk-plot') ?? root.querySelector(right ? '.mk-chart.orbit' : '.mk-chart'));
+          setSpot({ top: Math.max(12, Math.min(start, host.height - h - 12)), left: right ? host.width - w - 12 : 12 });
+        }, [help, panel]);
+        const now = entry.now?.(context);
+        return (
+          <div ref={card} className={`mk-help ${entry.axis ?? ''}`} role="dialog" aria-label={entry.title} style={spot ?? { visibility: 'hidden' }}>
+            <header>
+              {entry.axis && <span className={`dot ${entry.axis}`}></span>}
+              <strong>{entry.title}</strong>
+            </header>
+            <p>{entry.what}</p>
+            {now && <div className="mk-help-now"><span>지금</span>{now}</div>}
+            {entry.read && (
+              <dl>{entry.read.map(([k, v]) => <React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>
+            )}
+            {entry.list && <PartsGuide index={context.index} />}
+            {entry.how && (
+              <div className="mk-help-how">
+                <span>어떻게 만드나</span>
+                <ol>{entry.how.map(step => <li key={step}>{step}</li>)}</ol>
+              </div>
+            )}
+            {entry.note && <p className="mk-help-note">{entry.note}</p>}
+            {entry.tip && <div className="mk-help-tip"><span>이렇게 보세요</span>{[].concat(entry.tip).map(text => <p key={text}>{text}</p>)}</div>}
+          </div>
+        );
+      }
+
+      const SIDE_ROOM = 360;
+
+      const MarketPanel = React.memo(function MarketPanel({ market, quotes, items, onToggleItem, visible, left, panelRef, onEnter, onLeave, pinned, onPin, onDrag, onSettled }) {
+        const [selected, setSelected] = useStored('index', market.indices.map(i => i.key), market.indices[0].key);
+        const index = market.indices.find(i => i.key === selected) ?? market.indices[0];
+        const [detail, setDetail] = useState(null);
+        const [settings, setSettings] = useState(false);
+        const box = useRef(null);
+        const [help, helpApi] = useHelp();
+        const helpContext = useMemo(() => [help, helpApi], [help, helpApi]);
+        useEffect(() => { if (!visible) { setDetail(null); setSettings(false); helpApi.close(); } }, [visible]);
+        useEffect(() => {
+          if (!onSettled) return;
+          const id = setTimeout(() => onSettled(true), quotes ? 0 : 1500);
+          return () => clearTimeout(id);
+        }, [!!quotes, onSettled]);
+        useEffect(() => {
+          if (!detail && !settings && !help) return;
+          const back = e => {
+            if (e.key !== 'Escape') return;
+            e.stopImmediatePropagation();
+            if (help) helpApi.close();
+            else if (settings) setSettings(false);
+            else setDetail(null);
+          };
+          window.addEventListener('keydown', back, true);
+          return () => window.removeEventListener('keydown', back, true);
+        }, [detail, settings, help]);
+        useEffect(() => { helpApi.close(); }, [detail, selected]);
+        const histories = useJson(detail ? './quotes-hist.json' : null, MARKET_POLL_MS);
+        const picked = detail && quotesOf(quotes).find(q => q.key === detail);
+        const big = picked && withHistory(picked, histories);
+        const liveOf = i => quotesOf(quotes).find(q => q.key === `^${i.key}` && !q.stale);
+        const late = isStale(market.asof);
+        const closeDay = new Intl.DateTimeFormat('ko', { month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC' }).format(new Date(`${market.asof}T00:00:00Z`));
+        return (
+          <HelpContext.Provider value={helpContext}>
+          <section
+            id="market-panel"
+            ref={el => { box.current = el; if (panelRef) panelRef.current = el; }}
+            className={`mk-panel ${visible ? 'open' : ''}`}
+            style={pinned ? undefined : { left }}
+            aria-hidden={!visible}
+            onPointerEnter={onEnter}
+            onPointerLeave={onLeave}
+          >
+            <header className={`mk-head ${pinned ? 'mk-drag' : ''}`} onPointerDown={onDrag}>
+              {big ? <button className="mk-back" onClick={() => setDetail(null)}>← 시장 온도계</button> : <span>시장 온도계<Help id="guide" /></span>}
+              <span className="mk-date mk-when">
+                <Help id="badge"><span className={`mk-badge ${late ? 'late' : market.live ? 'live' : ''}`}>{late ? '갱신 지연' : market.live ? 'LIVE' : 'CLOSE'}</span></Help>
+                <span>{market.live && !late ? `${market.generated.slice(11, 16)} 기준` : closeDay}</span>
+                <button className="mk-pin-btn" aria-pressed={settings} title="바에 표시할 항목" aria-label="바에 표시할 항목" onClick={() => setSettings(v => !v)}>
+                  <svg className="still" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h10v2H3zm14 0h4v2h-4zM3 16h4v2H3zm8 0h10v2H11zM13 3.5h3v7h-3zM7.500 13.500h3v7h-3z" /></svg>
+                </button>
+                <button className="mk-pin-btn" aria-pressed={!!pinned} title={pinned ? '고정 해제' : '화면에 고정'} aria-label={pinned ? '고정 해제' : '화면에 고정'} onClick={onPin}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H8v2l1 1v6l-3 3v2h5v5l1 1 1-1v-5h5v-2l-3-3V6l1-1Z" /></svg>
+                </button>
+              </span>
+            </header>
+
+            {settings && <BarSettings indices={market.indices} quotes={quotes} items={items} onToggle={onToggleItem} />}
+            <div className={`mk-body ${big ? 'detail' : ''}`}>
+            {big && <MarketBoundary key={big.key}><BigChart quote={big} /></MarketBoundary>}
+            <div className="mk-front">
+            <div className="mk-cols">
+              <div>
+                <h3 className="mk-scope">미국 시장 전체</h3>
+                <Meter axis="fear" value={index.fear} />
+                <Meter axis="crowd" value={index.crowd} />
+                <MoodChart index={index} />
+
+                <h2><span className="mk-title">공포·쏠림 구성<Help id="parts" /></span> <span>10년 중 순위 (100 = 최고)</span></h2>
+                <ul className="mk-parts">
+                  {index.parts.map(part => (
+                    <li key={part.label} className={part.axis}>
+                      <span className="mk-part-name"><Help id={part.label}>{part.label}</Help></span>
+                      <span className="mk-part-val">{part.value}</span>
+                      <span className="mk-track"><span className="mk-fill" style={{ width: `${part.pct}%` }}></span></span>
+                      <span className="mk-part-pct">{part.pct}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <h2><span className="mk-title">과거 비슷한 날<Help id="zones" /></span> <span>1년 뒤</span></h2>
+                <ZoneTable indices={market.indices} />
+              </div>
+
+              <div>
+                <h3 className="mk-scope">지수별</h3>
+                <div className="mk-tabs first" role="group" aria-label="지수">
+                  {market.indices.map(i => (
+                    <button key={i.key} aria-pressed={i.key === index.key} className="mk-tab" onClick={() => setSelected(i.key)}>
+                      <span className="mk-tab-name">{i.name}</span>
+                      <span className="mk-tab-px">
+                        {(liveOf(i)?.price ?? i.close).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        <small className={`mk-chg ${toneOf(liveOf(i)?.chg ?? i.chg)}`}>{formatDelta(liveOf(i)?.chg ?? i.chg, '%')}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <PeakLine peak={index.peak} />
+                <OrbitDial trend={index.trend} />
+                <OrbitChart index={index} other={market.indices.find(i => i !== index) ?? index} />
+
+                <h2><span className="mk-title">위험 점검<Help id="signals" /></span> <span>1년 내 20% 하락 빈도</span></h2>
+                <SignalTable signals={index.signals} />
+              </div>
+            </div>
+            <footer>분위기 참고용이며 예측이 아닙니다 · 점수는 장중 10분마다 바뀌고 06:40에 확정</footer>
+            </div>
+            </div>
+            {help && (
+              <MarketBoundary key={help.id}>
+                <HelpCard help={help} context={{ index, market }} panel={box} />
+              </MarketBoundary>
+            )}
+            <MarketBoundary><QuoteSide quotes={quotes} flip={!pinned && left < SIDE_ROOM} detail={detail} onDetail={setDetail} /></MarketBoundary>
+          </section>
+          </HelpContext.Provider>
+        );
+      });
+
+      function PinnedMarket() {
+        const [hidden, setHidden] = useState(false);
+        const quotes = useJson(hidden ? null : './quotes.json', QUOTES_POLL_MS);
+        const market = useJson(hidden ? null : './market.json', MARKET_POLL_MS, quotes?.market);
+        const [items, toggleItem] = useBarItems();
+        const [shown, setShown] = useState(false);
+        const [settled, setSettled] = useState(false);
+        const root = useRef(null);
+        const spot = useRef(readSpot());
+
+        useEffect(() => {
+          navigator.locks.request(PIN_WARM, () => new Promise(() => {})).catch(() => {});
+        }, []);
+        useEffect(() => {
+          if (hidden) return;
+          let release;
+          navigator.locks.request(PIN_LOCK, () => new Promise(resolve => { release = resolve; })).catch(() => {});
+          return () => release?.();
+        }, [hidden]);
+
+        const place = useCallback(async () => {
+          const win = zebar.currentWidget().window.tauri;
+          const scale = window.devicePixelRatio;
+          const width = Math.ceil(root.current.offsetWidth * scale);
+          const height = Math.ceil(root.current.offsetHeight * scale);
+          if (!width || !height) return;
+          if (!spot.current) {
+            const [at, size] = [await win.outerPosition(), await win.innerSize()];
+            spot.current = { right: at.x + size.width, y: at.y };
+          }
+          await win.setSize({ type: 'Physical', width, height });
+          await win.setPosition({ type: 'Physical', x: spot.current.right - width, y: spot.current.y });
+        }, []);
+
+        useEffect(() => {
+          if (!market || !settled) return;
+          let alive = true;
+          (async () => {
+            await place().catch(() => {});
+            if (!alive) return;
+            setShown(true);
+            setTimeout(() => post(PIN_LOCK, 'ready'), 80);
+          })();
+          return () => { alive = false; };
+        }, [!!market, settled, place]);
+
+        useEffect(() => {
+          const observer = new ResizeObserver(() => { place().catch(() => {}); });
+          observer.observe(root.current, { box: 'border-box' });
+          return () => observer.disconnect();
+        }, [place]);
+
+        const drag = useCallback(e => {
+          if (e.button !== 0 || e.target.closest('button') || !spot.current) return;
+          const start = { screenX: e.screenX, screenY: e.screenY, ...spot.current };
+          const target = e.currentTarget;
+          target.setPointerCapture(e.pointerId);
+          const win = zebar.currentWidget().window.tauri;
+          let busy = false;
+          const move = ev => {
+            const scale = window.devicePixelRatio;
+            spot.current = {
+              right: Math.round(start.right + (ev.screenX - start.screenX) * scale),
+              y: Math.round(start.y + (ev.screenY - start.screenY) * scale),
+            };
+            if (busy) return;
+            busy = true;
+            const width = Math.ceil(root.current.offsetWidth * scale);
+            win.setPosition({ type: 'Physical', x: spot.current.right - width, y: spot.current.y })
+              .catch(() => {}).finally(() => { busy = false; });
+          };
+          const end = () => {
+            target.removeEventListener('pointermove', move);
+            target.removeEventListener('pointerup', end);
+            target.removeEventListener('pointercancel', end);
+            saveSpot(spot.current);
+            place().catch(() => {});
+          };
+          target.addEventListener('pointermove', move);
+          target.addEventListener('pointerup', end);
+          target.addEventListener('pointercancel', end);
+        }, [place]);
+
+        useEffect(() => {
+          const channel = new BroadcastChannel(PIN_SHOW);
+          channel.onmessage = async () => {
+            spot.current = readSpot();
+            setHidden(false);
+            await place().catch(() => {});
+            await zebar.currentWidget().window.tauri.show().catch(() => {});
+            setTimeout(() => post(PIN_LOCK, 'ready'), 80);
+          };
+          return () => channel.close();
+        }, [place]);
+
+        const unpin = useCallback(() => {
+          const win = zebar.currentWidget().window.tauri;
+          win.hide().then(() => setHidden(true), () => win.close());
+        }, []);
+        return (
+          <div ref={root} className={`mk-pin ${shown ? 'shown' : ''}`}>
+            {market && (
+              <MarketBoundary key={market.generated}>
+                <MarketPanel market={market} quotes={quotes} items={items} onToggleItem={toggleItem} visible left={0} pinned onPin={unpin} onDrag={drag} onSettled={setSettled} />
+              </MarketBoundary>
+            )}
+          </div>
+        );
+      }
+
       const BAR_LEVELS = [0.4, 0.8, 0.55, 1];
 
       function PlaybackBars() {
@@ -474,10 +2033,17 @@
           return () => { clearTimeout(id); if (typeof unsub === 'function') unsub(); };
         }, []);
         const gpu = useGpu();
+        const quotes = useJson('./quotes.json', QUOTES_POLL_MS);
+        const market = useJson('./market.json', MARKET_POLL_MS, quotes?.market);
+        const hover = useHoverPanel();
+        const held = useRef(null);
+        if (hover.visible || !held.current) held.current = quotes;
+        const [items, toggleItem] = useBarItems();
         useEffect(() => writeJumpMap(out.glazewm), [out.glazewm]);
         const deadTray = useDeadTrayIcons((out.systray?.icons || []).map(i => i.id).join(','));
 
         return (
+          <>
           <div className="app">
             <div className="left">
               <i className="logo nf nf-fa-windows"></i>
@@ -547,6 +2113,7 @@
                 </button>
               )}
               {out.cpu && <RunCat cpuUsage={out.cpu.usage} />}
+              {market && <MarketBoundary key={market.generated}><MarketStat market={market} quotes={quotes} items={items} triggerRef={hover.trigger} open={hover.visible} onEnter={hover.enter} onLeave={hover.leave} onClick={hover.show} /></MarketBoundary>}
               <ImeBadge />
               <UsageStat name="CPU" reading={out.cpu}>
                 <i className="nf nf-oct-cpu"></i>
@@ -619,6 +2186,23 @@
               {out.date && <span className="clock">{out.date.formatted}</span>}
             </div>
           </div>
+          {market && (
+            <MarketBoundary key={market.generated}>
+              <MarketPanel
+                market={market}
+                quotes={held.current}
+                items={items}
+                onToggleItem={toggleItem}
+                visible={hover.visible}
+                left={hover.left}
+                panelRef={hover.panel}
+                onEnter={hover.enter}
+                onLeave={hover.leave}
+                onPin={hover.pin}
+              />
+            </MarketBoundary>
+          )}
+          </>
         );
       }
     </script>

@@ -13,7 +13,7 @@
       "focused": false,
       "resizable": false,
       "transparent": true,
-      "includeFiles": ["*.html", "*.css", "*.js", "*.txt", "gpu-usage.ps1", "watch-ime.ahk"],
+      "includeFiles": ["*.html", "*.css", "*.js", "*.txt", "market.json", "quotes.json", "quotes-hist.json", "gpu-usage.ps1", "watch-ime.ahk"],
       "caching": { "defaultDuration": 604800, "rules": [] },
       "privileges": {
         "shellCommands": [
@@ -31,6 +31,30 @@
           "width": "100%",
           "height": "26px",
           "monitorSelection": { "type": "all" },
+          "dockToEdge": { "enabled": false, "edge": "top", "windowMargin": "0px" }
+        }
+      ]
+    },
+    {
+      "name": "market",
+      "htmlPath": "./bar.html",
+      "zOrder": "top_most",
+      "shownInTaskbar": false,
+      "focused": false,
+      "resizable": false,
+      "transparent": true,
+      "includeFiles": ["*.html", "*.css", "*.js", "market.json", "quotes.json", "quotes-hist.json"],
+      "caching": { "defaultDuration": 604800, "rules": [] },
+      "privileges": { "shellCommands": [] },
+      "presets": [
+        {
+          "name": "pinned",
+          "anchor": "top_right",
+          "offsetX": "-20px",
+          "offsetY": "32px",
+          "width": "850px",
+          "height": "716px",
+          "monitorSelection": { "type": "primary" },
           "dockToEdge": { "enabled": false, "edge": "top", "windowMargin": "0px" }
         }
       ]

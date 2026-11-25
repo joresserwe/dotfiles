@@ -31,7 +31,7 @@ foreach ($d in 'glazewm', 'winget', 'claude', 'surfingkeys') {
 # state ($XDG_STATE_HOME) that this script cannot read — /MIR must not
 # delete it; preserve whatever install.linux.sh last wrote. ime-state.txt is
 # mirror-owned runtime state written by winkey.ahk, same deal.
-robocopy "$src\zebar" "$dst\zebar" /MIR /XF profile.js ime-state.txt /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
+robocopy "$src\zebar" "$dst\zebar" /MIR /XF profile.js ime-state.txt market.json quotes.json quotes-hist.json /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 robocopy "$src\tacky-borders" "$dst\tacky-borders" /MIR /XF config.yaml /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
 
 # First-run bootstrap for the tacky runtime config.

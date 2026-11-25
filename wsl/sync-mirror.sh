@@ -51,7 +51,8 @@ done
 # profile.js is regenerated from WSL-side state that the Windows-side sync
 # cannot read, ime-state.txt is written into the mirror by winkey.ahk — both
 # syncs must exclude them from deletion.
-rsync -rlt --delete --exclude 'mac-bar/profile.js' --exclude 'mac-bar/ime-state.txt' \
+rsync -rlt --delete --exclude 'mac-bar/profile.js' --exclude 'mac-bar/ime-state.txt' --exclude 'mac-bar/market.json' \
+  --exclude 'mac-bar/quotes.json' --exclude 'mac-bar/quotes-hist.json' \
   "$DOTFILES_PATH/zebar/" "$mirror/zebar/" || status=1
 profile="$(cat "$state_dir/profile" 2>/dev/null || true)"
 case "$profile" in
