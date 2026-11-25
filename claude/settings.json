@@ -177,18 +177,6 @@
       "autoUpdate": true
     }
   },
-  "effortLevel": "high",
-  "modelSettings": {
-    "claude-opus-5-5": {
-      "effortLevel": "high"
-    },
-    "claude-sonnet-5-5": {
-      "effortLevel": "high"
-    },
-    "claude-fable-5-2": {
-      "effortLevel": "high"
-    }
-  },
   "tui": "fullscreen",
   "prefersReducedMotion": false,
   "skipDangerousModePermissionPrompt": true,

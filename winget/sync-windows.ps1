@@ -64,7 +64,13 @@ foreach ($f in 'ApplicationConfig.json', 'HotkeysConfig.json') {
   if (-not (Test-Path -LiteralPath $live)) { continue }
   if ((Test-Path -LiteralPath $applied) -and
       (Get-FileHash -LiteralPath $applied).Hash -eq (Get-FileHash -LiteralPath $live).Hash) { continue }
-  Copy-Item -LiteralPath $live (Join-Path $src "sharex\$f") -ErrorAction SilentlyContinue
+  $snap = Join-Path $src "sharex\$f"
+  try {
+    $text = [IO.File]::ReadAllText($live)
+    $text = [regex]::Replace($text, '(?m)^ *"(MainFormPosition|MainFormSize|ScreenRecordRegion|MagnifierPixelCount)": .*\n', '')
+    if ((Test-Path -LiteralPath $snap) -and ([IO.File]::ReadAllText($snap) -eq $text)) { continue }
+    [IO.File]::WriteAllText($snap, $text, (New-Object System.Text.UTF8Encoding($false)))
+  } catch { continue }
 }
 
 & (Join-Path $dst 'winget\flow-capture.ps1') -RepoPath $src -MirrorPath $dst

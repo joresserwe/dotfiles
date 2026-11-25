@@ -28,7 +28,7 @@ $script:FlowSettingsAllowedFields = @(
     'ShowUnknownSourceWarning', 'SoundVolume', 'StartFlowLauncherOnSystemStartup',
     'Theme', 'TimeFormat', 'UseAnimation', 'UseClock', 'UseDate',
     'UseDoublePinyin', 'UseDropShadowEffect', 'UseGlyphIcons',
-    'UseLogonTaskForStartup', 'UseSound', 'WindowHeightSize', 'WindowSize'
+    'UseLogonTaskForStartup', 'UseSound', 'WindowHeightSize'
 )
 
 $script:FlowPluginAllowedFields = @{

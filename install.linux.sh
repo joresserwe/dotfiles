@@ -775,8 +775,19 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
         >/dev/null 2>&1 || true
     fi
     mkdir -p "$sharex_personal_wsl" "$dotfiles_win_wsl/sharex.applied"
-    cp "$DOTFILES_PATH"/sharex/*.json "$sharex_personal_wsl/"
     cp "$DOTFILES_PATH"/sharex/*.json "$dotfiles_win_wsl/sharex.applied/"
+    sharex_live="$sharex_personal_wsl/ApplicationConfig.json"
+    if [[ -s "$sharex_live" ]]; then
+      sharex_merged="$(mktemp)"
+      if jq --indent 2 --slurpfile live "$sharex_live" -f "$DOTFILES_PATH/sharex/merge-local.jq" \
+        "$DOTFILES_PATH/sharex/ApplicationConfig.json" >"$sharex_merged"; then
+        cp "$sharex_merged" "$dotfiles_win_wsl/sharex.applied/ApplicationConfig.json"
+      else
+        log_manual "ShareX: machine-local fields not preserved (live ApplicationConfig.json unreadable)"
+      fi
+      rm -f "$sharex_merged"
+    fi
+    cp "$dotfiles_win_wsl"/sharex.applied/*.json "$sharex_personal_wsl/"
     log_done "ShareX: settings applied from sharex/ (pristine copy -> mirror sharex.applied)"
     if [[ "$sharex_was_running" == "True" ]]; then
       powershell.exe -NoProfile -Command \
@@ -1308,8 +1319,8 @@ fi
 ensure_dir "$XDG_DATA_HOME/claude"
 
 install_claude_settings
-git -C "$DOTFILES_PATH" config filter.strip-claude-model.clean 'jq --indent 2 "del(.model)"'
-log_done "git clean filter set: claude/settings.json model field kept out of git"
+configure_git_filters
+log_done "git filter set: machine-local claude/settings.json fields kept out of git"
 create_link "$DOTFILES_PATH/claude/CLAUDE.md" "$XDG_DATA_HOME/claude/CLAUDE.md"
 
 # Legacy (pre-2026-07): ~/.claude was a symlink to $XDG_DATA_HOME/claude.

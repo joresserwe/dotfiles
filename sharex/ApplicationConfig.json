@@ -187,7 +187,6 @@
         "ShowMagnifier": true,
         "UseSquareMagnifier": false,
         "MagnifierSize": 150,
-        "MagnifierPixelCount": 15,
         "ShowCenterCrosshair": true,
         "ShowScreenCrosshair": false,
         "ToolbarPosition": "0, 0"
@@ -843,9 +842,7 @@
   "TaskbarProgressEnabled": true,
   "UseWhiteShareXIcon": false,
   "RememberMainFormPosition": false,
-  "MainFormPosition": "1007, 371",
   "RememberMainFormSize": false,
-  "MainFormSize": "900, 702",
   "TrayLeftClickAction": "RectangleRegion",
   "TrayLeftDoubleClickAction": "OpenMainWindow",
   "TrayMiddleClickAction": "ClipboardUploadWithContentViewer",
@@ -950,7 +947,6 @@
   "AutoCaptureRepeatTime": 60.0,
   "AutoCaptureMinimizeToTray": true,
   "AutoCaptureWaitUpload": true,
-  "ScreenRecordRegion": "969, 452, 2054, 1598",
   "ActionsToolbarList": [
     "RectangleRegion",
     "PrintScreen",

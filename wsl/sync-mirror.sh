@@ -77,6 +77,12 @@ if [ ! -f "$mirror/tacky-borders/config.yaml" ]; then
   fi
 fi
 
+# git reports a size-changed file as modified even when its clean filter yields
+# identical content, and `git pull` then refuses to run until the index is refreshed.
+if git -C "$DOTFILES_PATH" diff --quiet -- claude/settings.json 2>/dev/null; then
+  git -C "$DOTFILES_PATH" add -- claude/settings.json 2>/dev/null || true
+fi
+
 {
   date -Is
   git -C "$DOTFILES_PATH" describe --always --dirty 2>/dev/null || true

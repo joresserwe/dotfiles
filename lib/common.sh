@@ -41,7 +41,7 @@ install_claude_settings() {
   mkdir -p "$(dirname "$target")"
   if [ "$profile" = "light" ]; then
     if [ -f "$target" ]; then
-      merged="$(jq -s '.[1] + (.[0] | {model} | with_entries(select(.value != null))) + {prefersReducedMotion: true}' "$target" "$managed")" || return 1
+      merged="$(jq -s '.[1] + (.[0] | {model, effortLevel, modelSettings} | with_entries(select(.value != null))) + {prefersReducedMotion: true}' "$target" "$managed")" || return 1
     else
       merged="$(jq '. + {prefersReducedMotion: true}' "$managed")" || return 1
     fi
@@ -55,6 +55,11 @@ install_claude_settings() {
   else
     create_link "$managed" "$target"
   fi
+}
+
+configure_git_filters() {
+  git -C "$DOTFILES_PATH" config filter.strip-claude-model.clean 'sh claude/settings-filter.sh clean'
+  git -C "$DOTFILES_PATH" config filter.strip-claude-model.smudge 'sh claude/settings-filter.sh smudge'
 }
 
 log_step() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
