@@ -31,7 +31,7 @@
       "ToastWindowPlacement": "MiddleRight",
       "ToastWindowSize": "600, 400",
       "ToastWindowLeftClickAction": "AnnotateImage",
-      "ToastWindowRightClickAction": "CloseNotification",
+      "ToastWindowRightClickAction": "AnnotateImage",
       "ToastWindowMiddleClickAction": "CloseNotification",
       "ToastWindowButtonSize": 40,
       "ToastWindowButtons": [
