@@ -291,15 +291,19 @@ git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 
 # WSL: make this clone pushable. The shared git/config routes github.com
 # credentials to `gh auth git-credential`, which needs a per-machine login;
-# fall through to Windows' Git Credential Manager via a repo-local override
-# (helper reset + GCM). Symlinked into ~/.local/bin because a credential
-# helper path can't contain spaces ("Program Files"). Machine state — the
-# override lives in .git/config, never in the synced git/config.
+# without one, fall through to Windows' Git Credential Manager via a
+# repo-local override (helper reset + GCM). Symlinked into ~/.local/bin
+# because a credential helper path can't contain spaces ("Program Files").
+# Machine state — the override lives in .git/config, never in the synced
+# git/config.
 GCM_WIN=''
 for gcm in '/mnt/c/Program Files/Git/'{ucrt64,mingw64}'/bin/git-credential-manager.exe'; do
   if [ -x "$gcm" ]; then GCM_WIN=$gcm; break; fi
 done
-if [[ -n "${WSL_DISTRO_NAME:-}" ]] && [ -n "$GCM_WIN" ]; then
+if gh auth token --hostname github.com >/dev/null 2>&1; then
+  git -C "$DOTFILES_PATH" config --local --unset-all "credential.https://github.com.helper" 2>/dev/null || true
+  log_done "git: dotfiles clone credentials -> gh"
+elif [[ -n "${WSL_DISTRO_NAME:-}" ]] && [ -n "$GCM_WIN" ]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$GCM_WIN" "$HOME/.local/bin/git-credential-manager.exe"
   git -C "$DOTFILES_PATH" config --local --replace-all "credential.https://github.com.helper" ""
