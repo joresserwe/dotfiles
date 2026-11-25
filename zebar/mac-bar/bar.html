@@ -702,7 +702,7 @@
           ['fear', main.fear, main.fearHist.slice(-TICK_DAYS)],
           ['crowd', main.crowd, main.crowdHist.slice(-TICK_DAYS)],
         ].filter(([axis]) => items.includes(axis));
-        const orbits = market.indices.filter(i => items.includes(orbitKey(i))).map(i => [i.key, i.name, i.trend.dev]);
+        const orbits = market.indices.filter(i => i.trend && items.includes(orbitKey(i))).map(i => [i.key, i.name, i.trend.dev]);
         const picked = quotesOf(quotes).filter(q => items.includes(q.key));
         const label = [...gauges.map(([axis, v]) => `${NAMES[axis]} ${v}`), ...orbits.map(([, name, v]) => `${NAMES.orbit} ${name} ${signed(v)}`), ...picked.map(q => `${q.name} ${formatDelta(q.chg, q.unit)}`)].join(', ');
         return (
@@ -821,7 +821,7 @@
           <div className="mk-settings" role="dialog" aria-label="바에 표시할 항목">
             <h3>바에 표시할 항목</h3>
             <p>온도계</p>
-            <div>{AXES.map(axis => chip(axis, NAMES[axis]))}{indices.map(i => chip(orbitKey(i), `${NAMES.orbit} ${i.name}`))}</div>
+            <div>{AXES.map(axis => chip(axis, NAMES[axis]))}{indices.filter(i => i.trend).map(i => chip(orbitKey(i), `${NAMES.orbit} ${i.name}`))}</div>
             {quotes?.groups.map(g => (
               <React.Fragment key={g.group}>
                 <p>{g.group}</p>
@@ -1342,8 +1342,8 @@
 
       function summaryText({ index }) {
         const risk = index.signals.find(x => x.verified);
-        const price = `추세선보다 ${gapText(index.trend.dev)}로 ‘${orbitZone(index.trend.dev)}’ 구간`;
-        return `미국 시장: ${fearText(index.fear)}. ${crowdText(index.crowd)}. ${index.name} 가격은 ${price}입니다. ${risk?.pending ? `이번 달 10개월선 ${risk.on ? '아래로 내려왔습니다' : '위로 올라왔습니다'}(월말 확정 전).` : risk?.on ? '10개월선 아래라 평소보다 크게 출렁일 수 있습니다.' : '10개월선 위라 크게 빠질 위험은 평소 수준입니다.'}`;
+        const price = index.trend ? `${index.name} 가격은 추세선보다 ${gapText(index.trend.dev)}로 ‘${orbitZone(index.trend.dev)}’ 구간입니다. ` : '';
+        return `미국 시장: ${fearText(index.fear)}. ${crowdText(index.crowd)}. ${price}${risk?.pending ? `이번 달 10개월선 ${risk.on ? '아래로 내려왔습니다' : '위로 올라왔습니다'}(월말 확정 전).` : risk?.on ? '10개월선 아래라 평소보다 크게 출렁일 수 있습니다.' : '10개월선 위라 크게 빠질 위험은 평소 수준입니다.'}`;
       }
 
       const partOf = (index, label) => index.parts.find(x => x.label === label);
@@ -1866,8 +1866,12 @@
                   ))}
                 </div>
                 <PeakLine peak={index.peak} />
-                <OrbitDial trend={index.trend} />
-                <OrbitChart index={index} other={market.indices.find(i => i !== index) ?? index} />
+                {index.trend ? (
+                  <>
+                    <OrbitDial trend={index.trend} />
+                    <OrbitChart index={index} other={market.indices.find(i => i !== index) ?? index} />
+                  </>
+                ) : <p className="mk-absent">배당 자료가 없어 궤도를 계산할 수 없습니다.</p>}
 
                 <h2><span className="mk-title">위험 점검<Help id="signals" /></span> <span>1년 내 20% 하락 빈도</span></h2>
                 <SignalTable signals={index.signals} />

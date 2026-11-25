@@ -659,6 +659,7 @@ i {
 
 
 .mk-panel footer { margin-top: 12px; font-size: 11px; color: var(--fg-dim); }
+.mk-absent { margin: 10px 0; font-size: 11.5px; color: var(--fg-dim); }
 
 .mk-handle {
   position: absolute;
