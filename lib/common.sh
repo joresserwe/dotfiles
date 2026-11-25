@@ -56,6 +56,18 @@ create_link() {
   log_done "link: $link_path -> $target_file"
 }
 
+configure_bitwarden() {
+  local server="https://vault.bitwarden.eu"
+  command -v bw >/dev/null || return 0
+  if [ "$(bw config server 2>/dev/null)" = "$server" ]; then
+    log_skip "bitwarden: server $server"
+  elif bw status 2>/dev/null | grep -q '"status":"unauthenticated"'; then
+    bw config server "$server" >/dev/null && log_done "bitwarden: server $server"
+  else
+    log_manual "bitwarden: logged in to another server"
+  fi
+}
+
 install_codex_web_guidance() {
   local cli="$HOME/.local/bin/codex" catalogs source_url plugins
   catalogs="$("$cli" plugin marketplace list --json)" || return 1

@@ -89,6 +89,8 @@ brew trust --formula felixkratz/formulae/borders 2>/dev/null || true
 brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
+configure_bitwarden || log_manual "bitwarden: server setup failed"
+
 # -----------------------------------------------------------------------------------------------
 
 echo "Installing node / java (via mise)..."
@@ -265,6 +267,7 @@ create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
+create_link "$DOTFILES_PATH/bin/bwc" "$HOME/.local/bin/bwc"
 
 # -----------------------------------------------------------------------------------------------
 

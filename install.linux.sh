@@ -286,6 +286,8 @@ brew bundle install --verbose --file "$DOTFILES_PATH/brew/Brewfile"
 # candidates exist — fatal under set -e
 brew bundle cleanup --file "$DOTFILES_PATH/brew/Brewfile" </dev/null || true
 
+configure_bitwarden || log_manual "bitwarden: server setup failed"
+
 create_link "$DOTFILES_PATH/git/config" "$XDG_CONFIG_HOME/git/config"
 git -C "$DOTFILES_PATH" config --local core.hooksPath git/hooks
 
@@ -377,6 +379,7 @@ create_link "$DOTFILES_PATH/bin/memhogs" "$HOME/.local/bin/memhogs"
 create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
+create_link "$DOTFILES_PATH/bin/bwc" "$HOME/.local/bin/bwc"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 
