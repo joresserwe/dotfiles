@@ -378,6 +378,7 @@ create_link "$DOTFILES_PATH/bin/update" "$HOME/.local/bin/update"
 create_link "$DOTFILES_PATH/bin/duckdb" "$HOME/.local/bin/duckdb"
 create_link "$DOTFILES_PATH/bin/jshell" "$HOME/.local/bin/jshell"
 create_link "$DOTFILES_PATH/bin/bwc" "$HOME/.local/bin/bwc"
+create_link "$DOTFILES_PATH/bin/bwg" "$HOME/.local/bin/bwg"
 create_link "$DOTFILES_PATH/bin/trust-proxy-ca" "$HOME/.local/bin/trust-proxy-ca"
 create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-rebuild-patched"
 

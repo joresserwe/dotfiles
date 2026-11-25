@@ -1,41 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+DOTFILES_PATH="${DOTFILES_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/.dotfiles}"
+# shellcheck source=../lib/secret.sh
+source "$DOTFILES_PATH/lib/secret.sh"
+
 die() { printf 'bwc: %s\n' "$1" >&2; exit 1; }
 
 for tool in bw jq fzf; do
   command -v "$tool" >/dev/null || die "$tool is not installed"
 done
-
-copy() {
-  case "$OSTYPE" in
-    darwin*)
-      printf '%s' "$1" | pbcopy
-      (sleep 30; [ "$(pbpaste)" = "$1" ] && printf '' | pbcopy) >/dev/null 2>&1 &
-      ;;
-    *)
-      command -v powershell.exe >/dev/null || die "no clipboard available"
-      local line=
-      exec 3< <(printf '%s' "$1" | base64 -w0 | setsid powershell.exe -NoProfile -STA -Command '
-        $s = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String([Console]::In.ReadToEnd()))
-        Add-Type -AssemblyName System.Windows.Forms
-        $d = New-Object Windows.Forms.DataObject
-        $d.SetText($s)
-        foreach ($f in "ExcludeClipboardContentFromMonitorProcessing", "CanIncludeInClipboardHistory", "CanUploadToCloudClipboard") {
-          $d.SetData($f, (New-Object IO.MemoryStream(, [byte[]](0, 0, 0, 0))))
-        }
-        [Windows.Forms.Clipboard]::SetDataObject($d, $true)
-        [Console]::Out.WriteLine("copied")
-        [Console]::Out.Flush()
-        Start-Sleep 30
-        if ([Windows.Forms.Clipboard]::GetText() -ceq $s) { [Windows.Forms.Clipboard]::Clear() }
-      ' 2>/dev/null)
-      read -r line <&3 || true
-      exec 3<&-
-      [[ "$line" == copied* ]] || die "copy failed"
-      ;;
-  esac
-}
 
 opened=
 finish() {
@@ -74,16 +48,17 @@ picked="$(printf '%s' "$items" | jq -r '
      + "\u001b[36m" + (.login.username | clean | fit(28)) + "\u001b[0m  "
      + "\u001b[2m" + (.login.uris[0]?.uri | host) + "\u001b[0m"]
   | @tsv' | fzf --ansi --delimiter='\t' --with-nth=2.. --height=60% --layout=reverse --border --info=inline \
-  --prompt='vault > ' --header='Enter: password   Ctrl-U: username   Esc: cancel' \
-  --expect=ctrl-u --query="$*")" || exit 0
+  --prompt='vault > ' --header='Enter: password   Ctrl-U: username   Ctrl-Y: copy password   Esc: cancel' \
+  --expect=ctrl-u,ctrl-y --query="$*")" || exit 0
 
 key="$(printf '%s\n' "$picked" | sed -n 1p)"
 id="$(printf '%s\n' "$picked" | sed -n 2p | cut -f1)"
 field=password
+mode=type
 [ "$key" != ctrl-u ] || field=username
+[ "$key" != ctrl-y ] || mode=copy
 
 value="$(printf '%s' "$items" | jq -r --arg id "$id" --arg f "$field" '.[] | select(.id == $id) | .login[$f] // ""')"
 name="$(printf '%s' "$items" | jq -r --arg id "$id" '.[] | select(.id == $id) | .name | gsub("[[:cntrl:]]"; " ")')"
 [ -n "$value" ] || die "$name has no $field"
-copy "$value"
-printf '%s: %s copied, cleared in 30s\n' "$name" "$field"
+secret_deliver "$name $field" "$value" 30 "$mode" || die "delivery failed"

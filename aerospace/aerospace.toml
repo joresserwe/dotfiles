@@ -223,6 +223,8 @@ ctrl-alt-cmd-7 = 'summon-workspace 7'
 ctrl-alt-cmd-8 = 'summon-workspace 8'
 # summon-workspace only accepts a workspace name (prev/next unsupported)
 
+ctrl-alt-cmd-v = 'exec-and-forget "$HOME/.local/bin/bw-type"'
+
 # Enter modes
 ctrl-alt-cmd-r = ['mode resize', 'exec-and-forget borders "active_color=gradient(top_left=0xffFF1493,bottom_right=0xffFF6B6B)"']
 ctrl-alt-cmd-m = ['mode move', 'exec-and-forget borders "active_color=gradient(top_left=0xff1E90FF,bottom_right=0xff00CED1)"']
