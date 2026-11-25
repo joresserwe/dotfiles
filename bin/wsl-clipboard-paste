@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# Mirror a Windows clipboard image into the private X11 clipboard, or paste
+# Windows clipboard text into the target tmux pane when no image is present.
+set -euo pipefail
+
+pane="${1:-}"
+if [[ -n "$pane" ]]; then
+  exec >/dev/null 2>&1
+fi
+xclip_pid=""
+
+cleanup() {
+  if [[ -n "$xclip_pid" ]] && kill -0 "$xclip_pid" 2>/dev/null; then
+    kill "$xclip_pid" 2>/dev/null || true
+    wait "$xclip_pid" 2>/dev/null || true
+  fi
+  xclip_pid=""
+  if [[ -n "$pane" ]]; then
+    exit 0
+  fi
+}
+trap cleanup EXIT INT TERM
+
+fail() {
+  local code="$1"
+  shift
+  if [[ -n "$pane" ]]; then
+    exit 0
+  fi
+  printf 'wsl-clipboard-paste: %s\n' "$*" >&2
+  exit "$code"
+}
+
+[[ -n "${WSL_DISTRO_NAME:-}" ]] || fail 1 "WSL is required"
+command -v flock >/dev/null 2>&1 || fail 1 "flock is not installed"
+
+powershell="$(command -v powershell.exe 2>/dev/null || true)"
+if [[ -z "$powershell" ]]; then
+  powershell='/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+fi
+[[ -x "$powershell" ]] || fail 1 "Windows PowerShell interop is unavailable"
+
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+
+# Serialize capture, publication, paste, and owner cleanup across tmux panes.
+exec 9>"$runtime_dir/wsl-clipboard-paste.lock"
+flock -w 5 9 || fail 1 "another image paste is still running"
+
+rc=0
+clip_payload="$("$powershell" -Sta -NoProfile -NonInteractive -Command '
+  $ErrorActionPreference = "Stop"
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+
+  $image = $null
+  $text = $null
+  for ($attempt = 0; $attempt -lt 15; $attempt++) {
+    $locked = $false
+    try {
+      $image = [System.Windows.Forms.Clipboard]::GetImage()
+    } catch [System.Runtime.InteropServices.ExternalException] {
+      # ShareX may still own the clipboard while finalizing the capture.
+      $locked = $true
+    }
+    if ($null -ne $image) { break }
+    if (-not $locked -and $attempt -ge 3) {
+      try {
+        if ([System.Windows.Forms.Clipboard]::ContainsText()) {
+          $text = [System.Windows.Forms.Clipboard]::GetText()
+          if ($text.Length -gt 0) { break }
+        }
+      } catch [System.Runtime.InteropServices.ExternalException] {
+        $locked = $true
+      }
+    }
+    # CopyImageToClipboard runs after ShareX finishes its capture pipeline, so
+    # an immediate Alt+V can briefly observe the previous text clipboard.
+    if ($attempt -lt 14) {
+      Start-Sleep -Milliseconds 100
+    }
+  }
+
+  if ($null -ne $image) {
+    $stream = [System.IO.MemoryStream]::new()
+    try {
+      $image.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+      [Console]::Out.Write("IMG:" + [Convert]::ToBase64String($stream.ToArray()))
+    } finally {
+      $stream.Dispose()
+      $image.Dispose()
+    }
+    exit 0
+  }
+
+  if ($null -eq $text) {
+    try {
+      if ([System.Windows.Forms.Clipboard]::ContainsText()) {
+        $text = [System.Windows.Forms.Clipboard]::GetText()
+      }
+    } catch [System.Runtime.InteropServices.ExternalException] {
+    }
+  }
+
+  if (-not [string]::IsNullOrEmpty($text)) {
+    $normalized = [System.Text.RegularExpressions.Regex]::Replace($text, "\r\n?", [string][char]10)
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalized)
+    [Console]::Out.Write("TXT:" + [Convert]::ToBase64String($bytes))
+    exit 0
+  }
+
+  exit 2
+' </dev/null)" || rc=$?
+
+case "$rc" in
+  0) ;;
+  2) fail 2 "Windows clipboard does not contain an image" ;;
+  *) fail "$rc" "failed to read the Windows clipboard (PowerShell exit $rc)" ;;
+esac
+
+clip_payload="${clip_payload//$'\r'/}"
+clip_payload="${clip_payload//$'\n'/}"
+
+case "$clip_payload" in
+  TXT:*)
+    [[ -n "$pane" ]] || fail 2 "Windows clipboard does not contain an image"
+    [[ -n "${TMUX:-}" ]] || fail 1 "a tmux pane was supplied outside tmux"
+    text_base64="${clip_payload#TXT:}"
+    [[ -n "$text_base64" ]] || exit 0
+    buf_name="wsl-paste-$$"
+    printf '%s' "$text_base64" | base64 --decode | tmux load-buffer -b "$buf_name" - \
+      || fail 1 "could not load clipboard text into tmux buffer"
+    tmux paste-buffer -p -r -d -b "$buf_name" -t "$pane" || {
+      tmux delete-buffer -b "$buf_name" 2>/dev/null || true
+      fail 1 "could not paste clipboard text into pane $pane"
+    }
+    trap - EXIT INT TERM
+    exit 0
+    ;;
+  IMG:*)
+    png_base64="${clip_payload#IMG:}"
+    ;;
+  *)
+    fail 1 "unexpected clipboard payload"
+    ;;
+esac
+
+command -v xclip >/dev/null 2>&1 || fail 1 "xclip is not installed; rerun install.linux.sh"
+export DISPLAY=:99
+export XAUTHORITY="$runtime_dir/kiro-clipboard.Xauthority"
+[[ -r "$XAUTHORITY" ]] || fail 1 "private Xauthority is unavailable; restart kiro-clipboard-xvfb.service"
+
+[[ -n "$png_base64" ]] || fail 1 "Windows clipboard image conversion returned no PNG data"
+printf '%s' "$png_base64" | base64 --decode >/dev/null \
+  || fail 1 "Windows clipboard returned invalid PNG encoding"
+
+# Foreground mode gives this script ownership of the xclip process, allowing
+# it to erase the X selection by terminating the owner after Kiro consumes it.
+xclip -quiet -selection clipboard -target image/png -in \
+  < <(printf '%s' "$png_base64" | base64 --decode) \
+  >/dev/null 2>&1 &
+xclip_pid=$!
+sleep 0.1
+kill -0 "$xclip_pid" 2>/dev/null \
+  || fail 1 "could not publish image/png to the private X11 display"
+
+if [[ -n "$pane" ]]; then
+  [[ -n "${TMUX:-}" ]] || fail 1 "a tmux pane was supplied outside tmux"
+  # Windows Terminal consumes physical Ctrl+V. Sending it from tmux reaches
+  # Kiro directly while the authenticated xclip owner is serving image/png.
+  tmux send-keys -t "$pane" C-v \
+    || fail 1 "could not send the image-paste key to pane $pane"
+  sleep 2
+else
+  # Manual diagnostics get a short window to query TARGETS/image/png.
+  sleep 5
+fi
+
+xclip_cleanup_pid="$xclip_pid"
+xclip_pid=""
+if [[ -n "$xclip_cleanup_pid" ]] && kill -0 "$xclip_cleanup_pid" 2>/dev/null; then
+  kill "$xclip_cleanup_pid" 2>/dev/null || true
+  wait "$xclip_cleanup_pid" 2>/dev/null || true
+fi
+trap - EXIT INT TERM

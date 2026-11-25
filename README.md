@@ -203,7 +203,7 @@ WSLg is intentionally disabled on this setup because its `weston` process crash-
 Windows clipboard → PowerShell (STA) → PNG → xclip/Xvfb :99 → Kiro / agy
 ```
 
-`xvfb`, `xauth`, and `xclip` are installed in Phase 0, and the user service `kiro-clipboard-xvfb.service` owns an authenticated headless display. The shell's `kiro-cli` and `agy` wrappers scope `DISPLAY=:99` and its private Xauthority cookie to those two programs only; Claude and Codex never inherit that display. Inside a Kiro or agy pane, `Alt+V` reads the current Windows clipboard image into memory, publishes it as `image/png`, and sends the program its image-paste `Ctrl+V` action. The X selection owner is terminated 2 seconds later, so screenshots are not retained. In every other pane, `Alt+V` is forwarded unchanged.
+`xvfb`, `xauth`, and `xclip` are installed in Phase 0, and the user service `kiro-clipboard-xvfb.service` owns an authenticated headless display. The shell's `kiro-cli` and `agy` wrappers scope `DISPLAY=:99` and its private Xauthority cookie to those two programs only; Claude and Codex never inherit that display. Inside a Kiro or agy pane, `Alt+V` reads the current Windows clipboard image into memory, publishes it as `image/png`, and sends the program its image-paste `Ctrl+V` action (falling back to bracketed text paste when the clipboard contains text instead of an image). The X selection owner is terminated 2 seconds later, so screenshots are not retained. In every other pane, `Alt+V` is forwarded unchanged.
 
 After the first install, restart Kiro through `kiro`, `kirod`, or the interactive `kiro-cli` wrapper, and agy through the interactive `agy` wrapper. Existing processes cannot gain the scoped clipboard environment retroactively.
 

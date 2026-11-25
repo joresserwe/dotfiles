@@ -387,8 +387,9 @@ create_link "$DOTFILES_PATH/bin/tmux-rebuild-patched" "$HOME/.local/bin/tmux-reb
 if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   ensure_dir "$HOME/.local/bin"
   ln -sfn "$DOTFILES_PATH/wsl/xdg-open" "$HOME/.local/bin/xdg-open"
-  create_link "$DOTFILES_PATH/bin/kiro-image-paste" "$HOME/.local/bin/kiro-image-paste"
-  log_done "WSL helpers: xdg-open + Kiro image paste"
+  rm -f "$HOME/.local/bin/kiro-image-paste"
+  create_link "$DOTFILES_PATH/bin/wsl-clipboard-paste" "$HOME/.local/bin/wsl-clipboard-paste"
+  log_done "WSL helpers: xdg-open + wsl-clipboard-paste"
 
   if [ -d /run/systemd/system ]; then
     ensure_dir "$XDG_CONFIG_HOME/systemd/user"
@@ -434,6 +435,15 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
   fi
 else
   log_skip "win32yank: not running under WSL"
+fi
+
+# Must run after wsl-clipboard-paste and win32yank.exe exist: tmux.conf and
+# tmux.mapping.conf gate their bindings on both binaries via if-shell.
+TMUX_BIN="$HOME/.local/bin/tmux"
+[ -x "$TMUX_BIN" ] || TMUX_BIN="$(command -v tmux 2>/dev/null || true)"
+if [ -n "$TMUX_BIN" ] && "$TMUX_BIN" list-sessions >/dev/null 2>&1; then
+  "$TMUX_BIN" source-file "$XDG_CONFIG_HOME/tmux/tmux.conf"
+  log_done "tmux: reloaded running server config"
 fi
 
 # ~/Drives (WSL-only): symlink every Windows drive — local AND mapped network
