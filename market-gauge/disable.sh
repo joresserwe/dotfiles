@@ -9,8 +9,7 @@ if [ -f "$key" ] && [ ! -f "$here/key.age" ]; then
   echo "market gauge: key.age is missing, run market-gauge/set-password.sh first" >&2
   exit 1
 fi
-read -rp "Turn the market gauge off on this PC? [y/N] " answer
-[[ "$answer" == [yY]* ]] || exit 0
+confirm "Turn the market gauge off on this PC?" || exit 0
 
 if [ -d /run/systemd/system ]; then
   units="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"

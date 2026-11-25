@@ -65,7 +65,24 @@ configure_git_filters() {
 log_step() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 log_skip() { printf '    \033[2;37m-- %s\033[0m\n' "$*"; }
 log_done() { printf '    \033[1;32mok\033[0m %s\n' "$*"; }
-log_manual() { printf '    \033[1;33m!!\033[0m %s\n' "$*"; }
+
+MANUAL_STEPS=()
+
+add_manual() { MANUAL_STEPS+=("$*"); }
+
+log_manual() {
+  printf '    \033[1;33m!!\033[0m %s\n' "$*"
+  add_manual "$*"
+}
+
+print_manual_steps() {
+  local item
+  [ "${#MANUAL_STEPS[@]}" -gt 0 ] || return 0
+  printf '\n\033[1;33m==> Left for you to do (%d)\033[0m\n' "${#MANUAL_STEPS[@]}"
+  for item in "${MANUAL_STEPS[@]}"; do
+    printf '    \033[1;33m!!\033[0m %s\n' "$item"
+  done
+}
 
 # ensure_dir path... → mkdir -p with idempotent log
 ensure_dir() {

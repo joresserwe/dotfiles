@@ -555,7 +555,7 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
     sudo systemctl enable --now fstrim.timer >/dev/null 2>&1 || true
     log_done "fstrim: WSL override (container condition, / target) + daily timer"
   else
-    log_skip "fstrim: systemd not running (set systemd=true in /etc/wsl.conf)"
+    log_manual "fstrim: systemd not running (set systemd=true in /etc/wsl.conf)"
   fi
 
   # --- Windows-local dotfiles mirror ----------------------------------------
@@ -600,10 +600,13 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]] && command -v winget.exe >/dev/null 2>&1; the
       systemctl --user restart dotfiles-mirror-watch.service || true
       log_done "mirror watcher: dotfiles-mirror-watch.service enabled"
     else
-      log_skip "mirror watcher: systemd not running (set systemd=true in /etc/wsl.conf)"
+      log_manual "mirror watcher: systemd not running (set systemd=true in /etc/wsl.conf)"
     fi
 
-    bash "$DOTFILES_PATH/market-gauge/unlock.sh" || log_manual "market gauge: unlock failed (retry with market-gauge/unlock.sh)"
+    if [[ -f "$XDG_CONFIG_HOME/market-gauge/key" ]]; then
+      bash "$DOTFILES_PATH/market-gauge/unlock.sh" </dev/null \
+        || log_manual "market gauge: update failed (retry with $DOTFILES_PATH/market-gauge/unlock.sh)"
+    fi
 
     ensure_dir "$HOME/.local/bin"
     create_link "$DOTFILES_PATH/wt/tmux-main" "$HOME/.local/bin/tmux-main"
@@ -1349,6 +1352,10 @@ log_done "Phase 5 complete"
 # ============================================================================
 log_step "All phases complete. Open a new shell (or 'exec zsh') to start using it."
 
-log_step "Manual step — Surfingkeys (per browser)"
-log_manual "In the extension settings, set 'Load settings from' to:"
-log_manual "  https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"
+add_manual "Surfingkeys (once per browser): set 'Load settings from' to https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"
+
+if [[ -n "${WSL_DISTRO_NAME:-}" && ! -f "$XDG_CONFIG_HOME/market-gauge/key" ]]; then
+  add_manual "Market gauge (optional): run $DOTFILES_PATH/market-gauge/unlock.sh and enter the password"
+fi
+
+print_manual_steps

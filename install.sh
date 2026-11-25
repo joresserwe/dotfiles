@@ -335,6 +335,6 @@ open -a Hidden\ Bar
 open -a RunCat
 open -a CleanMyMac
 
-echo ""
-echo "[manual] Surfingkeys — once per browser: in the extension settings, set 'Load settings from' to:"
-echo "  https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"
+add_manual "Surfingkeys (once per browser): set 'Load settings from' to https://raw.githubusercontent.com/joresserwe/dotfiles/master/surfingkeys/config.js"
+
+print_manual_steps

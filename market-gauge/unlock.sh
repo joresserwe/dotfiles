@@ -15,14 +15,11 @@ if [ ! -f "$key" ]; then
     echo "market gauge: locked (run market-gauge/unlock.sh in a terminal)"
     exit 0
   fi
-  read -rp "Set up the market gauge on this PC? [y/N] " answer
-  [[ "$answer" == [yY]* ]] || exit 0
   mkdir -p "$(dirname "$key")"
   tmp="$(mktemp "$(dirname "$key")/key.XXXXXX")"
   trap 'rm -f "$tmp"' EXIT
   until age -d "$here/key.age" >"$tmp"; do
-    read -rp "Try again? [y/N] " answer
-    [[ "$answer" == [yY]* ]] || exit 1
+    confirm "Try again?" || exit 1
   done
   [ "$(age-keygen -y "$tmp")" = "$(cat "$here/recipient")" ] || { echo "market gauge: key does not match" >&2; exit 1; }
   mv "$tmp" "$key"

@@ -184,13 +184,13 @@ Still manual:
 
 ### Market gauge
 
-The stock section of the zebar bar is fed by an app stored encrypted in `market-gauge/app.tar.age`. `install.linux.sh` runs `market-gauge/unlock.sh`, which asks for the password once per PC and then unpacks the app to `$XDG_DATA_HOME/market-gauge/app` and enables its systemd user timers. Answer `N` to leave the stock section off on that PC.
+The stock section of the zebar bar is fed by an app stored encrypted in `market-gauge/app.tar.age`. To turn it on, run `market-gauge/unlock.sh` once per PC and enter the password; it unpacks the app to `$XDG_DATA_HOME/market-gauge/app` and enables its systemd user timers. `install.linux.sh` only updates PCs that are already set up and prints the command on the rest.
 
 | Task | Command |
 |------|---------|
 | Encrypt edits made in `$XDG_DATA_HOME/market-gauge/app` | `market-gauge/pack.sh`, then commit |
 | Set or change the password | `market-gauge/set-password.sh`, then commit |
-| Set up a PC that was skipped or turned off | `market-gauge/unlock.sh` |
+| Set up a PC (first time or after turning it off) | `market-gauge/unlock.sh` |
 | Turn it off on a PC (removes the key and the bar's data) | `market-gauge/disable.sh` |
 
 A `watchlist.json` or `dividends.csv` in `$XDG_CONFIG_HOME/market-gauge` overrides the packed one on that PC.

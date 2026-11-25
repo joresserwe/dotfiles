@@ -7,6 +7,18 @@ need_age() {
   command -v age >/dev/null || { echo "market gauge: age is not installed (brew install age)" >&2; exit 1; }
 }
 
+confirm() {
+  local answer
+  while read -rt 0.1; do :; done
+  while true; do
+    read -rp "$1 [y/n] " answer || return 1
+    case "$answer" in
+      [yY]* | ㅛ*) return 0 ;;
+      [nN]* | ㅜ*) return 1 ;;
+    esac
+  done
+}
+
 app_tar() {
   tar -C "$app" --exclude=__pycache__ --exclude='*.tmp' --sort=name --mtime=@0 \
     --owner=0 --group=0 --numeric-owner --mode='u=rwX,go=rX' -cf - .
